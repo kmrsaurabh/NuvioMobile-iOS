@@ -37,7 +37,7 @@ actual object ExternalTorrentServerHttp {
             delegate = null,
             delegateQueue = NSOperationQueue.mainQueue
         )
-        val task = session.dataTaskWithRequest(nativeRequest, completionHandler = { data: NSData?, response: NSURLResponse?, error: NSError? ->
+        val task = session.dataTaskWithRequest(nativeRequest) { data, response, error ->
             if (error != null || response == null) {
                 completion.complete(null)
                 return@dataTaskWithRequest
@@ -62,7 +62,7 @@ actual object ExternalTorrentServerHttp {
                 return@dataTaskWithRequest
             }
             completion.complete(null)
-        })
+        }
         task.resume()
         val result = completion.await()
         session.finishTasksAndInvalidate()
@@ -88,7 +88,7 @@ actual object ExternalTorrentServerHttp {
             delegate = null,
             delegateQueue = NSOperationQueue.mainQueue
         )
-        val task = session.dataTaskWithRequest(nativeRequest, completionHandler = { _: NSData?, response: NSURLResponse?, error: NSError? ->
+        val task = session.dataTaskWithRequest(nativeRequest) { data, response, error ->
             if (error != null) {
                 completion.complete(false)
                 return@dataTaskWithRequest
@@ -96,7 +96,7 @@ actual object ExternalTorrentServerHttp {
             val httpResponse = response as? NSHTTPURLResponse
             val statusCode = httpResponse?.statusCode?.toInt() ?: 0
             completion.complete(statusCode < 500)
-        })
+        }
         task.resume()
         val result = completion.await()
         session.finishTasksAndInvalidate()
