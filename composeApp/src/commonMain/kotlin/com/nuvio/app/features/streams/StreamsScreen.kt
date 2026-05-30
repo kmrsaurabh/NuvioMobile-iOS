@@ -89,6 +89,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import coil3.compose.AsyncImage
 import com.nuvio.app.core.ui.nuvioSafeBottomPadding
 import com.nuvio.app.features.debrid.DebridProviders
+import com.nuvio.app.features.torrent.TorrentStreamingRepository
 import com.nuvio.app.features.debrid.DebridSettingsRepository
 import com.nuvio.app.features.player.PlayerSettingsRepository
 import com.nuvio.app.features.watchprogress.WatchProgressRepository
@@ -138,6 +139,10 @@ fun StreamsScreen(
     val debridSettings by remember {
         DebridSettingsRepository.ensureLoaded()
         DebridSettingsRepository.uiState
+    }.collectAsStateWithLifecycle()
+    val torrentSettings by remember {
+        TorrentStreamingRepository.ensureLoaded()
+        TorrentStreamingRepository.uiState
     }.collectAsStateWithLifecycle()
     val watchProgressUiState by remember {
         WatchProgressRepository.ensureLoaded()
@@ -226,6 +231,7 @@ fun StreamsScreen(
                 episodeTitle = episodeTitle,
                 uiState = uiState,
                 debridEnabled = debridSettings.canResolvePlayableLinks,
+                torrentStreamingEnabled = torrentSettings.enabled,
                 appendInstantServiceToDefaultName = debridSettings.canResolvePlayableLinks && !debridSettings.hasCustomStreamFormatting,
                 resumePositionMs = effectiveResumePositionMs,
                 resumeProgressFraction = effectiveResumeProgressFraction,
@@ -245,6 +251,7 @@ fun StreamsScreen(
                 episodeTitle = episodeTitle,
                 uiState = uiState,
                 debridEnabled = debridSettings.canResolvePlayableLinks,
+                torrentStreamingEnabled = torrentSettings.enabled,
                 appendInstantServiceToDefaultName = debridSettings.canResolvePlayableLinks && !debridSettings.hasCustomStreamFormatting,
                 resumePositionMs = effectiveResumePositionMs,
                 resumeProgressFraction = effectiveResumeProgressFraction,
@@ -393,6 +400,7 @@ private fun MobileStreamsLayout(
     episodeTitle: String?,
     uiState: StreamsUiState,
     debridEnabled: Boolean,
+    torrentStreamingEnabled: Boolean = false,
     appendInstantServiceToDefaultName: Boolean,
     resumePositionMs: Long?,
     resumeProgressFraction: Float?,
@@ -475,6 +483,7 @@ private fun MobileStreamsLayout(
                     StreamList(
                         uiState = uiState,
                         debridEnabled = debridEnabled,
+                        torrentStreamingEnabled = torrentStreamingEnabled,
                         appendInstantServiceToDefaultName = appendInstantServiceToDefaultName,
                         onStreamSelected = onStreamSelected,
                         onStreamLongPress = onStreamLongPress,
@@ -770,6 +779,7 @@ private fun FilterChip(
 internal fun StreamList(
     uiState: StreamsUiState,
     debridEnabled: Boolean,
+    torrentStreamingEnabled: Boolean = false,
     appendInstantServiceToDefaultName: Boolean,
     onStreamSelected: (stream: StreamItem, resumePositionMs: Long?, resumeProgressFraction: Float?) -> Unit,
     onStreamLongPress: (StreamItem) -> Unit,
@@ -810,6 +820,7 @@ internal fun StreamList(
                         group = group,
                         showHeader = uiState.selectedFilter == null,
                         debridEnabled = debridEnabled,
+                        torrentStreamingEnabled = torrentStreamingEnabled,
                         appendInstantServiceToDefaultName = appendInstantServiceToDefaultName,
                         onStreamSelected = onStreamSelected,
                         onStreamLongPress = onStreamLongPress,
@@ -835,6 +846,7 @@ private fun LazyListScope.streamSection(
     group: AddonStreamGroup,
     showHeader: Boolean,
     debridEnabled: Boolean,
+    torrentStreamingEnabled: Boolean = false,
     appendInstantServiceToDefaultName: Boolean,
     onStreamSelected: (stream: StreamItem, resumePositionMs: Long?, resumeProgressFraction: Float?) -> Unit,
     onStreamLongPress: (StreamItem) -> Unit,
@@ -879,10 +891,10 @@ private fun LazyListScope.streamSection(
         ) { _, stream ->
             StreamCard(
                 stream = stream,
-                enabled = stream.isSelectableForPlayback(debridEnabled),
+                enabled = stream.isSelectableForPlayback(debridEnabled, torrentStreamingEnabled),
                 appendInstantServiceToDefaultName = appendInstantServiceToDefaultName,
                 onClick = {
-                    if (stream.isSelectableForPlayback(debridEnabled)) {
+                    if (stream.isSelectableForPlayback(debridEnabled, torrentStreamingEnabled)) {
                         onStreamSelected(stream, resumePositionMs, resumeProgressFraction)
                     }
                 },

@@ -66,8 +66,13 @@ data class StreamItem(
 private fun String?.isMagnetLink(): Boolean =
     this?.trimStart()?.startsWith("magnet:", ignoreCase = true) == true
 
-fun StreamItem.isSelectableForPlayback(debridEnabled: Boolean): Boolean =
-    playableDirectUrl != null || (debridEnabled && isAddonDebridCandidate)
+fun StreamItem.isSelectableForPlayback(
+    debridEnabled: Boolean,
+    torrentStreamingEnabled: Boolean = false,
+): Boolean =
+    playableDirectUrl != null ||
+    (debridEnabled && isAddonDebridCandidate) ||
+    (torrentStreamingEnabled && isTorrentStream)
 
 data class StreamBehaviorHints(
     val bingeGroup: String? = null,

@@ -61,6 +61,7 @@ internal fun TabletStreamsLayout(
     episodeTitle: String?,
     uiState: StreamsUiState,
     debridEnabled: Boolean,
+    torrentStreamingEnabled: Boolean = false,
     appendInstantServiceToDefaultName: Boolean,
     resumePositionMs: Long?,
     resumeProgressFraction: Float?,
@@ -202,6 +203,7 @@ internal fun TabletStreamsLayout(
                         StreamList(
                             uiState = uiState,
                             debridEnabled = debridEnabled,
+                            torrentStreamingEnabled = torrentStreamingEnabled,
                             appendInstantServiceToDefaultName = appendInstantServiceToDefaultName,
                             onStreamSelected = onStreamSelected,
                             onStreamLongPress = onStreamLongPress,

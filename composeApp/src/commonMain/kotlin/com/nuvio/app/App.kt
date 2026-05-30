@@ -192,6 +192,9 @@ import com.nuvio.app.features.watchprogress.nextUpDismissKey
 import com.nuvio.app.features.watchprogress.toContinueWatchingItem
 import com.nuvio.app.features.watching.application.WatchingActions
 import com.nuvio.app.features.watching.application.WatchingState
+import com.nuvio.app.features.torrent.TorrentStreamResolver
+import com.nuvio.app.features.torrent.TorrentResolveResult
+import com.nuvio.app.features.torrent.TorrentStreamingRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -1671,6 +1674,52 @@ private fun MainAppContent(
                         } else {
                             selectedStream
                         }
+                        // ── Torrent P2P streaming (auto-play) ──
+                        if (stream.isTorrentStream && stream.playableDirectUrl == null) {
+                            val torrentSettings = TorrentStreamingRepository.uiState.value
+                            if (torrentSettings.canStream) {
+                                when (val result = TorrentStreamResolver.resolve(stream, stream.fileIdx ?: stream.clientResolve?.fileIdx)) {
+                                    is TorrentResolveResult.Success -> {
+                                        autoPlayHandled = true
+                                        val resolvedPlayerLaunch = PlayerLaunch(
+                                            title = launch.title,
+                                            sourceUrl = result.playbackUrl,
+                                            sourceHeaders = result.headers,
+                                            logo = launch.logo,
+                                            poster = launch.poster,
+                                            background = launch.background,
+                                            seasonNumber = launch.seasonNumber,
+                                            episodeNumber = launch.episodeNumber,
+                                            episodeTitle = launch.episodeTitle,
+                                            episodeThumbnail = launch.episodeThumbnail,
+                                            streamTitle = stream.streamLabel,
+                                            streamSubtitle = stream.streamSubtitle,
+                                            bingeGroup = stream.behaviorHints.bingeGroup,
+                                            pauseDescription = pauseDescription,
+                                            providerName = stream.addonName,
+                                            providerAddonId = stream.addonId,
+                                            contentType = launch.type,
+                                            videoId = effectiveVideoId,
+                                            parentMetaId = launch.parentMetaId ?: effectiveVideoId,
+                                            parentMetaType = launch.parentMetaType ?: launch.type,
+                                            initialPositionMs = launch.resumePositionMs ?: 0L,
+                                            initialProgressFraction = launch.resumeProgressFraction,
+                                        )
+                                        StreamsRepository.consumeAutoPlay()
+                                        StreamsRepository.cancelLoading()
+                                        val launchId = PlayerLaunchStore.put(resolvedPlayerLaunch)
+                                        navController.navigate(PlayerRoute(launchId = launchId)) {
+                                            popUpTo<StreamRoute> { inclusive = true }
+                                        }
+                                        return@LaunchedEffect
+                                    }
+                                    is TorrentResolveResult.Error -> {
+                                        StreamsRepository.skipAutoPlayStream(selectedStream)
+                                        return@LaunchedEffect
+                                    }
+                                }
+                            }
+                        }
                         val sourceUrl = stream.playableDirectUrl
                         if (sourceUrl == null) {
                             StreamsRepository.skipAutoPlayStream(selectedStream)
@@ -1786,6 +1835,31 @@ private fun MainAppContent(
                                 }
                             }
                             return
+                        }
+                        // ── Torrent P2P streaming ──
+                        if (stream.isTorrentStream && stream.playableDirectUrl == null) {
+                            val torrentSettings = TorrentStreamingRepository.uiState.value
+                            if (torrentSettings.canStream) {
+                                streamRouteScope.launch {
+                                    when (val result = TorrentStreamResolver.resolve(stream, stream.fileIdx ?: stream.clientResolve?.fileIdx)) {
+                                        is TorrentResolveResult.Success -> {
+                                            openSelectedStream(
+                                                stream = stream.copy(
+                                                    url = result.playbackUrl,
+                                                ),
+                                                resolvedResumePositionMs = resolvedResumePositionMs,
+                                                resolvedResumeProgressFraction = resolvedResumeProgressFraction,
+                                                forceExternal = forceExternal,
+                                                forceInternal = forceInternal,
+                                            )
+                                        }
+                                        is TorrentResolveResult.Error -> {
+                                            NuvioToastController.show(result.message)
+                                        }
+                                    }
+                                }
+                                return
+                            }
                         }
                         val sourceUrl = stream.playableDirectUrl ?: return
                         if (playerSettings.streamReuseLastLinkEnabled) {
