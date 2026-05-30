@@ -10,11 +10,11 @@ import platform.Foundation.NSURLSession
 import platform.Foundation.NSURLSessionConfiguration
 import platform.Foundation.NSURLSessionDataTask
 import platform.Foundation.setHTTPMethod
-import platform.Foundation.setValue
 import platform.Foundation.NSData
 import platform.Foundation.NSURLResponse
 import platform.Foundation.NSError
-import platform.Foundation.create
+import platform.Foundation.NSString
+import platform.Foundation.NSUTF8StringEncoding
 
 actual object ExternalTorrentServerHttp {
 
@@ -37,7 +37,7 @@ actual object ExternalTorrentServerHttp {
             delegate = null,
             delegateQueue = NSOperationQueue.mainQueue
         )
-        val task = session.dataTaskWithRequest(nativeRequest) { data: NSData?, response: NSURLResponse?, error: NSError? ->
+        val task = session.dataTaskWithRequest(nativeRequest, completionHandler = { data: NSData?, response: NSURLResponse?, error: NSError? ->
             if (error != null || response == null) {
                 completion.complete(null)
                 return@dataTaskWithRequest
@@ -51,8 +51,8 @@ actual object ExternalTorrentServerHttp {
                 return@dataTaskWithRequest
             }
             if (statusCode in 200..299) {
-                if (data != null && data.length.toLong() > 0L) {
-                    val bodyStr = platform.Foundation.NSString.create(data, platform.Foundation.NSUTF8StringEncoding)?.toString()?.trim()
+                if (data != null && data.length > 0UL) {
+                    val bodyStr = NSString.create(data, NSUTF8StringEncoding)?.toString()?.trim()
                     if (bodyStr != null && (bodyStr.startsWith("http://") || bodyStr.startsWith("https://"))) {
                         completion.complete(bodyStr)
                         return@dataTaskWithRequest
@@ -62,7 +62,7 @@ actual object ExternalTorrentServerHttp {
                 return@dataTaskWithRequest
             }
             completion.complete(null)
-        }
+        })
         task.resume()
         val result = completion.await()
         session.finishTasksAndInvalidate()
@@ -88,7 +88,7 @@ actual object ExternalTorrentServerHttp {
             delegate = null,
             delegateQueue = NSOperationQueue.mainQueue
         )
-        val task = session.dataTaskWithRequest(nativeRequest) { _: NSData?, response: NSURLResponse?, error: NSError? ->
+        val task = session.dataTaskWithRequest(nativeRequest, completionHandler = { _: NSData?, response: NSURLResponse?, error: NSError? ->
             if (error != null) {
                 completion.complete(false)
                 return@dataTaskWithRequest
@@ -96,7 +96,7 @@ actual object ExternalTorrentServerHttp {
             val httpResponse = response as? NSHTTPURLResponse
             val statusCode = httpResponse?.statusCode?.toInt() ?: 0
             completion.complete(statusCode < 500)
-        }
+        })
         task.resume()
         val result = completion.await()
         session.finishTasksAndInvalidate()
