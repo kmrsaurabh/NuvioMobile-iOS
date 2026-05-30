@@ -14,6 +14,7 @@ import platform.Foundation.NSFileManager
 import platform.Foundation.NSHomeDirectory
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSUTF8StringEncoding
+import platform.Foundation.timeIntervalSince1970
 import platform.Foundation.NSUserDomainMask
 import platform.posix.fclose
 import platform.posix.fopen
