@@ -1,16 +1,29 @@
 package com.nuvio.app.features.torrent
 
 import co.touchlab.kermit.Logger
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.usePinned
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import platform.Foundation.NSCachesDirectory
+import platform.Foundation.NSData
 import platform.Foundation.NSFileManager
+import platform.Foundation.NSHomeDirectory
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
-import platform.Foundation.NSString
+import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.NSUserDomainMask
-import platform.Foundation.stringByAppendingPathComponent
-import platform.Foundation.writeToFile
+import platform.Foundation.create
+import platform.posix.fclose
+import platform.posix.fopen
+import platform.posix.fread
+import platform.posix.fseek
+import platform.posix.ftell
+import platform.posix.fwrite
+import platform.posix.SEEK_END
+import platform.posix.SEEK_SET
 
 @Serializable
 private data class CacheEntry(
@@ -26,6 +39,7 @@ private data class CacheMetadata(
     val entries: MutableList<CacheEntry> = mutableListOf(),
 )
 
+@OptIn(ExperimentalForeignApi::class)
 actual object TorrentDiskCache {
     private const val TAG = "TorrentDiskCache"
     private const val CACHE_DIR_NAME = "torrent_cache"
@@ -37,39 +51,63 @@ actual object TorrentDiskCache {
     }
 
     private fun cacheDirectory(): String {
-        val paths = NSSearchPathForDirectoriesInDomains(
-            NSCachesDirectory,
-            NSUserDomainMask,
-            true,
-        )
-        val cachesDir = paths.firstOrNull() as? String ?: return ""
-        return (cachesDir as NSString).stringByAppendingPathComponent(CACHE_DIR_NAME)
+        val root = NSHomeDirectory().trimEnd('/')
+        return "$root/Library/Caches/$CACHE_DIR_NAME"
     }
 
-    private fun metadataFilePath(): String {
-        val dir = cacheDirectory()
-        if (dir.isBlank()) return ""
-        return (dir as NSString).stringByAppendingPathComponent(METADATA_FILE_NAME)
-    }
+    private fun metadataFilePath(): String =
+        "${cacheDirectory()}/$METADATA_FILE_NAME"
 
     private fun ensureCacheDirectoryExists() {
         val dir = cacheDirectory()
-        if (dir.isBlank()) return
         val fileManager = NSFileManager.defaultManager
         if (!fileManager.fileExistsAtPath(dir)) {
-            fileManager.createDirectoryAtPath(dir, withIntermediateDirectories = true, attributes = null, error = null)
+            fileManager.createDirectoryAtPath(
+                path = dir,
+                withIntermediateDirectories = true,
+                attributes = null,
+                error = null,
+            )
+        }
+    }
+
+    private fun readFileAsString(path: String): String? {
+        val file = fopen(path, "rb") ?: return null
+        return try {
+            fseek(file, 0, SEEK_END)
+            val size = ftell(file)
+            if (size <= 0L) return null
+            fseek(file, 0, SEEK_SET)
+            val bytes = ByteArray(size.toInt())
+            bytes.usePinned { pinned ->
+                fread(pinned.addressOf(0), 1.convert(), size.convert(), file)
+            }
+            bytes.decodeToString()
+        } finally {
+            fclose(file)
+        }
+    }
+
+    private fun writeStringToFile(path: String, content: String): Boolean {
+        val bytes = content.encodeToByteArray()
+        val file = fopen(path, "wb") ?: return false
+        return try {
+            bytes.usePinned { pinned ->
+                val written = fwrite(pinned.addressOf(0), 1.convert(), bytes.size.convert(), file)
+                written.toLong() == bytes.size.toLong()
+            }
+        } finally {
+            fclose(file)
         }
     }
 
     private fun loadMetadata(): CacheMetadata {
         val path = metadataFilePath()
-        if (path.isBlank()) return CacheMetadata()
         val fileManager = NSFileManager.defaultManager
         if (!fileManager.fileExistsAtPath(path)) return CacheMetadata()
         return try {
-            val content = NSString.stringWithContentsOfFile(path, encoding = 4u /* NSUTF8StringEncoding */, error = null)
-                ?: return CacheMetadata()
-            json.decodeFromString<CacheMetadata>(content.toString())
+            val content = readFileAsString(path) ?: return CacheMetadata()
+            json.decodeFromString<CacheMetadata>(content)
         } catch (e: Exception) {
             Logger.w(TAG, e) { "Failed to load cache metadata" }
             CacheMetadata()
@@ -79,16 +117,13 @@ actual object TorrentDiskCache {
     private fun saveMetadata(metadata: CacheMetadata) {
         ensureCacheDirectoryExists()
         val path = metadataFilePath()
-        if (path.isBlank()) return
         try {
             val jsonStr = json.encodeToString(metadata)
-            (jsonStr as NSString).writeToFile(path, atomically = true, encoding = 4u /* NSUTF8StringEncoding */, error = null)
+            writeStringToFile(path, jsonStr)
         } catch (e: Exception) {
             Logger.w(TAG, e) { "Failed to save cache metadata" }
         }
     }
-
-    private fun entryKey(infoHash: String, fileIdx: Int): String = "${infoHash}_$fileIdx"
 
     actual fun currentSizeBytes(): Long {
         val metadata = loadMetadata()
@@ -97,7 +132,6 @@ actual object TorrentDiskCache {
 
     actual fun clearAll() {
         val dir = cacheDirectory()
-        if (dir.isBlank()) return
         val fileManager = NSFileManager.defaultManager
         if (fileManager.fileExistsAtPath(dir)) {
             fileManager.removeItemAtPath(dir, error = null)
@@ -147,7 +181,11 @@ actual object TorrentDiskCache {
         ensureCacheDirectoryExists()
         val fileManager = NSFileManager.defaultManager
         val attributes = fileManager.attributesOfItemAtPath(filePath, error = null)
-        val sizeBytes = (attributes?.get("NSFileSize") as? Long) ?: 0L
+        val sizeBytes = when (val value = attributes?.get("NSFileSize")) {
+            is Long -> value
+            is Number -> value.toLong()
+            else -> 0L
+        }
 
         val metadata = loadMetadata()
         metadata.entries.removeAll { it.infoHash == infoHash && it.fileIdx == fileIdx }
@@ -188,5 +226,5 @@ actual object TorrentDiskCache {
     }
 
     private fun currentTimeMs(): Long =
-        platform.Foundation.NSDate.date().timeIntervalSince1970().toLong() * 1000L
+        platform.Foundation.NSDate().timeIntervalSince1970.toLong() * 1000L
 }
