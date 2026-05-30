@@ -18,6 +18,7 @@ import platform.Foundation.NSError
 actual object ExternalTorrentServerHttp {
 
     actual suspend fun fetchStreamUrl(requestUrl: String): String? {
+        val url = NSURL(string = requestUrl)
         val nativeRequest = NSMutableURLRequest(
             uRL = url,
             cachePolicy = NSURLRequestReloadIgnoringLocalCacheData,
@@ -35,7 +36,7 @@ actual object ExternalTorrentServerHttp {
             delegate = null,
             delegateQueue = NSOperationQueue.mainQueue,
         )
-        val task: NSURLSessionDataTask = session.dataTaskWithRequest(nativeRequest) { data: NSData?, response: NSURLResponse?, error: NSError? ->
+        val task: NSURLSessionDataTask = session.dataTaskWithRequest(request = nativeRequest, completionHandler = { data: NSData?, response: NSURLResponse?, error: NSError? ->
             if (error != null || response == null) {
                 completion.complete(null)
                 return@dataTaskWithRequest
@@ -53,11 +54,11 @@ actual object ExternalTorrentServerHttp {
             if (statusCode in 200..299) {
                 // Try parsing body as a URL
                 if (data != null && data.length.toLong() > 0L) {
-                    val bodyStr = platform.Foundation.NSString.create(
+                    val bodyStr = platform.Foundation.NSString(
                         data = data,
                         encoding = platform.Foundation.NSUTF8StringEncoding,
-                    )?.toString()?.trim()
-                    if (bodyStr != null && (bodyStr.startsWith("http://") || bodyStr.startsWith("https://"))) {
+                    ).toString().trim()
+                    if (bodyStr.startsWith("http://") || bodyStr.startsWith("https://")) {
                         completion.complete(bodyStr)
                         return@dataTaskWithRequest
                     }
@@ -95,7 +96,7 @@ actual object ExternalTorrentServerHttp {
             delegate = null,
             delegateQueue = NSOperationQueue.mainQueue,
         )
-        val task: NSURLSessionDataTask = session.dataTaskWithRequest(nativeRequest) { _: NSData?, response: NSURLResponse?, error: NSError? ->
+        val task: NSURLSessionDataTask = session.dataTaskWithRequest(request = nativeRequest, completionHandler = { _: NSData?, response: NSURLResponse?, error: NSError? ->
             if (error != null) {
                 completion.complete(false)
                 return@dataTaskWithRequest
