@@ -9,8 +9,6 @@ import platform.Foundation.NSURLRequestReloadIgnoringLocalCacheData
 import platform.Foundation.NSURLSession
 import platform.Foundation.NSURLSessionConfiguration
 import platform.Foundation.NSURLSessionDataTask
-import platform.Foundation.setHTTPMethod
-import platform.Foundation.setValue
 
 actual object ExternalTorrentServerHttp {
 
@@ -51,11 +49,11 @@ actual object ExternalTorrentServerHttp {
             if (statusCode in 200..299) {
                 // Try parsing body as a URL
                 if (data != null && data.length.toLong() > 0L) {
-                    val bodyStr = platform.Foundation.NSString.create(
+                    val bodyStr = platform.Foundation.NSString(
                         data = data,
                         encoding = platform.Foundation.NSUTF8StringEncoding,
-                    )?.toString()?.trim()
-                    if (bodyStr != null && (bodyStr.startsWith("http://") || bodyStr.startsWith("https://"))) {
+                    ).toString().trim()
+                    if (bodyStr.startsWith("http://") || bodyStr.startsWith("https://")) {
                         completion.complete(bodyStr)
                         return@dataTaskWithRequest
                     }

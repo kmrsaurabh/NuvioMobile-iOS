@@ -15,7 +15,6 @@ import platform.Foundation.NSHomeDirectory
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.NSUserDomainMask
-import platform.Foundation.create
 import platform.posix.fclose
 import platform.posix.fopen
 import platform.posix.fread
