@@ -37,10 +37,10 @@ actual object ExternalTorrentServerHttp {
             delegate = null,
             delegateQueue = NSOperationQueue.mainQueue
         )
-        val task = session.dataTaskWithRequest(nativeRequest) { data, response, error ->
+        val task = session.dataTaskWithRequest(nativeRequest) { data: NSData?, response: NSURLResponse?, error: NSError? ->
             if (error != null || response == null) {
                 completion.complete(null)
-                return
+                return@dataTaskWithRequest
             }
             val httpResponse = response as? NSHTTPURLResponse
             val statusCode = httpResponse?.statusCode?.toInt() ?: 0
@@ -48,18 +48,18 @@ actual object ExternalTorrentServerHttp {
             if (statusCode in 300..399) {
                 val location = httpResponse?.valueForHTTPHeaderField("Location")
                 completion.complete(location)
-                return
+                return@dataTaskWithRequest
             }
             if (statusCode in 200..299) {
                 if (data != null && data.length.toLong() > 0L) {
                     val bodyStr = platform.Foundation.NSString.create(data, platform.Foundation.NSUTF8StringEncoding)?.toString()?.trim()
                     if (bodyStr != null && (bodyStr.startsWith("http://") || bodyStr.startsWith("https://"))) {
                         completion.complete(bodyStr)
-                        return
+                        return@dataTaskWithRequest
                     }
                 }
                 completion.complete(httpResponse?.URL?.absoluteString ?: requestUrl)
-                return
+                return@dataTaskWithRequest
             }
             completion.complete(null)
         }
@@ -88,10 +88,10 @@ actual object ExternalTorrentServerHttp {
             delegate = null,
             delegateQueue = NSOperationQueue.mainQueue
         )
-        val task = session.dataTaskWithRequest(nativeRequest) { _, response, error ->
+        val task = session.dataTaskWithRequest(nativeRequest) { _: NSData?, response: NSURLResponse?, error: NSError? ->
             if (error != null) {
                 completion.complete(false)
-                return
+                return@dataTaskWithRequest
             }
             val httpResponse = response as? NSHTTPURLResponse
             val statusCode = httpResponse?.statusCode?.toInt() ?: 0
