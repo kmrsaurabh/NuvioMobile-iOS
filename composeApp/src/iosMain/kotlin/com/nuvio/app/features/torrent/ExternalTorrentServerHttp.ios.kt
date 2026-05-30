@@ -14,6 +14,7 @@ import platform.Foundation.setValue
 import platform.Foundation.NSData
 import platform.Foundation.NSURLResponse
 import platform.Foundation.NSError
+import platform.Foundation.create
 
 actual object ExternalTorrentServerHttp {
 
@@ -36,40 +37,38 @@ actual object ExternalTorrentServerHttp {
             delegate = null,
             delegateQueue = NSOperationQueue.mainQueue,
         )
-        val task: NSURLSessionDataTask = session.dataTaskWithRequest(request = nativeRequest, completionHandler = { data: NSData?, response: NSURLResponse?, error: NSError? ->
+        val handler: (NSData?, NSURLResponse?, NSError?) -> Unit = { data, response, error ->
             if (error != null || response == null) {
                 completion.complete(null)
-                return@dataTaskWithRequest
-            }
-            val httpResponse = response as? NSHTTPURLResponse
-            val statusCode = httpResponse?.statusCode?.toInt() ?: 0
+            } else {
+                val httpResponse = response as? NSHTTPURLResponse
+                val statusCode = httpResponse?.statusCode?.toInt() ?: 0
 
-            // Handle redirect
-            if (statusCode in 300..399) {
-                val location = httpResponse?.valueForHTTPHeaderField("Location")
-                completion.complete(location)
-                return@dataTaskWithRequest
-            }
-
-            if (statusCode in 200..299) {
-                // Try parsing body as a URL
-                if (data != null && data.length.toLong() > 0L) {
-                    val bodyStr = platform.Foundation.NSString(
-                        data = data,
-                        encoding = platform.Foundation.NSUTF8StringEncoding,
-                    ).toString().trim()
-                    if (bodyStr.startsWith("http://") || bodyStr.startsWith("https://")) {
-                        completion.complete(bodyStr)
-                        return@dataTaskWithRequest
+                if (statusCode in 300..399) {
+                    val location = httpResponse?.valueForHTTPHeaderField("Location")
+                    completion.complete(location)
+                } else if (statusCode in 200..299) {
+                    var bodyParsed = false
+                    if (data != null && data.length.toLong() > 0L) {
+                        val bodyStr = platform.Foundation.NSString.create(
+                            data = data,
+                            encoding = platform.Foundation.NSUTF8StringEncoding,
+                        )?.toString()?.trim()
+                        
+                        if (bodyStr != null && (bodyStr.startsWith("http://") || bodyStr.startsWith("https://"))) {
+                            completion.complete(bodyStr)
+                            bodyParsed = true
+                        }
                     }
+                    if (!bodyParsed) {
+                        completion.complete(httpResponse?.URL?.absoluteString ?: requestUrl)
+                    }
+                } else {
+                    completion.complete(null)
                 }
-                // Use the final request URL
-                completion.complete(httpResponse?.URL?.absoluteString ?: requestUrl)
-                return@dataTaskWithRequest
             }
-
-            completion.complete(null)
         }
+        val task: NSURLSessionDataTask = session.dataTaskWithRequest(nativeRequest, handler)
 
         task.resume()
         val result = completion.await()
@@ -96,15 +95,16 @@ actual object ExternalTorrentServerHttp {
             delegate = null,
             delegateQueue = NSOperationQueue.mainQueue,
         )
-        val task: NSURLSessionDataTask = session.dataTaskWithRequest(request = nativeRequest, completionHandler = { _: NSData?, response: NSURLResponse?, error: NSError? ->
+        val handler: (NSData?, NSURLResponse?, NSError?) -> Unit = { _, response, error ->
             if (error != null) {
                 completion.complete(false)
-                return@dataTaskWithRequest
+            } else {
+                val httpResponse = response as? NSHTTPURLResponse
+                val statusCode = httpResponse?.statusCode?.toInt() ?: 0
+                completion.complete(statusCode < 500)
             }
-            val httpResponse = response as? NSHTTPURLResponse
-            val statusCode = httpResponse?.statusCode?.toInt() ?: 0
-            completion.complete(statusCode < 500)
         }
+        val task: NSURLSessionDataTask = session.dataTaskWithRequest(nativeRequest, handler)
 
         task.resume()
         val result = completion.await()
