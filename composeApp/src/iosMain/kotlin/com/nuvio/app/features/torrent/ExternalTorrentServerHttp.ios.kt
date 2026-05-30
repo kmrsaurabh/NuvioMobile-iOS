@@ -10,11 +10,59 @@ import platform.Foundation.NSURLSession
 import platform.Foundation.NSURLSessionConfiguration
 import platform.Foundation.NSURLSessionDataTask
 import platform.Foundation.setHTTPMethod
-import platform.Foundation.setValue
 import platform.Foundation.NSData
 import platform.Foundation.NSURLResponse
 import platform.Foundation.NSError
+import platform.Foundation.NSString
+import platform.Foundation.NSUTF8StringEncoding
+import platform.Foundation.NSMutableData
+import platform.Foundation.appendData
+import platform.Foundation.NSURLSessionDataDelegateProtocol
+import platform.Foundation.NSURLSessionTask
 import platform.Foundation.create
+import platform.darwin.NSObject
+
+private data class HttpResponse(
+    val data: NSData?,
+    val response: NSURLResponse?
+)
+
+private class SimpleHttpDelegate(
+    private val completion: CompletableDeferred<HttpResponse>
+) : NSObject(), NSURLSessionDataDelegateProtocol {
+    private val responseData = NSMutableData()
+    private var urlResponse: NSURLResponse? = null
+
+    override fun URLSession(
+        session: NSURLSession,
+        dataTask: NSURLSessionDataTask,
+        didReceiveResponse: NSURLResponse,
+        completionHandler: (Long) -> Unit
+    ) {
+        urlResponse = didReceiveResponse
+        completionHandler(1L)
+    }
+
+    override fun URLSession(
+        session: NSURLSession,
+        dataTask: NSURLSessionDataTask,
+        didReceiveData: NSData
+    ) {
+        responseData.appendData(didReceiveData)
+    }
+
+    override fun URLSession(
+        session: NSURLSession,
+        task: NSURLSessionTask,
+        didCompleteWithError: NSError?
+    ) {
+        if (didCompleteWithError != null) {
+            completion.complete(HttpResponse(null, null))
+        } else {
+            completion.complete(HttpResponse(responseData, urlResponse))
+        }
+    }
+}
 
 actual object ExternalTorrentServerHttp {
 
@@ -27,53 +75,45 @@ actual object ExternalTorrentServerHttp {
         )
         nativeRequest.setHTTPMethod("GET")
 
-        val completion = CompletableDeferred<String?>()
+        val completion = CompletableDeferred<HttpResponse>()
+        val delegate = SimpleHttpDelegate(completion)
         val configuration = NSURLSessionConfiguration.defaultSessionConfiguration().apply {
             timeoutIntervalForRequest = 30.0
             timeoutIntervalForResource = 60.0
         }
         val session = NSURLSession.sessionWithConfiguration(
             configuration = configuration,
-            delegate = null,
+            delegate = delegate,
             delegateQueue = NSOperationQueue.mainQueue,
         )
-        val handler: (NSData?, NSURLResponse?, NSError?) -> Unit = { data, response, error ->
-            if (error != null || response == null) {
-                completion.complete(null)
-            } else {
-                val httpResponse = response as? NSHTTPURLResponse
-                val statusCode = httpResponse?.statusCode?.toInt() ?: 0
-
-                if (statusCode in 300..399) {
-                    val location = httpResponse?.valueForHTTPHeaderField("Location")
-                    completion.complete(location)
-                } else if (statusCode in 200..299) {
-                    var bodyParsed = false
-                    if (data != null && data.length.toLong() > 0L) {
-                        val bodyStr = platform.Foundation.NSString.create(
-                            data = data,
-                            encoding = platform.Foundation.NSUTF8StringEncoding,
-                        )?.toString()?.trim()
-                        
-                        if (bodyStr != null && (bodyStr.startsWith("http://") || bodyStr.startsWith("https://"))) {
-                            completion.complete(bodyStr)
-                            bodyParsed = true
-                        }
-                    }
-                    if (!bodyParsed) {
-                        completion.complete(httpResponse?.URL?.absoluteString ?: requestUrl)
-                    }
-                } else {
-                    completion.complete(null)
-                }
-            }
-        }
-        val task: NSURLSessionDataTask = session.dataTaskWithRequest(nativeRequest, handler)
-
+        val task = session.dataTaskWithRequest(nativeRequest)
         task.resume()
+
         val result = completion.await()
         session.finishTasksAndInvalidate()
-        return result
+
+        val response = result.response ?: return null
+        val data = result.data
+
+        val httpResponse = response as? NSHTTPURLResponse
+        val statusCode = httpResponse?.statusCode?.toInt() ?: 0
+
+        if (statusCode in 300..399) {
+            return httpResponse?.valueForHTTPHeaderField("Location")
+        } else if (statusCode in 200..299) {
+            if (data != null && data.length > 0UL) {
+                val bodyStr = NSString.create(
+                    data = data,
+                    encoding = NSUTF8StringEncoding,
+                )?.toString()?.trim()
+
+                if (bodyStr != null && (bodyStr.startsWith("http://") || bodyStr.startsWith("https://"))) {
+                    return bodyStr
+                }
+            }
+            return httpResponse?.URL?.absoluteString ?: requestUrl
+        }
+        return null
     }
 
     actual suspend fun testReachability(baseUrl: String): Boolean {
@@ -85,30 +125,26 @@ actual object ExternalTorrentServerHttp {
         )
         nativeRequest.setHTTPMethod("HEAD")
 
-        val completion = CompletableDeferred<Boolean>()
+        val completion = CompletableDeferred<HttpResponse>()
+        val delegate = SimpleHttpDelegate(completion)
         val configuration = NSURLSessionConfiguration.defaultSessionConfiguration().apply {
             timeoutIntervalForRequest = 10.0
             timeoutIntervalForResource = 15.0
         }
         val session = NSURLSession.sessionWithConfiguration(
             configuration = configuration,
-            delegate = null,
+            delegate = delegate,
             delegateQueue = NSOperationQueue.mainQueue,
         )
-        val handler: (NSData?, NSURLResponse?, NSError?) -> Unit = { _, response, error ->
-            if (error != null) {
-                completion.complete(false)
-            } else {
-                val httpResponse = response as? NSHTTPURLResponse
-                val statusCode = httpResponse?.statusCode?.toInt() ?: 0
-                completion.complete(statusCode < 500)
-            }
-        }
-        val task: NSURLSessionDataTask = session.dataTaskWithRequest(nativeRequest, handler)
-
+        val task = session.dataTaskWithRequest(nativeRequest)
         task.resume()
+
         val result = completion.await()
         session.finishTasksAndInvalidate()
-        return result
+
+        val response = result.response ?: return false
+        val httpResponse = response as? NSHTTPURLResponse
+        val statusCode = httpResponse?.statusCode?.toInt() ?: 0
+        return statusCode in 200..499
     }
 }
