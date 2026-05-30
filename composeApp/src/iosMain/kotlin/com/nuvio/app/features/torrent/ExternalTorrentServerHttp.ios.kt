@@ -33,43 +33,36 @@ actual object ExternalTorrentServerHttp {
             timeoutIntervalForResource = 60.0
         }
         val session = NSURLSession.sessionWithConfiguration(
-            configuration = configuration,
+            configuration,
             delegate = null,
-            delegateQueue = NSOperationQueue.mainQueue,
+            delegateQueue = NSOperationQueue.mainQueue
         )
-        val handler: (NSData?, NSURLResponse?, NSError?) -> Unit = { data, response, error ->
+        val task = session.dataTaskWithRequest(nativeRequest) { data, response, error ->
             if (error != null || response == null) {
                 completion.complete(null)
-            } else {
-                val httpResponse = response as? NSHTTPURLResponse
-                val statusCode = httpResponse?.statusCode?.toInt() ?: 0
-
-                if (statusCode in 300..399) {
-                    val location = httpResponse?.valueForHTTPHeaderField("Location")
-                    completion.complete(location)
-                } else if (statusCode in 200..299) {
-                    var bodyParsed = false
-                    if (data != null && data.length.toLong() > 0L) {
-                        val bodyStr = platform.Foundation.NSString.create(
-                            data = data,
-                            encoding = platform.Foundation.NSUTF8StringEncoding,
-                        )?.toString()?.trim()
-                        
-                        if (bodyStr != null && (bodyStr.startsWith("http://") || bodyStr.startsWith("https://"))) {
-                            completion.complete(bodyStr)
-                            bodyParsed = true
-                        }
-                    }
-                    if (!bodyParsed) {
-                        completion.complete(httpResponse?.URL?.absoluteString ?: requestUrl)
-                    }
-                } else {
-                    completion.complete(null)
-                }
+                return
             }
-        }
-        val task: NSURLSessionDataTask = session.dataTaskWithRequest(nativeRequest, handler)
+            val httpResponse = response as? NSHTTPURLResponse
+            val statusCode = httpResponse?.statusCode?.toInt() ?: 0
 
+            if (statusCode in 300..399) {
+                val location = httpResponse?.valueForHTTPHeaderField("Location")
+                completion.complete(location)
+                return
+            }
+            if (statusCode in 200..299) {
+                if (data != null && data.length.toLong() > 0L) {
+                    val bodyStr = platform.Foundation.NSString.create(data, platform.Foundation.NSUTF8StringEncoding)?.toString()?.trim()
+                    if (bodyStr != null && (bodyStr.startsWith("http://") || bodyStr.startsWith("https://"))) {
+                        completion.complete(bodyStr)
+                        return
+                    }
+                }
+                completion.complete(httpResponse?.URL?.absoluteString ?: requestUrl)
+                return
+            }
+            completion.complete(null)
+        }
         task.resume()
         val result = completion.await()
         session.finishTasksAndInvalidate()
@@ -91,21 +84,19 @@ actual object ExternalTorrentServerHttp {
             timeoutIntervalForResource = 15.0
         }
         val session = NSURLSession.sessionWithConfiguration(
-            configuration = configuration,
+            configuration,
             delegate = null,
-            delegateQueue = NSOperationQueue.mainQueue,
+            delegateQueue = NSOperationQueue.mainQueue
         )
-        val handler: (NSData?, NSURLResponse?, NSError?) -> Unit = { _, response, error ->
+        val task = session.dataTaskWithRequest(nativeRequest) { _, response, error ->
             if (error != null) {
                 completion.complete(false)
-            } else {
-                val httpResponse = response as? NSHTTPURLResponse
-                val statusCode = httpResponse?.statusCode?.toInt() ?: 0
-                completion.complete(statusCode < 500)
+                return
             }
+            val httpResponse = response as? NSHTTPURLResponse
+            val statusCode = httpResponse?.statusCode?.toInt() ?: 0
+            completion.complete(statusCode < 500)
         }
-        val task: NSURLSessionDataTask = session.dataTaskWithRequest(nativeRequest, handler)
-
         task.resume()
         val result = completion.await()
         session.finishTasksAndInvalidate()
