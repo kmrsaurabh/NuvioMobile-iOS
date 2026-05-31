@@ -1,6 +1,0 @@
-﻿2026-05-31T16:54:28.0573080Z ##[group]Run chmod +x ./gradlew
-2026-05-31T16:54:28.0573390Z [36;1mchmod +x ./gradlew[0m
-2026-05-31T16:54:28.0608000Z shell: /bin/bash -e {0}
-2026-05-31T16:54:28.0608280Z env:
-2026-05-31T16:54:28.0608490Z   MD_APPLE_SDK_ROOT: /Applications/Xcode_26.3.app
-2026-05-31T16:54:28.0608760Z ##[endgroup]

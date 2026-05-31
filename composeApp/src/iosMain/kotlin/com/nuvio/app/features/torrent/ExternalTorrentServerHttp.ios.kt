@@ -21,6 +21,7 @@ import platform.Foundation.NSURLSessionDataDelegateProtocol
 import platform.Foundation.NSURLSessionTask
 import platform.darwin.NSObject
 import kotlinx.cinterop.readBytes
+import kotlinx.cinterop.reinterpret
 
 private data class HttpResponse(
     val data: NSData?,
@@ -104,7 +105,8 @@ actual object ExternalTorrentServerHttp {
         } else if (statusCode in 200..299) {
             if (data != null && data.length > 0UL) {
                 val bytes = data.bytes?.let { pointer ->
-                    kotlinx.cinterop.readBytes(pointer, data.length.toInt())
+                    val bytePtr = pointer.reinterpret<kotlinx.cinterop.ByteVar>()
+                    kotlinx.cinterop.readBytes(bytePtr, data.length.toInt())
                 }
                 val bodyStr = bytes?.decodeToString()?.trim()
 

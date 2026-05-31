@@ -1,0 +1,28 @@
+﻿2026-05-31T17:14:50.7655992Z ##[group]Run actions/cache@v4
+2026-05-31T17:14:50.7656292Z with:
+2026-05-31T17:14:50.7656516Z   path: ~/.gradle/caches
+~/.gradle/wrapper
+
+2026-05-31T17:14:50.7656986Z   key: Linux-gradle-305068457a335118bb028f1aaf9edcff19634c538e8dbda7a60aa368333337e9
+2026-05-31T17:14:50.7657442Z   enableCrossOsArchive: false
+2026-05-31T17:14:50.7657695Z   fail-on-cache-miss: false
+2026-05-31T17:14:50.7657952Z   lookup-only: false
+2026-05-31T17:14:50.7659046Z   save-always: false
+2026-05-31T17:14:50.7659285Z env:
+2026-05-31T17:14:50.7659581Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-05-31T17:14:50.7660074Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-05-31T17:14:50.7660471Z   ANDROID_HOME: /usr/local/lib/android/sdk
+2026-05-31T17:14:50.7660762Z   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+2026-05-31T17:14:50.7661039Z ##[endgroup]
+2026-05-31T17:14:51.1757569Z Cache hit for: Linux-gradle-305068457a335118bb028f1aaf9edcff19634c538e8dbda7a60aa368333337e9
+2026-05-31T17:14:52.4775683Z Received 0 of 803949558 (0.0%), 0.0 MBs/sec
+2026-05-31T17:14:53.4786098Z Received 109051904 of 803949558 (13.6%), 52.0 MBs/sec
+2026-05-31T17:14:54.4810986Z Received 234881024 of 803949558 (29.2%), 74.6 MBs/sec
+2026-05-31T17:14:55.4840460Z Received 377487360 of 803949558 (47.0%), 89.9 MBs/sec
+2026-05-31T17:14:56.4831476Z Received 532676608 of 803949558 (66.3%), 101.5 MBs/sec
+2026-05-31T17:14:57.4842635Z Received 662700032 of 803949558 (82.4%), 105.2 MBs/sec
+2026-05-31T17:14:58.4640879Z Received 803949558 of 803949558 (100.0%), 109.7 MBs/sec
+2026-05-31T17:14:58.4644028Z Cache Size: ~767 MB (803949558 B)
+2026-05-31T17:14:58.4688978Z [command]/usr/bin/tar -xf /home/runner/work/_temp/0cfcd901-1a0c-48b3-ac30-ba27b128ec64/cache.tzst -P -C /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS --use-compress-program unzstd
+2026-05-31T17:15:02.1504839Z Cache restored successfully
+2026-05-31T17:15:02.1955545Z Cache restored from key: Linux-gradle-305068457a335118bb028f1aaf9edcff19634c538e8dbda7a60aa368333337e9
