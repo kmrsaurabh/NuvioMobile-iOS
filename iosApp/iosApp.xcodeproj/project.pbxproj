@@ -426,6 +426,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Frameworks\"",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.nuvio.media;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -455,6 +459,10 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+				);
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Frameworks\"",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.nuvio.app;
 				SWIFT_EMIT_LOC_STRINGS = YES;
