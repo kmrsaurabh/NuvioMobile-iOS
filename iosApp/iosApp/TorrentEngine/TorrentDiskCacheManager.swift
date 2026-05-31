@@ -10,7 +10,7 @@ import Foundation
 // MARK: - Cache Entry Metadata
 
 /// Metadata for a single cached torrent file, persisted to disk.
-struct TorrentCacheEntry: Codable {
+public struct TorrentCacheEntry: Codable {
     /// Unique identifier for this cache entry (typically the info hash).
     let id: String
 
