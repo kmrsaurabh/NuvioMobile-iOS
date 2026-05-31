@@ -20,8 +20,8 @@ import platform.Foundation.appendData
 import platform.Foundation.NSURLSessionDataDelegateProtocol
 import platform.Foundation.NSURLSessionTask
 import platform.darwin.NSObject
-import kotlinx.cinterop.readBytes
-import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
 
 private data class HttpResponse(
     val data: NSData?,
@@ -104,11 +104,13 @@ actual object ExternalTorrentServerHttp {
             return httpResponse?.valueForHTTPHeaderField("Location")
         } else if (statusCode in 200..299) {
             if (data != null && data.length > 0UL) {
-                val bytes = data.bytes?.let { pointer ->
-                    val bytePtr = pointer.reinterpret<kotlinx.cinterop.ByteVar>()
-                    kotlinx.cinterop.readBytes(bytePtr, data.length.toInt())
+                val bytes = ByteArray(data.length.toInt())
+                if (bytes.isNotEmpty()) {
+                    bytes.usePinned { pinned ->
+                        platform.posix.memcpy(pinned.addressOf(0), data.bytes, data.length)
+                    }
                 }
-                val bodyStr = bytes?.decodeToString()?.trim()
+                val bodyStr = bytes.decodeToString().trim()
 
                 if (bodyStr != null && (bodyStr.startsWith("http://") || bodyStr.startsWith("https://"))) {
                     return bodyStr

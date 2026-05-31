@@ -1,0 +1,12 @@
+﻿2026-05-31T17:40:58.4503980Z Post job cleanup.
+2026-05-31T17:40:58.6039210Z [command]/opt/homebrew/bin/git version
+2026-05-31T17:40:58.7518390Z git version 2.54.0
+2026-05-31T17:40:58.7591400Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/d47851ac-6feb-417b-a4c1-d4bb765ecc8f/.gitconfig'
+2026-05-31T17:40:58.7601450Z Temporarily overriding HOME='/Users/runner/work/_temp/d47851ac-6feb-417b-a4c1-d4bb765ecc8f' before making global git config changes
+2026-05-31T17:40:58.7603450Z Adding repository directory to the temporary git global config as a safe directory
+2026-05-31T17:40:58.7612370Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS
+2026-05-31T17:40:58.7848600Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-05-31T17:40:58.7934180Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-05-31T17:40:59.0338080Z Entering 'MPVKit'
+2026-05-31T17:40:59.0798550Z fatal: No url found for submodule path 'libass-android' in .gitmodules
+2026-05-31T17:40:59.0851020Z ##[warning]The process '/opt/homebrew/bin/git' failed with exit code 128

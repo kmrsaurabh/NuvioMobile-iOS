@@ -1,0 +1,73 @@
+﻿2026-05-31T17:35:46.3142260Z ##[group]Run actions/checkout@v4
+2026-05-31T17:35:46.3142840Z with:
+2026-05-31T17:35:46.3143150Z   repository: kmrsaurabh/NuvioMobile-iOS
+2026-05-31T17:35:46.3146240Z   token: ***
+2026-05-31T17:35:46.3146530Z   ssh-strict: true
+2026-05-31T17:35:46.3146820Z   ssh-user: git
+2026-05-31T17:35:46.3147130Z   persist-credentials: true
+2026-05-31T17:35:46.3147470Z   clean: true
+2026-05-31T17:35:46.3147770Z   sparse-checkout-cone-mode: true
+2026-05-31T17:35:46.3148130Z   fetch-depth: 1
+2026-05-31T17:35:46.3148420Z   fetch-tags: false
+2026-05-31T17:35:46.3148720Z   show-progress: true
+2026-05-31T17:35:46.3149040Z   lfs: false
+2026-05-31T17:35:46.3149330Z   submodules: false
+2026-05-31T17:35:46.3149640Z   set-safe-directory: true
+2026-05-31T17:35:46.3150070Z ##[endgroup]
+2026-05-31T17:35:46.6032010Z Syncing repository: kmrsaurabh/NuvioMobile-iOS
+2026-05-31T17:35:46.6033770Z ##[group]Getting Git version info
+2026-05-31T17:35:46.6034630Z Working directory is '/Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS'
+2026-05-31T17:35:46.6035960Z [command]/opt/homebrew/bin/git version
+2026-05-31T17:35:46.6257120Z git version 2.54.0
+2026-05-31T17:35:46.6280120Z ##[endgroup]
+2026-05-31T17:35:46.6285940Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/4ab7232e-9544-44a0-a70e-d9053382ff89/.gitconfig'
+2026-05-31T17:35:46.6292500Z Temporarily overriding HOME='/Users/runner/work/_temp/4ab7232e-9544-44a0-a70e-d9053382ff89' before making global git config changes
+2026-05-31T17:35:46.6294940Z Adding repository directory to the temporary git global config as a safe directory
+2026-05-31T17:35:46.6300470Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS
+2026-05-31T17:35:46.6396300Z Deleting the contents of '/Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS'
+2026-05-31T17:35:46.6399160Z ##[group]Initializing the repository
+2026-05-31T17:35:46.6403270Z [command]/opt/homebrew/bin/git init /Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS
+2026-05-31T17:35:46.6589290Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-05-31T17:35:46.6591460Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-05-31T17:35:46.6593080Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-05-31T17:35:46.6594400Z hint: call:
+2026-05-31T17:35:46.6595010Z hint:
+2026-05-31T17:35:46.6595780Z hint: 	git config --global init.defaultBranch <name>
+2026-05-31T17:35:46.6596780Z hint:
+2026-05-31T17:35:46.6597680Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-05-31T17:35:46.6599330Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-05-31T17:35:46.6600590Z hint:
+2026-05-31T17:35:46.6601220Z hint: 	git branch -m <name>
+2026-05-31T17:35:46.6601970Z hint:
+2026-05-31T17:35:46.6602990Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-05-31T17:35:46.6604840Z Initialized empty Git repository in /Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS/.git/
+2026-05-31T17:35:46.6607910Z [command]/opt/homebrew/bin/git remote add origin https://github.com/kmrsaurabh/NuvioMobile-iOS
+2026-05-31T17:35:46.6664080Z ##[endgroup]
+2026-05-31T17:35:46.6665220Z ##[group]Disabling automatic garbage collection
+2026-05-31T17:35:46.6666480Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-05-31T17:35:46.6723480Z ##[endgroup]
+2026-05-31T17:35:46.6724590Z ##[group]Setting up auth
+2026-05-31T17:35:46.6727370Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-05-31T17:35:46.6781280Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-05-31T17:35:46.7521610Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-05-31T17:35:46.7574310Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-05-31T17:35:46.8220190Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-31T17:35:46.8269190Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-05-31T17:35:46.9371670Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-05-31T17:35:46.9374830Z ##[endgroup]
+2026-05-31T17:35:46.9375940Z ##[group]Fetching the repository
+2026-05-31T17:35:46.9378660Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +85237845dda360dc251218a4cac328ccfa2ffb53:refs/remotes/origin/cmp-rewrite
+2026-05-31T17:35:49.8935450Z From https://github.com/kmrsaurabh/NuvioMobile-iOS
+2026-05-31T17:35:49.8936660Z  * [new ref]         85237845dda360dc251218a4cac328ccfa2ffb53 -> origin/cmp-rewrite
+2026-05-31T17:35:49.9022090Z ##[endgroup]
+2026-05-31T17:35:49.9022750Z ##[group]Determining the checkout info
+2026-05-31T17:35:49.9023520Z ##[endgroup]
+2026-05-31T17:35:49.9024900Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-05-31T17:35:49.9096050Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-05-31T17:35:49.9156500Z ##[group]Checking out the ref
+2026-05-31T17:35:49.9159350Z [command]/opt/homebrew/bin/git checkout --progress --force -B cmp-rewrite refs/remotes/origin/cmp-rewrite
+2026-05-31T17:35:50.1548380Z Switched to a new branch 'cmp-rewrite'
+2026-05-31T17:35:50.1563320Z branch 'cmp-rewrite' set up to track 'origin/cmp-rewrite'.
+2026-05-31T17:35:50.1587940Z ##[endgroup]
+2026-05-31T17:35:50.1710360Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-05-31T17:35:50.1787070Z 85237845dda360dc251218a4cac328ccfa2ffb53

@@ -1,0 +1,29 @@
+﻿2026-05-31T17:35:51.9401080Z ##[group]Run actions/setup-java@v4
+2026-05-31T17:35:51.9401320Z with:
+2026-05-31T17:35:51.9401460Z   java-version: 17
+2026-05-31T17:35:51.9401630Z   distribution: temurin
+2026-05-31T17:35:51.9401810Z   java-package: jdk
+2026-05-31T17:35:51.9401970Z   check-latest: false
+2026-05-31T17:35:51.9402150Z   server-id: github
+2026-05-31T17:35:51.9402350Z   server-username: GITHUB_ACTOR
+2026-05-31T17:35:51.9402570Z   server-password: GITHUB_TOKEN
+2026-05-31T17:35:51.9402770Z   overwrite-settings: true
+2026-05-31T17:35:51.9402960Z   job-status: success
+2026-05-31T17:35:51.9405160Z   token: ***
+2026-05-31T17:35:51.9405320Z env:
+2026-05-31T17:35:51.9405500Z   MD_APPLE_SDK_ROOT: /Applications/Xcode_26.3.app
+2026-05-31T17:35:51.9405750Z ##[endgroup]
+2026-05-31T17:35:52.1154530Z ##[group]Installed distributions
+2026-05-31T17:35:52.2063730Z Resolved Java 17.0.19+10 from tool-cache
+2026-05-31T17:35:52.2163980Z Setting Java 17.0.19+10 as the default
+2026-05-31T17:35:52.2264910Z Creating toolchains.xml for JDK version 17 from temurin
+2026-05-31T17:35:52.2365680Z Writing to /Users/runner/.m2/toolchains.xml
+2026-05-31T17:35:52.2466650Z 
+2026-05-31T17:35:52.2568200Z Java configuration:
+2026-05-31T17:35:52.2669290Z   Distribution: temurin
+2026-05-31T17:35:52.2769670Z   Version: 17.0.19+10
+2026-05-31T17:35:52.2870500Z   Path: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-05-31T17:35:52.2970870Z 
+2026-05-31T17:35:52.3072110Z ##[endgroup]
+2026-05-31T17:35:52.3251930Z Creating settings.xml with server-id: github
+2026-05-31T17:35:52.3271870Z Writing to /Users/runner/.m2/settings.xml
