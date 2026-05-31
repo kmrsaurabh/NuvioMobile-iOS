@@ -19,7 +19,6 @@ import platform.Foundation.NSMutableData
 import platform.Foundation.appendData
 import platform.Foundation.NSURLSessionDataDelegateProtocol
 import platform.Foundation.NSURLSessionTask
-import platform.Foundation.create
 import platform.darwin.NSObject
 
 private data class HttpResponse(
@@ -37,10 +36,10 @@ private class SimpleHttpDelegate(
         session: NSURLSession,
         dataTask: NSURLSessionDataTask,
         didReceiveResponse: NSURLResponse,
-        completionHandler: (Long) -> Unit
+        completionHandler: (platform.Foundation.NSURLSessionResponseDisposition) -> Unit
     ) {
         urlResponse = didReceiveResponse
-        completionHandler(1L)
+        completionHandler(platform.Foundation.NSURLSessionResponseAllow)
     }
 
     override fun URLSession(

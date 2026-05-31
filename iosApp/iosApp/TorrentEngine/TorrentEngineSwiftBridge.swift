@@ -7,32 +7,24 @@
 //
 // Architecture:
 //   Kotlin (ComposeApp) --> ObjC interop --> TorrentEngineSwiftBridge
-//     ├── LibTorrentSession (C API abstraction, placeholder)
+//     ├── LibTorrentSession (C API wrapper for iTorrent)
 //     ├── TorrentHTTPServer (NWListener-based streaming)
-//     ├── TorrentPiecePrioritizer (streaming-optimized download)
 //     └── TorrentDiskCacheManager (LRU disk cache)
 
 import Foundation
+import iTorrent
 
 // MARK: - Configuration Models
 
 /// Engine configuration decoded from JSON passed by Kotlin.
 private struct TorrentEngineConfig: Codable {
-    /// Port for the HTTP streaming server (0 = random ephemeral).
     var httpPort: UInt16 = 0
-    /// Maximum number of concurrent torrent sessions.
     var maxActiveTorrents: Int = 3
-    /// Maximum disk cache size in bytes (default 2 GB).
     var maxCacheSizeBytes: Int64 = 2 * 1024 * 1024 * 1024
-    /// Maximum download rate in bytes/sec (0 = unlimited).
     var maxDownloadRate: Int = 0
-    /// Maximum upload rate in bytes/sec (0 = unlimited).
     var maxUploadRate: Int = 0
-    /// Maximum number of peer connections per torrent.
     var maxPeerConnections: Int = 80
-    /// Whether to enable DHT.
     var enableDHT: Bool = true
-    /// Libtorrent alert mask (for debugging; 0 = defaults).
     var alertMask: Int = 0
 }
 
@@ -87,161 +79,142 @@ private struct CacheStats: Codable {
     let maxSizeBytes: Int64
 }
 
-// MARK: - LibTorrent Session Abstraction (Placeholder)
+// MARK: - LibTorrent Session Abstraction
 
-/// Clean abstraction over the libtorrent C API.
-///
-/// This class contains placeholder implementations that return simulated values.
-/// When `LibTorrent.xcframework` is integrated, replace the placeholder bodies
-/// with actual C API calls (e.g., `lt_session_create()`, `lt_add_torrent()`, etc.).
-///
-/// The interface is designed to map 1:1 to the libtorrent C API, making the
-/// eventual integration straightforward.
+/// Clean abstraction over the libtorrent C API using iTorrent framework.
 private class LibTorrentSession {
-
-    /// Opaque handle to the libtorrent session (will be `OpaquePointer?` when connected).
-    private var sessionHandle: UnsafeMutableRawPointer?
-
-    /// Whether the session has been started.
-    private(set) var isActive: Bool = false
-
-    /// Creates and configures the libtorrent session.
-    /// - Parameters:
-    ///   - config: Engine configuration.
-    func create(config: TorrentEngineConfig) {
-        // PLACEHOLDER: Replace with actual C API call
-        // sessionHandle = lt_session_create()
-        // lt_session_set_download_rate_limit(sessionHandle, config.maxDownloadRate)
-        // lt_session_set_upload_rate_limit(sessionHandle, config.maxUploadRate)
-        // if config.enableDHT { lt_session_start_dht(sessionHandle) }
-        print("[LibTorrent] Session created (placeholder)")
-        isActive = true
+    static let shared = LibTorrentSession()
+    
+    private var isInitialized = false
+    let downloadPath: String
+    private let configPath: String
+    
+    private init() {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        let docDir = paths[0]
+        
+        let dlDir = docDir.appendingPathComponent("Downloads", isDirectory: true)
+        let cfgDir = docDir.appendingPathComponent("TorrentConfig", isDirectory: true)
+        
+        try? FileManager.default.createDirectory(at: dlDir, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: cfgDir, withIntermediateDirectories: true)
+        
+        downloadPath = dlDir.path
+        configPath = cfgDir.path
     }
-
-    /// Adds a torrent by magnet URI.
-    /// - Parameters:
-    ///   - magnetUri: The magnet URI string.
-    ///   - savePath: Directory to save downloaded data.
-    ///   - fileIndex: Index of the file to prioritize (-1 for largest).
-    /// - Returns: An opaque torrent handle, or nil on failure.
-    func addTorrent(magnetUri: String, savePath: String, fileIndex: Int) -> UnsafeMutableRawPointer? {
-        // PLACEHOLDER: Replace with actual C API call
-        // let params = lt_parse_magnet_uri(magnetUri)
-        // lt_add_torrent_params_set_save_path(params, savePath)
-        // let handle = lt_session_add_torrent(sessionHandle, params)
-        // return handle
-        print("[LibTorrent] Added torrent: \(magnetUri.prefix(60))... (placeholder)")
-        // Return a dummy non-nil handle for tracking
-        return UnsafeMutableRawPointer.allocate(byteCount: 1, alignment: 1)
+    
+    func initialize(config: TorrentEngineConfig) {
+        if isInitialized { return }
+        init_engine("NuvioMobile", downloadPath, configPath)
+        isInitialized = true
     }
-
-    /// Removes a torrent from the session.
-    /// - Parameters:
-    ///   - handle: The torrent handle returned by `addTorrent`.
-    ///   - deleteFiles: Whether to also delete downloaded files.
-    func removeTorrent(handle: UnsafeMutableRawPointer, deleteFiles: Bool = false) {
-        // PLACEHOLDER: Replace with actual C API call
-        // lt_session_remove_torrent(sessionHandle, handle, deleteFiles ? 1 : 0)
-        handle.deallocate()
-        print("[LibTorrent] Removed torrent (placeholder)")
-    }
-
-    /// Sets the piece priority for a torrent.
-    /// - Parameters:
-    ///   - handle: The torrent handle.
-    ///   - pieceIndex: The piece index.
-    ///   - priority: Priority value (0-7).
-    func setPiecePriority(handle: UnsafeMutableRawPointer, pieceIndex: Int, priority: Int32) {
-        // PLACEHOLDER: Replace with actual C API call
-        // lt_torrent_set_piece_priority(handle, pieceIndex, priority)
-    }
-
-    /// Returns whether a torrent's metadata has been resolved.
-    func hasMetadata(handle: UnsafeMutableRawPointer) -> Bool {
-        // PLACEHOLDER: Replace with actual C API call
-        // return lt_torrent_has_metadata(handle) != 0
-        return true
-    }
-
-    /// Returns the total number of pieces for a torrent.
-    func totalPieces(handle: UnsafeMutableRawPointer) -> Int {
-        // PLACEHOLDER
-        // return Int(lt_torrent_num_pieces(handle))
-        return 1000
-    }
-
-    /// Returns the piece length in bytes.
-    func pieceLength(handle: UnsafeMutableRawPointer) -> Int {
-        // PLACEHOLDER
-        // return Int(lt_torrent_piece_length(handle))
-        return 256 * 1024  // 256 KB
-    }
-
-    /// Returns the total file size in bytes.
-    func totalSize(handle: UnsafeMutableRawPointer, fileIndex: Int) -> Int64 {
-        // PLACEHOLDER
-        // return lt_torrent_file_size(handle, fileIndex)
-        return Int64(1000 * 256 * 1024) // 256 MB placeholder
-    }
-
-    /// Returns the file name.
-    func fileName(handle: UnsafeMutableRawPointer, fileIndex: Int) -> String {
-        // PLACEHOLDER
-        // let cStr = lt_torrent_file_name(handle, fileIndex)
-        // return String(cString: cStr)
-        return "video.mkv"
-    }
-
-    /// Returns download rate in bytes/sec.
-    func downloadRate(handle: UnsafeMutableRawPointer) -> Int64 {
-        // PLACEHOLDER
-        return 0
-    }
-
-    /// Returns upload rate in bytes/sec.
-    func uploadRate(handle: UnsafeMutableRawPointer) -> Int64 {
-        // PLACEHOLDER
-        return 0
-    }
-
-    /// Returns the number of connected peers.
-    func numPeers(handle: UnsafeMutableRawPointer) -> Int {
-        // PLACEHOLDER
-        return 0
-    }
-
-    /// Returns the number of connected seeds.
-    func numSeeds(handle: UnsafeMutableRawPointer) -> Int {
-        // PLACEHOLDER
-        return 0
-    }
-
-    /// Returns download progress (0.0 - 1.0).
-    func progress(handle: UnsafeMutableRawPointer) -> Double {
-        // PLACEHOLDER
-        return 0.0
-    }
-
-    /// Returns the total downloaded bytes.
-    func downloadedBytes(handle: UnsafeMutableRawPointer) -> Int64 {
-        // PLACEHOLDER
-        return 0
-    }
-
-    /// Sets sequential download mode.
-    func setSequentialDownload(handle: UnsafeMutableRawPointer, enabled: Bool) {
-        // PLACEHOLDER
-        // lt_torrent_set_sequential_download(handle, enabled ? 1 : 0)
-        print("[LibTorrent] Sequential download \(enabled ? "enabled" : "disabled") (placeholder)")
-    }
-
-    /// Destroys the libtorrent session.
+    
     func destroy() {
-        // PLACEHOLDER
-        // lt_session_destroy(sessionHandle)
-        sessionHandle = nil
-        isActive = false
-        print("[LibTorrent] Session destroyed (placeholder)")
+        // iTorrent engine runs globally
+    }
+    
+    func addMagnet(uri: String) -> String? {
+        if let cHash = add_magnet(uri) {
+            let hashString = String(cString: cHash)
+            return hashString.isEmpty ? nil : hashString
+        }
+        return nil
+    }
+    
+    func removeTorrent(infoHash: String) {
+        remove_torrent(infoHash, 1) // 1 = remove files
+    }
+    
+    func setSequentialDownload(infoHash: String, sequential: Bool) {
+        set_torrent_files_sequental(infoHash, sequential ? 1 : 0)
+    }
+    
+    func getTorrentState(infoHash: String) -> TorrentSessionState? {
+        let result = get_torrent_info()
+        defer { free_result(result) }
+        
+        for i in 0..<result.count {
+            let tInfo = result.torrents[Int(i)]
+            let currentHash = String(cString: tInfo.hash)
+            if currentHash == infoHash {
+                var status: TorrentStatus = .downloading
+                if tInfo.is_paused != 0 {
+                    status = .paused
+                } else if tInfo.has_metadata == 0 {
+                    status = .resolvingMetadata
+                } else if tInfo.is_finished != 0 || tInfo.is_seed != 0 {
+                    status = .completed
+                } else if String(cString: tInfo.state) == "downloading" {
+                    status = .downloading
+                }
+                
+                return TorrentSessionState(
+                    sessionId: currentHash,
+                    infoHash: currentHash,
+                    magnetUri: "", 
+                    fileIndex: 0,
+                    status: status,
+                    streamUrl: "",
+                    fileName: String(cString: tInfo.name),
+                    totalSizeBytes: Int64(tInfo.total_size),
+                    downloadedBytes: Int64(tInfo.total_done),
+                    downloadRate: Int64(tInfo.download_rate),
+                    uploadRate: Int64(tInfo.upload_rate),
+                    numPeers: Int(tInfo.num_peers),
+                    numSeeds: Int(tInfo.num_seeds),
+                    progress: Double(tInfo.progress),
+                    isMetadataResolved: tInfo.has_metadata != 0,
+                    isStreaming: false,
+                    errorMessage: nil
+                )
+            }
+        }
+        return nil
+    }
+    
+    func getStats() -> EngineStats {
+        let result = get_torrent_info()
+        let activeCount = Int(result.count)
+        var totalDown: Int64 = 0
+        var totalUp: Int64 = 0
+        
+        for i in 0..<result.count {
+            let t = result.torrents[Int(i)]
+            totalDown += Int64(t.download_rate)
+            totalUp += Int64(t.upload_rate)
+        }
+        free_result(result)
+        
+        return EngineStats(
+            activeSessions: activeCount,
+            totalDownloadRate: totalDown,
+            totalUploadRate: totalUp,
+            httpServerPort: 0,
+            httpServerRunning: false,
+            cacheStats: CacheStats(entryCount: 0, totalSizeBytes: 0, maxSizeBytes: 0)
+        )
+    }
+    
+    func getFiles(infoHash: String) -> [(name: String, size: Int64, downloaded: Int64)] {
+        let filesStruct = get_files_of_torrent_by_hash(infoHash)
+        defer { free_files(filesStruct) }
+        
+        var result = [(name: String, size: Int64, downloaded: Int64)]()
+        if filesStruct.error == 0 {
+            for i in 0..<filesStruct.size {
+                let file = filesStruct.files[Int(i)]
+                result.append((
+                    name: String(cString: file.file_name),
+                    size: file.file_size,
+                    downloaded: file.file_downloaded
+                ))
+            }
+        }
+        return result
+    }
+    
+    func prioritizeFile(infoHash: String, fileIndex: Int, priority: Int) {
+        set_torrent_file_priority(infoHash, Int32(fileIndex), Int32(priority))
     }
 }
 
@@ -254,7 +227,7 @@ private class LibTorrentSession {
 private class TorrentSessionDataProvider: NSObject, TorrentDataProvider {
 
     let sessionId: String
-    private let savePath: URL
+    private let filePath: URL
     private let _fileName: String
     private let _totalSize: Int64
     private var fileHandle: FileHandle?
@@ -266,9 +239,9 @@ private class TorrentSessionDataProvider: NSObject, TorrentDataProvider {
     /// Track the furthest contiguous byte available.
     private var _availableSize: Int64 = 0
 
-    init(sessionId: String, savePath: URL, fileName: String, totalSize: Int64) {
+    init(sessionId: String, filePath: URL, fileName: String, totalSize: Int64) {
         self.sessionId = sessionId
-        self.savePath = savePath
+        self.filePath = filePath
         self._fileName = fileName
         self._totalSize = totalSize
         super.init()
@@ -298,7 +271,17 @@ private class TorrentSessionDataProvider: NSObject, TorrentDataProvider {
         fileLock.lock()
         defer { fileLock.unlock() }
 
-        guard let handle = fileHandle else { return nil }
+        guard let handle = fileHandle else {
+            // Attempt to open again if it wasn't there
+            openFileIfNeededInternal()
+            guard let retryHandle = fileHandle else { return nil }
+            return tryReadData(handle: retryHandle, offset: offset, length: length)
+        }
+        
+        return tryReadData(handle: handle, offset: offset, length: length)
+    }
+    
+    private func tryReadData(handle: FileHandle, offset: Int64, length: Int) -> Data? {
         do {
             try handle.seek(toOffset: UInt64(offset))
             let data = handle.readData(ofLength: length)
@@ -346,9 +329,11 @@ private class TorrentSessionDataProvider: NSObject, TorrentDataProvider {
     private func openFileIfNeeded() {
         fileLock.lock()
         defer { fileLock.unlock() }
-
-        let filePath = savePath.appendingPathComponent(_fileName)
-        if FileManager.default.fileExists(atPath: filePath.path) {
+        openFileIfNeededInternal()
+    }
+    
+    private func openFileIfNeededInternal() {
+        if fileHandle == nil && FileManager.default.fileExists(atPath: filePath.path) {
             fileHandle = try? FileHandle(forReadingFrom: filePath)
         }
     }
@@ -357,7 +342,6 @@ private class TorrentSessionDataProvider: NSObject, TorrentDataProvider {
     func reopenFile() {
         fileLock.lock()
         try? fileHandle?.close()
-        let filePath = savePath.appendingPathComponent(_fileName)
         fileHandle = try? FileHandle(forReadingFrom: filePath)
         fileLock.unlock()
     }
@@ -372,8 +356,6 @@ private class ActiveTorrentSession {
     let magnetUri: String
     let fileIndex: Int
     var state: TorrentSessionState
-    var torrentHandle: UnsafeMutableRawPointer?
-    var prioritizer: TorrentPiecePrioritizer?
     var dataProvider: TorrentSessionDataProvider?
 
     init(sessionId: String, infoHash: String, magnetUri: String, fileIndex: Int, state: TorrentSessionState) {
@@ -393,7 +375,7 @@ private class ActiveTorrentSession {
 /// Manages:
 /// - libtorrent session lifecycle (via `LibTorrentSession` abstraction)
 /// - Embedded HTTP streaming server (`TorrentHTTPServer`)
-/// - Active torrent sessions with streaming-optimized prioritization
+/// - Active torrent sessions
 /// - Disk cache with LRU eviction
 ///
 /// All methods are thread-safe, using a serial GCD queue for state mutations.
@@ -410,7 +392,7 @@ private class ActiveTorrentSession {
     private let engineQueue = DispatchQueue(label: "com.nuvio.torrent.engine", qos: .userInitiated)
 
     /// The libtorrent session abstraction.
-    private let ltSession = LibTorrentSession()
+    private let ltSession = LibTorrentSession.shared
 
     /// Embedded HTTP server for streaming.
     private let httpServer = TorrentHTTPServer()
@@ -476,7 +458,7 @@ private class ActiveTorrentSession {
             self.cacheManager = TorrentDiskCacheManager(maxCacheSizeBytes: self.config.maxCacheSizeBytes)
 
             // Create libtorrent session
-            self.ltSession.create(config: self.config)
+            self.ltSession.initialize(config: self.config)
 
             // Start HTTP server
             let actualPort = self.httpServer.start(port: self.config.httpPort)
@@ -517,9 +499,8 @@ private class ActiveTorrentSession {
     /// This method:
     /// 1. Creates a unique session entry
     /// 2. Starts metadata resolution via libtorrent
-    /// 3. Sets up streaming-optimized piece prioritization
-    /// 4. Registers the session with the HTTP server
-    /// 5. Returns JSON with the stream URL: `http://127.0.0.1:{port}/stream/{sessionId}`
+    /// 3. Registers the session with the HTTP server
+    /// 4. Returns JSON with the stream URL: `http://127.0.0.1:{port}/stream/{sessionId}`
     ///
     /// - Parameters:
     ///   - magnetUri: The magnet URI of the torrent.
@@ -545,29 +526,15 @@ private class ActiveTorrentSession {
             self.sessionCounter += 1
             let sessionId = "\(infoHash.prefix(16))_\(self.sessionCounter)_\(Int(Date().timeIntervalSince1970))"
 
-            // Resolve save path from cache manager
-            let savePath: URL
-            if let cache = self.cacheManager {
-                savePath = cache.directoryForTorrent(infoHash: infoHash, fileName: "")
-            } else {
-                let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("torrent_\(infoHash)")
-                try? FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
-                savePath = tmp
-            }
-
             // Add torrent to libtorrent session
-            let handle = self.ltSession.addTorrent(
-                magnetUri: magnetUri,
-                savePath: savePath.path,
-                fileIndex: Int(fileIdx)
-            )
+            let addedHash = self.ltSession.addMagnet(uri: magnetUri) ?? infoHash
 
             // Build initial session state
             let streamUrl = self.httpServer.streamUrl(forSession: sessionId)
 
-            var state = TorrentSessionState(
+            let state = TorrentSessionState(
                 sessionId: sessionId,
-                infoHash: infoHash,
+                infoHash: addedHash,
                 magnetUri: magnetUri,
                 fileIndex: Int(fileIdx),
                 status: .resolvingMetadata,
@@ -587,18 +554,14 @@ private class ActiveTorrentSession {
 
             let session = ActiveTorrentSession(
                 sessionId: sessionId,
-                infoHash: infoHash,
+                infoHash: addedHash,
                 magnetUri: magnetUri,
                 fileIndex: Int(fileIdx),
                 state: state
             )
-            session.torrentHandle = handle
 
-            // If metadata is immediately available (placeholder always returns true),
-            // set up streaming infrastructure
-            if let handle = handle, self.ltSession.hasMetadata(handle: handle) {
-                self.setupStreamingForSession(session, handle: handle, savePath: savePath)
-            }
+            // Setup streaming if metadata is already available
+            self.trySetupStreamingForSession(session)
 
             self.activeSessions[sessionId] = session
             resultJson = self.encodeSessionState(session.state)
@@ -658,14 +621,8 @@ private class ActiveTorrentSession {
         engineQueue.sync { [weak self] in
             guard let self = self else { return }
 
-            var totalDownRate: Int64 = 0
-            var totalUpRate: Int64 = 0
-
-            for session in self.activeSessions.values {
-                totalDownRate += session.state.downloadRate
-                totalUpRate += session.state.uploadRate
-            }
-
+            let engineStats = self.ltSession.getStats()
+            
             let cacheStats = CacheStats(
                 entryCount: self.cacheManager?.entryCount() ?? 0,
                 totalSizeBytes: self.cacheManager?.currentCacheSize() ?? 0,
@@ -674,8 +631,8 @@ private class ActiveTorrentSession {
 
             let stats = EngineStats(
                 activeSessions: self.activeSessions.count,
-                totalDownloadRate: totalDownRate,
-                totalUploadRate: totalUpRate,
+                totalDownloadRate: engineStats.totalDownloadRate,
+                totalUploadRate: engineStats.totalUploadRate,
                 httpServerPort: self.httpServer.port,
                 httpServerRunning: self.httpServer.isRunning,
                 cacheStats: cacheStats
@@ -691,9 +648,6 @@ private class ActiveTorrentSession {
     }
 
     /// Completely destroys the engine and frees all resources.
-    ///
-    /// After calling this, the engine cannot be restarted. Create a new instance instead.
-    /// Typically called when the app is terminating.
     @objc public func destroy() {
         stop()
         engineQueue.async { [weak self] in
@@ -705,88 +659,86 @@ private class ActiveTorrentSession {
 
     // MARK: - Internal: Session Setup
 
-    /// Configures streaming infrastructure after torrent metadata is resolved.
-    private func setupStreamingForSession(_ session: ActiveTorrentSession,
-                                          handle: UnsafeMutableRawPointer,
-                                          savePath: URL) {
-        let pieces = ltSession.totalPieces(handle: handle)
-        let pLength = ltSession.pieceLength(handle: handle)
-        let fileIdx = session.fileIndex >= 0 ? session.fileIndex : 0
-        let tSize = ltSession.totalSize(handle: handle, fileIndex: fileIdx)
-        let fName = ltSession.fileName(handle: handle, fileIndex: fileIdx)
-
-        // Update session state with metadata
-        session.state.isMetadataResolved = true
-        session.state.fileName = fName
-        session.state.totalSizeBytes = tSize
-        session.state.status = .downloading
-
-        // Enable sequential downloading for streaming
-        ltSession.setSequentialDownload(handle: handle, enabled: true)
-
-        // Create piece prioritizer
-        let prioritizer = TorrentPiecePrioritizer(
-            totalPieces: pieces,
-            pieceLength: pLength,
-            totalSize: tSize
-        )
-
-        // Wire up the priority applier to libtorrent
-        prioritizer.priorityApplier = { [weak self] pieceIndex, priority in
-            self?.ltSession.setPiecePriority(handle: handle, pieceIndex: pieceIndex, priority: priority.rawValue)
+    /// Tries to configure streaming infrastructure if metadata is resolved.
+    private func trySetupStreamingForSession(_ session: ActiveTorrentSession) {
+        guard let engineState = ltSession.getTorrentState(infoHash: session.infoHash) else { return }
+        
+        if engineState.isMetadataResolved {
+            let files = ltSession.getFiles(infoHash: session.infoHash)
+            if files.isEmpty { return }
+            
+            let fileIdx = session.fileIndex >= 0 && session.fileIndex < files.count ? session.fileIndex : 0
+            let targetFile = files[fileIdx]
+            
+            // Prioritize this file
+            ltSession.prioritizeFile(infoHash: session.infoHash, fileIndex: fileIdx, priority: 7) // 7 = normal
+            ltSession.setSequentialDownload(infoHash: session.infoHash, sequential: true)
+            
+            // iTorrent stores torrents in `downloadPath/torrentName` or `downloadPath` depending on if it's a multi-file torrent
+            let torrentName = engineState.fileName
+            var fileUrl = URL(fileURLWithPath: ltSession.downloadPath)
+            
+            // Add torrent folder if it is a directory
+            if !torrentName.isEmpty && files.count > 1 {
+                fileUrl.appendPathComponent(torrentName)
+            }
+            fileUrl.appendPathComponent(targetFile.name)
+            
+            session.state.isMetadataResolved = true
+            session.state.fileName = targetFile.name
+            session.state.totalSizeBytes = targetFile.size
+            session.state.status = .downloading
+            
+            // Create data provider for HTTP server
+            let provider = TorrentSessionDataProvider(
+                sessionId: session.sessionId,
+                filePath: fileUrl,
+                fileName: targetFile.name,
+                totalSize: targetFile.size
+            )
+            session.dataProvider = provider
+            
+            // Register with HTTP server
+            httpServer.registerProvider(sessionId: session.sessionId, provider: provider)
+            
+            session.state.isStreaming = true
+            session.state.status = .streaming
+            
+            print("[TorrentEngine] Streaming setup complete for \(session.sessionId): \(targetFile.name) (\(targetFile.size) bytes)")
         }
-
-        // Start with streaming priorities from the beginning
-        prioritizer.prioritizeForStreaming(currentByte: 0)
-
-        session.prioritizer = prioritizer
-
-        // Create data provider for HTTP server
-        let provider = TorrentSessionDataProvider(
-            sessionId: session.sessionId,
-            savePath: savePath,
-            fileName: fName,
-            totalSize: tSize
-        )
-        session.dataProvider = provider
-
-        // Register with HTTP server
-        httpServer.registerProvider(sessionId: session.sessionId, provider: provider)
-
-        session.state.isStreaming = true
-        session.state.status = .streaming
-
-        print("[TorrentEngine] Streaming setup complete for \(session.sessionId): \(fName) (\(tSize) bytes)")
     }
 
     // MARK: - Internal: Session State Refresh
 
     /// Refreshes a session's state from the libtorrent handle.
     private func refreshSessionState(_ session: ActiveTorrentSession) {
-        guard let handle = session.torrentHandle else { return }
+        guard let engineState = ltSession.getTorrentState(infoHash: session.infoHash) else { return }
 
         // Check if metadata just became available
-        if !session.state.isMetadataResolved && ltSession.hasMetadata(handle: handle) {
-            let savePath: URL
-            if let cache = cacheManager {
-                savePath = cache.directoryForTorrent(infoHash: session.infoHash, fileName: "")
-            } else {
-                let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("torrent_\(session.infoHash)")
-                try? FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
-                savePath = tmp
-            }
-            setupStreamingForSession(session, handle: handle, savePath: savePath)
+        if !session.state.isMetadataResolved && engineState.isMetadataResolved {
+            trySetupStreamingForSession(session)
         }
 
-        session.state.downloadRate = ltSession.downloadRate(handle: handle)
-        session.state.uploadRate = ltSession.uploadRate(handle: handle)
-        session.state.numPeers = ltSession.numPeers(handle: handle)
-        session.state.numSeeds = ltSession.numSeeds(handle: handle)
-        session.state.progress = ltSession.progress(handle: handle)
-        session.state.downloadedBytes = ltSession.downloadedBytes(handle: handle)
-
-        // Update data provider with current available size
-        session.dataProvider?.updateAvailableSize(session.state.downloadedBytes)
+        session.state.downloadRate = engineState.downloadRate
+        session.state.uploadRate = engineState.uploadRate
+        session.state.numPeers = engineState.numPeers
+        session.state.numSeeds = engineState.numSeeds
+        session.state.progress = engineState.progress
+        
+        let files = ltSession.getFiles(infoHash: session.infoHash)
+        let fileIdx = session.fileIndex >= 0 && session.fileIndex < files.count ? session.fileIndex : 0
+        if fileIdx < files.count {
+            session.state.downloadedBytes = files[fileIdx].downloaded
+            // Update data provider with current available size for this specific file!
+            session.dataProvider?.updateAvailableSize(session.state.downloadedBytes)
+        } else {
+            session.state.downloadedBytes = engineState.downloadedBytes
+        }
+        
+        // Ensure status reflects downloading state
+        if session.state.status == .resolvingMetadata && engineState.isMetadataResolved {
+            session.state.status = .downloading
+        }
     }
 
     // MARK: - Internal: Session Removal
@@ -799,13 +751,10 @@ private class ActiveTorrentSession {
         httpServer.unregisterProvider(sessionId: sessionId)
 
         // Remove from libtorrent
-        if let handle = session.torrentHandle {
-            ltSession.removeTorrent(handle: handle, deleteFiles: false)
-        }
+        ltSession.removeTorrent(infoHash: session.infoHash)
 
         session.state.status = .stopped
         session.state.isStreaming = false
-        session.prioritizer = nil
         session.dataProvider = nil
 
         print("[TorrentEngine] Removed session: \(sessionId)")
