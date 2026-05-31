@@ -634,6 +634,8 @@ struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
         // Register MPV player bridge before Compose initializes
         NuvioPlayerRegistration.register()
+        // Register torrent engine bridge for P2P streaming
+        NuvioTorrentRegistration.register()
         
         let controller = MainViewControllerKt.MainViewController()
         controller.view.backgroundColor = UIColor(red: 0.008, green: 0.016, blue: 0.016, alpha: 1.0)

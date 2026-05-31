@@ -425,7 +425,7 @@ private class ActiveTorrentSession {
     private var config = TorrentEngineConfig()
 
     /// Whether the engine has been started.
-    private var isStarted: Bool = false
+    @objc public private(set) var isStarted: Bool = false
 
     /// Counter for generating unique session IDs.
     private var sessionCounter: UInt64 = 0
