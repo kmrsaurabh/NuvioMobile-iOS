@@ -101,10 +101,10 @@ actual object ExternalTorrentServerHttp {
             return httpResponse?.valueForHTTPHeaderField("Location")
         } else if (statusCode in 200..299) {
             if (data != null && data.length > 0UL) {
-                val bodyStr = NSString.create(
-                    data = data,
-                    encoding = NSUTF8StringEncoding,
-                )?.toString()?.trim()
+                val bytes = data.bytes?.let { pointer ->
+                    kotlinx.cinterop.readBytes(pointer, data.length.toInt())
+                }
+                val bodyStr = bytes?.decodeToString()?.trim()
 
                 if (bodyStr != null && (bodyStr.startsWith("http://") || bodyStr.startsWith("https://"))) {
                     return bodyStr

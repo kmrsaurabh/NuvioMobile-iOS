@@ -498,14 +498,14 @@ private fun PlayPauseControlButton(
                 if (torrentSessionStatus != null) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Buffering ${formatSpeed(torrentSessionStatus.downloadRate.toLong())}",
+                        text = "Buffering ${formatSpeed(torrentSessionStatus.downloadSpeedBps)}",
                         color = Color.White,
-                        style = MaterialTheme.nuvioTypeScale.labelMedium
+                        style = MaterialTheme.typography.labelMedium
                     )
                     Text(
-                        text = "Peers: ${torrentSessionStatus.numPeers} | Seeds: ${torrentSessionStatus.numSeeds}",
+                        text = "Peers: ${torrentSessionStatus.peerCount} | Seeds: ${torrentSessionStatus.seedCount}",
                         color = Color.White.copy(alpha = 0.7f),
-                        style = MaterialTheme.nuvioTypeScale.labelSmall
+                        style = MaterialTheme.typography.labelSmall
                     )
                 }
             }

@@ -1722,7 +1722,7 @@ fun PlayerScreen(
 
         LaunchedEffect(activeTorrentSessionId) {
             val sessionId = activeTorrentSessionId ?: return@LaunchedEffect
-            while (kotlinx.coroutines.isActive) {
+            while (isActive) {
                 torrentSessionStatus = com.nuvio.app.features.torrent.NativeTorrentEngine.getSessionStatus(sessionId)
                 kotlinx.coroutines.delay(500)
             }
