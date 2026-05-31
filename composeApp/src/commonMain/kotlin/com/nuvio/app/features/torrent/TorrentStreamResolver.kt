@@ -7,6 +7,7 @@ sealed class TorrentResolveResult {
     data class Success(
         val playbackUrl: String,
         val headers: Map<String, String> = emptyMap(),
+        val sessionId: String? = null,
     ) : TorrentResolveResult()
 
     data class Error(val message: String) : TorrentResolveResult()
@@ -70,7 +71,7 @@ object TorrentStreamResolver {
             val session = NativeTorrentEngine.addTorrent(effectiveMagnet, infoHash, fileIdx)
                 ?: return TorrentResolveResult.Error("Failed to start torrent session")
             Logger.d(TAG) { "Native torrent session started: streamUrl=${session.streamUrl}" }
-            TorrentResolveResult.Success(playbackUrl = session.streamUrl)
+            TorrentResolveResult.Success(playbackUrl = session.streamUrl, sessionId = session.sessionId)
         } catch (e: Exception) {
             Logger.e(TAG, e) { "Native engine resolution failed" }
             TorrentResolveResult.Error("Torrent engine error: ${e.message}")

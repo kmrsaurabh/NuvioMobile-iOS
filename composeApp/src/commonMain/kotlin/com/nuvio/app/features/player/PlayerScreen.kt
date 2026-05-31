@@ -159,6 +159,7 @@ fun PlayerScreen(
     providerAddonId: String? = null,
     initialPositionMs: Long = 0L,
     initialProgressFraction: Float? = null,
+    torrentSessionId: String? = null,
 ) {
     LockPlayerToLandscape()
     val playerSettingsUiState by remember {
@@ -237,6 +238,8 @@ fun PlayerScreen(
         var playbackSnapshot by remember { mutableStateOf(PlayerPlaybackSnapshot()) }
         var playerController by remember { mutableStateOf<PlayerEngineController?>(null) }
         var playerControllerSourceUrl by remember { mutableStateOf<String?>(null) }
+        var activeTorrentSessionId by rememberSaveable { mutableStateOf(torrentSessionId) }
+        var torrentSessionStatus by remember { mutableStateOf<com.nuvio.app.features.torrent.TorrentSessionStatus?>(null) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
         val keepScreenAwake = errorMessage == null &&
             (playbackSnapshot.isPlaying || (shouldPlay && playbackSnapshot.isLoading))
@@ -1711,6 +1714,20 @@ fun PlayerScreen(
             fetchAddonSubtitlesForActiveItem()
         }
 
+        LaunchedEffect(playbackSnapshot.isEnded) {
+            if (playbackSnapshot.isEnded) {
+                onBack()
+            }
+        }
+
+        LaunchedEffect(activeTorrentSessionId) {
+            val sessionId = activeTorrentSessionId ?: return@LaunchedEffect
+            while (kotlinx.coroutines.isActive) {
+                torrentSessionStatus = com.nuvio.app.features.torrent.NativeTorrentEngine.getSessionStatus(sessionId)
+                kotlinx.coroutines.delay(500)
+            }
+        }
+
         LaunchedEffect(playbackSnapshot.isLoading, playerController) {
             if (!playbackSnapshot.isLoading && playerController != null) {
                 refreshTracks()
@@ -2232,7 +2249,8 @@ fun PlayerScreen(
                     episodeNumber = activeEpisodeNumber,
                     episodeTitle = activeEpisodeTitle,
                     playbackSnapshot = playbackSnapshot,
-                    displayedPositionMs = displayedPositionMs,
+                    torrentSessionStatus = torrentSessionStatus,
+                    displayedPositionMs = scrubbingPositionMs ?: playbackSnapshot.positionMs,
                     metrics = metrics,
                     resizeMode = resizeMode,
                     isLocked = playerControlsLocked,

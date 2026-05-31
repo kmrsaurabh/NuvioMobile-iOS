@@ -765,6 +765,19 @@ private class ActiveTorrentSession {
     private func refreshSessionState(_ session: ActiveTorrentSession) {
         guard let handle = session.torrentHandle else { return }
 
+        // Check if metadata just became available
+        if !session.state.isMetadataResolved && ltSession.hasMetadata(handle: handle) {
+            let savePath: URL
+            if let cache = cacheManager {
+                savePath = cache.directoryForTorrent(infoHash: session.infoHash, fileName: "")
+            } else {
+                let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("torrent_\(session.infoHash)")
+                try? FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
+                savePath = tmp
+            }
+            setupStreamingForSession(session, handle: handle, savePath: savePath)
+        }
+
         session.state.downloadRate = ltSession.downloadRate(handle: handle)
         session.state.uploadRate = ltSession.uploadRate(handle: handle)
         session.state.numPeers = ltSession.numPeers(handle: handle)

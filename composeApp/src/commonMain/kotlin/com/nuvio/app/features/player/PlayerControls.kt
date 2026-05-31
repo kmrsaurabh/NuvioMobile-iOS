@@ -60,6 +60,15 @@ import com.nuvio.app.core.ui.appIconPainter
 import com.nuvio.app.core.ui.nuvioTypeScale
 import nuvio.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+import com.nuvio.app.features.torrent.TorrentSessionStatus
+
+private fun formatSpeed(bytesPerSec: Long): String {
+    if (bytesPerSec < 1024) return "$bytesPerSec B/s"
+    val kb = bytesPerSec / 1024.0
+    if (kb < 1024) return "${(kb * 10).toInt() / 10.0} KB/s"
+    val mb = kb / 1024.0
+    return "${(mb * 10).toInt() / 10.0} MB/s"
+}
 
 @Composable
 internal fun PlayerControlsShell(
@@ -70,6 +79,7 @@ internal fun PlayerControlsShell(
     episodeNumber: Int?,
     episodeTitle: String?,
     playbackSnapshot: PlayerPlaybackSnapshot,
+    torrentSessionStatus: TorrentSessionStatus? = null,
     displayedPositionMs: Long,
     metrics: PlayerLayoutMetrics,
     resizeMode: PlayerResizeMode,
@@ -139,6 +149,7 @@ internal fun PlayerControlsShell(
                 seasonNumber = seasonNumber,
                 episodeNumber = episodeNumber,
                 episodeTitle = episodeTitle,
+                torrentSessionStatus = torrentSessionStatus,
                 metrics = metrics,
                 isLocked = isLocked,
                 showActions = showPlaybackControls,
@@ -163,6 +174,7 @@ internal fun PlayerControlsShell(
             if (showPlaybackControls) {
                 CenterControls(
                     snapshot = playbackSnapshot,
+                    torrentSessionStatus = torrentSessionStatus,
                     metrics = metrics,
                     onSeekBack = onSeekBack,
                     onSeekForward = onSeekForward,
@@ -206,6 +218,7 @@ private fun PlayerHeader(
     seasonNumber: Int?,
     episodeNumber: Int?,
     episodeTitle: String?,
+    torrentSessionStatus: TorrentSessionStatus?,
     metrics: PlayerLayoutMetrics,
     isLocked: Boolean,
     showActions: Boolean,
@@ -290,6 +303,29 @@ private fun PlayerHeader(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        if (torrentSessionStatus != null) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.Black.copy(alpha = 0.5f))
+                                    .border(1.dp, Color(0xFF4CAF50).copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF4CAF50))
+                                )
+                                Text(
+                                    text = "P2P Active",
+                                    style = typeScale.labelSm.copy(fontSize = metrics.metadataSize * 0.9f),
+                                    color = Color(0xFF4CAF50)
+                                )
+                            }
+                        }
                     }
                 }
                 ParentalGuideOverlay(
@@ -376,6 +412,7 @@ private fun PlayerHeaderIconButton(
 @Composable
 private fun CenterControls(
     snapshot: PlayerPlaybackSnapshot,
+    torrentSessionStatus: TorrentSessionStatus?,
     metrics: PlayerLayoutMetrics,
     onSeekBack: () -> Unit,
     onSeekForward: () -> Unit,
@@ -396,6 +433,7 @@ private fun CenterControls(
         PlayPauseControlButton(
             isPlaying = snapshot.isPlaying,
             isBuffering = snapshot.isLoading,
+            torrentSessionStatus = torrentSessionStatus,
             metrics = metrics,
             onClick = onTogglePlayback,
         )
@@ -435,6 +473,7 @@ private fun SideControlButton(
 private fun PlayPauseControlButton(
     isPlaying: Boolean,
     isBuffering: Boolean,
+    torrentSessionStatus: TorrentSessionStatus?,
     metrics: PlayerLayoutMetrics,
     onClick: () -> Unit,
 ) {
@@ -450,11 +489,26 @@ private fun PlayPauseControlButton(
         contentAlignment = Alignment.Center,
     ) {
         if (isBuffering) {
-            CircularProgressIndicator(
-                color = Color.White,
-                strokeWidth = 3.dp,
-                modifier = Modifier.size(metrics.playIconSize),
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    strokeWidth = 3.dp,
+                    modifier = Modifier.size(metrics.playIconSize),
+                )
+                if (torrentSessionStatus != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Buffering ${formatSpeed(torrentSessionStatus.downloadRate.toLong())}",
+                        color = Color.White,
+                        style = MaterialTheme.nuvioTypeScale.labelMedium
+                    )
+                    Text(
+                        text = "Peers: ${torrentSessionStatus.numPeers} | Seeds: ${torrentSessionStatus.numSeeds}",
+                        color = Color.White.copy(alpha = 0.7f),
+                        style = MaterialTheme.nuvioTypeScale.labelSmall
+                    )
+                }
+            }
         } else {
             Icon(
                 painter = playPausePainter,

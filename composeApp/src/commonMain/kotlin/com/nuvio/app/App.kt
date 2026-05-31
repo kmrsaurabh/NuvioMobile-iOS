@@ -1704,6 +1704,7 @@ private fun MainAppContent(
                                             parentMetaType = launch.parentMetaType ?: launch.type,
                                             initialPositionMs = launch.resumePositionMs ?: 0L,
                                             initialProgressFraction = launch.resumeProgressFraction,
+                                            torrentSessionId = result.sessionId,
                                         )
                                         StreamsRepository.consumeAutoPlay()
                                         StreamsRepository.cancelLoading()
@@ -1800,6 +1801,7 @@ private fun MainAppContent(
                         resolvedResumeProgressFraction: Float?,
                         forceExternal: Boolean,
                         forceInternal: Boolean,
+                        torrentSessionId: String? = null,
                     ) {
                         if (DirectDebridPlaybackResolver.shouldResolveToPlayableStream(stream)) {
                             if (resolvingDebridStream) return
@@ -1818,6 +1820,7 @@ private fun MainAppContent(
                                         resolvedResumeProgressFraction = resolvedResumeProgressFraction,
                                         forceExternal = forceExternal,
                                         forceInternal = forceInternal,
+                                        torrentSessionId = torrentSessionId,
                                     )
                                     else -> {
                                         resolved.toastMessage()?.let { NuvioToastController.show(it) }
@@ -1851,6 +1854,7 @@ private fun MainAppContent(
                                                 resolvedResumeProgressFraction = resolvedResumeProgressFraction,
                                                 forceExternal = forceExternal,
                                                 forceInternal = forceInternal,
+                                                torrentSessionId = result.sessionId,
                                             )
                                         }
                                         is TorrentResolveResult.Error -> {
@@ -1907,6 +1911,7 @@ private fun MainAppContent(
                             parentMetaType = launch.parentMetaType ?: launch.type,
                             initialPositionMs = resolvedResumePositionMs ?: 0L,
                             initialProgressFraction = resolvedResumeProgressFraction,
+                            torrentSessionId = torrentSessionId,
                         )
 
                         if (!forceInternal && (forceExternal || playerSettings.externalPlayerEnabled)) {
@@ -2037,6 +2042,7 @@ private fun MainAppContent(
                         parentMetaType = launch.parentMetaType,
                         initialPositionMs = launch.initialPositionMs,
                         initialProgressFraction = launch.initialProgressFraction,
+                        torrentSessionId = launch.torrentSessionId,
                         onBack = {
                             ResumePromptRepository.markPlayerExitedNormally()
                             PlayerLaunchStore.remove(route.launchId)
