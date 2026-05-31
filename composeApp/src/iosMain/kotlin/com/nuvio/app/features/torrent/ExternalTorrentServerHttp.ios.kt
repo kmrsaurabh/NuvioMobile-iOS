@@ -20,6 +20,7 @@ import platform.Foundation.appendData
 import platform.Foundation.NSURLSessionDataDelegateProtocol
 import platform.Foundation.NSURLSessionTask
 import platform.darwin.NSObject
+import kotlinx.cinterop.readBytes
 
 private data class HttpResponse(
     val data: NSData?,
@@ -63,6 +64,7 @@ private class SimpleHttpDelegate(
     }
 }
 
+@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 actual object ExternalTorrentServerHttp {
 
     actual suspend fun fetchStreamUrl(requestUrl: String): String? {

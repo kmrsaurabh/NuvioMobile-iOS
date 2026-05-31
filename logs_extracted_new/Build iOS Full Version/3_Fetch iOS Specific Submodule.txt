@@ -1,0 +1,7 @@
+﻿2026-05-31T16:54:26.9740380Z ##[group]Run git submodule update --init --recursive MPVKit
+2026-05-31T16:54:26.9741820Z [36;1mgit submodule update --init --recursive MPVKit[0m
+2026-05-31T16:54:26.9795280Z shell: /bin/bash -e {0}
+2026-05-31T16:54:26.9796190Z ##[endgroup]
+2026-05-31T16:54:27.0842570Z Submodule 'MPVKit' (https://github.com/tapframe/MPVNuvio.git) registered for path 'MPVKit'
+2026-05-31T16:54:27.0946260Z Cloning into '/Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS/MPVKit'...
+2026-05-31T16:54:27.6420820Z Submodule path 'MPVKit': checked out '97923266e43d52bbca33a911fd6a7f9a1bcf35cb'
