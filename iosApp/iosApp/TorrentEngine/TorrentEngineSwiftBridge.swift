@@ -105,7 +105,7 @@ private class LibTorrentSession {
     
     func initialize(config: TorrentEngineConfig) {
         if isInitialized { return }
-        init_engine("NuvioMobile", downloadPath, configPath)
+        init_engine(strdup("NuvioMobile"), strdup(downloadPath), strdup(configPath))
         isInitialized = true
     }
     
@@ -135,6 +135,11 @@ private class LibTorrentSession {
         
         for i in 0..<result.count {
             let tInfo = result.torrents[Int(i)]
+            
+            // Safely check for NULL even if declared _Nonnull
+            let hashPtr = UnsafeRawPointer(tInfo.hash)
+            if Int(bitPattern: hashPtr) == 0 { continue }
+            
             let currentHash = String(cString: tInfo.hash)
             if currentHash == infoHash {
                 var status: TorrentStatus = .downloading
@@ -144,9 +149,15 @@ private class LibTorrentSession {
                     status = .resolvingMetadata
                 } else if tInfo.is_finished != 0 || tInfo.is_seed != 0 {
                     status = .completed
-                } else if String(cString: tInfo.state) == "downloading" {
-                    status = .downloading
+                } else {
+                    let statePtr = UnsafeRawPointer(tInfo.state)
+                    if Int(bitPattern: statePtr) != 0 && String(cString: tInfo.state) == "downloading" {
+                        status = .downloading
+                    }
                 }
+                
+                let namePtr = UnsafeRawPointer(tInfo.name)
+                let nameStr = Int(bitPattern: namePtr) != 0 ? String(cString: tInfo.name) : ""
                 
                 return TorrentSessionState(
                     sessionId: currentHash,
@@ -155,7 +166,7 @@ private class LibTorrentSession {
                     fileIndex: 0,
                     status: status,
                     streamUrl: "",
-                    fileName: String(cString: tInfo.name),
+                    fileName: nameStr,
                     totalSizeBytes: Int64(tInfo.total_size),
                     downloadedBytes: Int64(tInfo.total_done),
                     downloadRate: Int64(tInfo.download_rate),
@@ -203,8 +214,10 @@ private class LibTorrentSession {
         if filesStruct.error == 0 {
             for i in 0..<filesStruct.size {
                 let file = filesStruct.files[Int(i)]
+                let namePtr = UnsafeRawPointer(file.file_name)
+                let nameStr = Int(bitPattern: namePtr) != 0 ? String(cString: file.file_name) : ""
                 result.append((
-                    name: String(cString: file.file_name),
+                    name: nameStr,
                     size: file.file_size,
                     downloaded: file.file_downloaded
                 ))
