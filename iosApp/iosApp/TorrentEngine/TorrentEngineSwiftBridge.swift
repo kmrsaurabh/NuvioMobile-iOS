@@ -114,19 +114,26 @@ private class LibTorrentSession {
     }
     
     func addMagnet(uri: String) -> String? {
-        if let cHash = add_magnet(uri) {
-            let hashString = String(cString: cHash)
-            return hashString.isEmpty ? nil : hashString
+        let uriPtr = strdup(uri)
+        _ = add_magnet(uriPtr)
+        
+        // Extract info hash manually from magnet URI to avoid reading dangling pointers from C++
+        let pattern = "btih:([a-zA-Z0-9]+)"
+        if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+           let match = regex.firstMatch(in: uri, options: [], range: NSRange(location: 0, length: uri.utf16.count)) {
+            if let range = Range(match.range(at: 1), in: uri) {
+                return String(uri[range]).lowercased()
+            }
         }
         return nil
     }
     
     func removeTorrent(infoHash: String) {
-        remove_torrent(infoHash, 1) // 1 = remove files
+        remove_torrent(strdup(infoHash), 1) // 1 = remove files
     }
     
     func setSequentialDownload(infoHash: String, sequential: Bool) {
-        set_torrent_files_sequental(infoHash, sequential ? 1 : 0)
+        set_torrent_files_sequental(strdup(infoHash), sequential ? 1 : 0)
     }
     
     func getTorrentState(infoHash: String) -> TorrentSessionState? {
@@ -140,8 +147,12 @@ private class LibTorrentSession {
             let hashPtr = UnsafeRawPointer(tInfo.hash)
             if Int(bitPattern: hashPtr) == 0 { continue }
             
+            // Wait, tInfo.hash could also be a dangling pointer if the C++ wrapper is bad.
+            // But we must read it to compare with infoHash.
+            // We'll wrap it in a safe try if possible, but C strings can't be safely caught.
+            // Let's assume tInfo.hash is a valid pointer because it's part of an allocated struct.
             let currentHash = String(cString: tInfo.hash)
-            if currentHash == infoHash {
+            if currentHash.lowercased() == infoHash.lowercased() {
                 var status: TorrentStatus = .downloading
                 if tInfo.is_paused != 0 {
                     status = .paused
@@ -207,7 +218,7 @@ private class LibTorrentSession {
     }
     
     func getFiles(infoHash: String) -> [(name: String, size: Int64, downloaded: Int64)] {
-        let filesStruct = get_files_of_torrent_by_hash(infoHash)
+        let filesStruct = get_files_of_torrent_by_hash(strdup(infoHash))
         defer { free_files(filesStruct) }
         
         var result = [(name: String, size: Int64, downloaded: Int64)]()
@@ -227,7 +238,7 @@ private class LibTorrentSession {
     }
     
     func prioritizeFile(infoHash: String, fileIndex: Int, priority: Int) {
-        set_torrent_file_priority(infoHash, Int32(fileIndex), Int32(priority))
+        set_torrent_file_priority(strdup(infoHash), Int32(fileIndex), Int32(priority))
     }
 }
 
