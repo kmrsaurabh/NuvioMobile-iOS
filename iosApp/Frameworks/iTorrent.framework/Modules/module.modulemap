@@ -1,5 +1,5 @@
 framework module iTorrent {
-    umbrella header "iTorrent.h"
+    umbrella header "iTorrent-Framework-Bridging-Header.h"
     export *
     module * { export * }
 }
