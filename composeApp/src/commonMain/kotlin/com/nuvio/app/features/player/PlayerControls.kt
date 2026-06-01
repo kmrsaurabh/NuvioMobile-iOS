@@ -489,9 +489,12 @@ private fun PlayPauseControlButton(
         contentAlignment = Alignment.Center,
     ) {
         if (isBuffering) {
+            val isTorrent = torrentSessionStatus != null
+            val accentColor = if (isTorrent) Color(0xFF4CAF50) else Color.White
+            
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CircularProgressIndicator(
-                    color = Color.White,
+                    color = accentColor,
                     strokeWidth = 3.dp,
                     modifier = Modifier.size(metrics.playIconSize),
                 )
@@ -499,12 +502,12 @@ private fun PlayPauseControlButton(
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Buffering ${formatSpeed(torrentSessionStatus.downloadSpeedBps)}",
-                        color = Color.White,
+                        color = accentColor,
                         style = MaterialTheme.typography.labelMedium
                     )
                     Text(
                         text = "Peers: ${torrentSessionStatus.peerCount} | Seeds: ${torrentSessionStatus.seedCount}",
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = accentColor.copy(alpha = 0.8f),
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
