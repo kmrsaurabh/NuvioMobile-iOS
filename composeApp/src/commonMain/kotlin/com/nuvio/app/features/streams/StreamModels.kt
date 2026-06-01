@@ -108,9 +108,9 @@ private fun String?.extractBtihInfoHash(): String? {
         .takeIf { it.isNotEmpty() }
 }
 
-fun StreamItem.isSelectableForPlayback(debridEnabled: Boolean): Boolean =
+fun StreamItem.isSelectableForPlayback(debridEnabled: Boolean, torrentStreamingEnabled: Boolean): Boolean =
     playableDirectUrl != null ||
-        (AppFeaturePolicy.p2pEnabled && needsLocalDebridResolve && p2pInfoHash != null) ||
+        (AppFeaturePolicy.p2pEnabled && torrentStreamingEnabled && needsLocalDebridResolve && p2pInfoHash != null) ||
         (debridEnabled && isAddonDebridCandidate)
 
 data class StreamBehaviorHints(
