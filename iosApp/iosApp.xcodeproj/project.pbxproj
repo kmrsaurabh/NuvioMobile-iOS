@@ -35,6 +35,17 @@
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2CEC62B46BD947A6BC852FA3 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				2CEC62B46BD947A6BC852FA2 /* iTorrent.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -165,6 +176,7 @@
 				79E42700D221AF24510E3E09 /* Sources */,
 				B8D8368DBB6E1F38F403E5AA /* Frameworks */,
 				0A1B2C3D4E5F60718293A4BC /* Embed App Extensions */,
+				2CEC62B46BD947A6BC852FA3 /* Embed Frameworks */,
 				2DAFDB313E32F227766A2072 /* Resources */,
 			);
 			buildRules = (
