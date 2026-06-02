@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nuvio.app.features.settings.SettingsGroup
@@ -18,6 +21,7 @@ internal fun TorrentStreamingSettingsContent(
 ) {
     val settings by TorrentStreamingRepository.uiState.collectAsStateWithLifecycle()
     val sectionSpacing = if (isTablet) 18.dp else 12.dp
+    var testResult by remember { mutableStateOf<String?>(null) }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(sectionSpacing),
@@ -55,6 +59,23 @@ internal fun TorrentStreamingSettingsContent(
                         checked = settings.enableUpload,
                         isTablet = isTablet,
                         onCheckedChange = TorrentStreamingRepository::setEnableUpload,
+                    )
+                    SettingsGroupDivider(isTablet = isTablet)
+                    SettingsNavigationRow(
+                        title = "Test P2P Engine",
+                        description = testResult ?: "Verify that the native torrent engine can start successfully",
+                        isTablet = isTablet,
+                        onClick = {
+                            try {
+                                if (!NativeTorrentEngine.isRunning()) {
+                                    NativeTorrentEngine.start(settings)
+                                }
+                                val stats = NativeTorrentEngine.getStats()
+                                testResult = "Engine running. HTTP port: ${stats.httpServerPort}, Active sessions: ${stats.activeSessions}"
+                            } catch (e: Exception) {
+                                testResult = "Engine failed to start: ${e.message}"
+                            }
+                        },
                     )
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
