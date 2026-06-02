@@ -184,7 +184,14 @@ private struct HTTPRequest {
 
             let newListener = try NWListener(using: params)
 
+            let semaphore = DispatchSemaphore(value: 0)
+            
             newListener.stateUpdateHandler = { [weak self] state in
+                if case .ready = state {
+                    semaphore.signal()
+                } else if case .failed(_) = state {
+                    semaphore.signal()
+                }
                 self?.handleListenerState(state)
             }
 
@@ -195,19 +202,10 @@ private struct HTTPRequest {
             newListener.start(queue: networkQueue)
             listener = newListener
 
-            // Wait briefly for the listener to report its port
-            var resolvedPort: UInt16 = 0
-            let semaphore = DispatchSemaphore(value: 0)
-            networkQueue.async {
-                // Give the listener a moment to bind
-                Thread.sleep(forTimeInterval: 0.1)
-                if let actualPort = newListener.port?.rawValue {
-                    resolvedPort = actualPort
-                }
-                semaphore.signal()
-            }
+            // Wait for the listener to become ready
             _ = semaphore.wait(timeout: .now() + 2.0)
-
+            
+            let resolvedPort = newListener.port?.rawValue ?? 0
             self.port = resolvedPort
             isRunning = true
             print("[HTTPServer] Started on port \(resolvedPort)")
