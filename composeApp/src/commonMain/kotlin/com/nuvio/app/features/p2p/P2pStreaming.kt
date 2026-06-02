@@ -66,7 +66,7 @@ object P2pSettingsRepository {
 
     private fun loadFromDisk() {
         hasLoaded = true
-        p2pEnabled = P2pSettingsStorage.loadP2pEnabled() ?: false
+        p2pEnabled = P2pSettingsStorage.loadP2pEnabled() ?: true
         enableUpload = P2pSettingsStorage.loadEnableUpload() ?: true
         hideTorrentStats = P2pSettingsStorage.loadHideTorrentStats() ?: true
         publish()

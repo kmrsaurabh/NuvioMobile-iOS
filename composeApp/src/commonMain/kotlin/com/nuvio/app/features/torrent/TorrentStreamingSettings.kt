@@ -1,7 +1,7 @@
 package com.nuvio.app.features.torrent
 
 data class TorrentStreamingSettings(
-    val enabled: Boolean = false,
+    val enabled: Boolean = true,
     val useExternalServer: Boolean = false,
     val externalServerUrl: String = "",
     val cacheSizeMb: Int = 2048,

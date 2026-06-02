@@ -95,7 +95,7 @@ object TorrentStreamingRepository {
     private fun loadFromDisk() {
         publish(
             TorrentStreamingSettings(
-                enabled = TorrentStreamingSettingsStorage.loadEnabled() ?: false,
+                enabled = TorrentStreamingSettingsStorage.loadEnabled() ?: true,
                 useExternalServer = TorrentStreamingSettingsStorage.loadUseExternalServer() ?: false,
                 externalServerUrl = TorrentStreamingSettingsStorage.loadExternalServerUrl().orEmpty(),
                 cacheSizeMb = TorrentStreamingSettingsStorage.loadCacheSizeMb() ?: 2048,
