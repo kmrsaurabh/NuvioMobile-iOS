@@ -61,19 +61,21 @@ internal fun TorrentStreamingSettingsContent(
                         onCheckedChange = TorrentStreamingRepository::setEnableUpload,
                     )
                     SettingsGroupDivider(isTablet = isTablet)
+                    val isRunning = NativeTorrentEngine.isRunning()
                     SettingsNavigationRow(
-                        title = "Test P2P Engine",
+                        title = if (isRunning) "Restart P2P Engine" else "Start P2P Engine",
                         description = testResult ?: "Verify that the native torrent engine can start successfully",
                         isTablet = isTablet,
                         onClick = {
                             try {
-                                if (!NativeTorrentEngine.isRunning()) {
-                                    NativeTorrentEngine.start(settings)
+                                if (NativeTorrentEngine.isRunning()) {
+                                    NativeTorrentEngine.stop()
                                 }
+                                NativeTorrentEngine.start(settings)
                                 val stats = NativeTorrentEngine.getStats()
-                                testResult = "Engine running. Active sessions: ${stats.activeSessions}"
+                                testResult = "🟢 Running (Active sessions: ${stats.activeSessions})"
                             } catch (e: Exception) {
-                                testResult = "Engine failed to start: ${e.message}"
+                                testResult = "🔴 Offline (${e.message})"
                             }
                         },
                     )

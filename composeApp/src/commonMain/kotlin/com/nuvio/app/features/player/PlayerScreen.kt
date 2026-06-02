@@ -55,7 +55,7 @@ import com.nuvio.app.features.downloads.DownloadItem
 import com.nuvio.app.features.downloads.DownloadsRepository
 import com.nuvio.app.features.p2p.P2pConsentDialog
 import com.nuvio.app.features.p2p.P2pLoadingStatus
-import com.nuvio.app.features.p2p.P2pSettingsRepository
+import com.nuvio.app.features.torrent.TorrentStreamingRepository
 import com.nuvio.app.features.p2p.P2pStreamRequest
 import com.nuvio.app.features.p2p.P2pStreamingEngine
 import com.nuvio.app.features.p2p.P2pStreamingState
@@ -190,8 +190,8 @@ fun PlayerScreen(
         PlayerSettingsRepository.uiState
     }.collectAsStateWithLifecycle()
     val p2pSettingsUiState by remember {
-        P2pSettingsRepository.ensureLoaded()
-        P2pSettingsRepository.uiState
+        TorrentStreamingRepository.ensureLoaded()
+        TorrentStreamingRepository.uiState
     }.collectAsStateWithLifecycle()
     val p2pStreamingState by P2pStreamingEngine.state.collectAsStateWithLifecycle()
     val metaScreenSettingsUiState by remember {
@@ -1245,8 +1245,8 @@ fun PlayerScreen(
 
         fun switchToP2pSourceStream(stream: StreamItem) {
             val infoHash = stream.p2pInfoHash ?: return
-            if (!P2pSettingsRepository.isVisible) return
-            if (!P2pSettingsRepository.uiState.value.p2pEnabled) {
+            if (!AppFeaturePolicy.p2pEnabled) return
+            if (!TorrentStreamingRepository.uiState.value.enabled) {
                 pendingP2pSwitch = PendingPlayerP2pSwitch(stream = stream, episode = null, isAutoPlay = false)
                 return
             }
@@ -1280,8 +1280,8 @@ fun PlayerScreen(
 
         fun switchToP2pEpisodeStream(stream: StreamItem, episode: MetaVideo, isAutoPlay: Boolean = false) {
             val infoHash = stream.p2pInfoHash ?: return
-            if (!P2pSettingsRepository.isVisible) return
-            if (!P2pSettingsRepository.uiState.value.p2pEnabled) {
+            if (!AppFeaturePolicy.p2pEnabled) return
+            if (!TorrentStreamingRepository.uiState.value.enabled) {
                 pendingP2pSwitch = PendingPlayerP2pSwitch(stream = stream, episode = episode, isAutoPlay = isAutoPlay)
                 return
             }
@@ -1951,7 +1951,7 @@ fun PlayerScreen(
                 P2pStreamingEngine.stopStream()
                 return@LaunchedEffect
             }
-            if (!P2pSettingsRepository.isVisible || !p2pSettingsUiState.p2pEnabled) {
+            if (!AppFeaturePolicy.p2pEnabled || !p2pSettingsUiState.enabled) {
                 return@LaunchedEffect
             }
 
@@ -2769,7 +2769,7 @@ fun PlayerScreen(
                     onEnableP2p = {
                         val pending = pendingP2pSwitch ?: return@P2pConsentDialog
                         pendingP2pSwitch = null
-                        P2pSettingsRepository.setP2pEnabled(true)
+                        TorrentStreamingRepository.setEnabled(true)
                         val episode = pending.episode
                         if (episode != null) {
                             switchToP2pEpisodeStream(

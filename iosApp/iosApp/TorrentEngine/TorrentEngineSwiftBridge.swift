@@ -12,6 +12,7 @@
 //     └── TorrentDiskCacheManager (LRU disk cache)
 
 import Foundation
+import UIKit
 import iTorrent
 
 // MARK: - Configuration Models
@@ -449,7 +450,31 @@ private class ActiveTorrentSession {
 
     private override init() {
         super.init()
-        print("[TorrentEngine] Bridge initialized")
+        NotificationCenter.default.addObserver(self, selector: #selector(handleWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func handleWillEnterForeground() {
+        engineQueue.async { [weak self] in
+            guard let self = self, self.isStarted else { return }
+            
+            // Check if HTTP server dropped/failed during background and restart if needed
+            if !self.httpServer.isRunning {
+                print("[TorrentEngine] Restarting HTTP server on foreground")
+                let actualPort = self.httpServer.start(port: self.httpServer.port > 0 ? self.httpServer.port : UInt16(self.config.httpPort))
+                if actualPort > 0 {
+                    // Re-register active data providers
+                    for (sessionId, session) in self.activeSessions {
+                        if let provider = session.dataProvider {
+                            self.httpServer.registerProvider(sessionId: sessionId, provider: provider)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // MARK: - Engine Lifecycle
