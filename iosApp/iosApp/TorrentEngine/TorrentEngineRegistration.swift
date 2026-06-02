@@ -16,35 +16,35 @@ final class SwiftTorrentBridgeImpl: NSObject, SwiftTorrentBridge {
     private let engine = TorrentEngineSwiftBridge.shared
 
     func startEngine(configJson: String) {
-        engine.start(configJson: configJson)
+        engine.startEngine(configJson)
     }
 
     func stopEngine() {
-        engine.stop()
+        engine.stopEngine()
     }
 
     func isEngineRunning() -> Bool {
-        return engine.isStarted
+        return engine.isEngineRunning()
     }
 
     func addTorrentSession(magnetUri: String, infoHash: String, fileIdx: Int32) -> String {
-        return engine.addTorrent(magnetUri: magnetUri, infoHash: infoHash, fileIdx: fileIdx)
+        return engine.addTorrentSession(magnetUri: magnetUri, infoHash: infoHash, fileIdx: fileIdx)
     }
 
     func removeTorrentSession(sessionId: String) {
-        engine.removeTorrent(sessionId: sessionId)
+        engine.removeTorrentSession(sessionId: sessionId)
     }
 
     func getSessionStatusJson(sessionId: String) -> String {
-        return engine.getSessionStatus(sessionId: sessionId)
+        return engine.getSessionStatusJson(sessionId: sessionId)
     }
 
     func getEngineStatsJson() -> String {
-        return engine.getStats()
+        return engine.getEngineStatsJson()
     }
 
     func destroyEngine() {
-        engine.destroy()
+        engine.destroyEngine()
     }
 }
 
