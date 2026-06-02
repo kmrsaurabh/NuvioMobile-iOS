@@ -16,12 +16,14 @@ import com.nuvio.app.features.settings.SettingsSection
 import com.nuvio.app.features.settings.SettingsSwitchRow
 
 @Composable
+@androidx.compose.material3.ExperimentalMaterial3Api
 internal fun TorrentStreamingSettingsContent(
     isTablet: Boolean,
 ) {
     val settings by TorrentStreamingRepository.uiState.collectAsStateWithLifecycle()
     val sectionSpacing = if (isTablet) 18.dp else 12.dp
     var testResult by remember { mutableStateOf<String?>(null) }
+    var showUrlDialog by remember { mutableStateOf(false) }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(sectionSpacing),
@@ -52,6 +54,15 @@ internal fun TorrentStreamingSettingsContent(
                         isTablet = isTablet,
                         onCheckedChange = TorrentStreamingRepository::setUseExternalServer,
                     )
+                    if (settings.useExternalServer) {
+                        SettingsGroupDivider(isTablet = isTablet)
+                        SettingsNavigationRow(
+                            title = "External server URL",
+                            description = settings.externalServerUrl.ifBlank { "Tap to configure" },
+                            isTablet = isTablet,
+                            onClick = { showUrlDialog = true }
+                        )
+                    }
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsSwitchRow(
                         title = "Enable upload (seeding)",
@@ -93,6 +104,51 @@ internal fun TorrentStreamingSettingsContent(
                         isTablet = isTablet,
                         onClick = { /* TODO: show cache size dialog */ },
                     )
+                }
+            }
+        }
+    }
+
+    if (showUrlDialog) {
+        var draft by remember { mutableStateOf(settings.externalServerUrl) }
+        androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showUrlDialog = false }) {
+            androidx.compose.material3.Surface(
+                modifier = androidx.compose.foundation.layout.fillMaxWidth(),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+            ) {
+                Column(
+                    modifier = androidx.compose.foundation.layout.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    androidx.compose.material3.Text(
+                        text = "External Server URL",
+                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+                    )
+                    androidx.compose.material3.OutlinedTextField(
+                        value = draft,
+                        onValueChange = { draft = it },
+                        modifier = androidx.compose.foundation.layout.fillMaxWidth(),
+                        singleLine = true,
+                        placeholder = { androidx.compose.material3.Text("http://...") }
+                    )
+                    androidx.compose.foundation.layout.Row(
+                        modifier = androidx.compose.foundation.layout.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, androidx.compose.ui.Alignment.End),
+                    ) {
+                        androidx.compose.material3.TextButton(onClick = { showUrlDialog = false }) {
+                            androidx.compose.material3.Text("Cancel")
+                        }
+                        androidx.compose.material3.Button(
+                            onClick = {
+                                TorrentStreamingRepository.setExternalServerUrl(draft)
+                                showUrlDialog = false
+                            },
+                        ) {
+                            androidx.compose.material3.Text("Save")
+                        }
+                    }
                 }
             }
         }
