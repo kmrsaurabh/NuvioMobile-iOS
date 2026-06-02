@@ -26,35 +26,62 @@ actual object P2pStreamingEngine {
         stopStream()
         _state.value = P2pStreamingState.Connecting
 
-        TorrentStreamingRepository.ensureLoaded()
-        val settings = TorrentStreamingRepository.uiState.value
-        if (!NativeTorrentEngine.isRunning()) {
-            NativeTorrentEngine.start(settings)
-        }
-
-        val trackersParam = request.trackers.joinToString("") { "&tr=$it" }
-        val magnetUri = "magnet:?xt=urn:btih:${request.infoHash}$trackersParam"
-
-        val session = NativeTorrentEngine.addTorrent(magnetUri, request.infoHash, request.fileIdx)
-            ?: throw P2pStreamingException("Failed to add torrent to NativeTorrentEngine")
-
-        activeSessionId = session.sessionId
-
-        _state.value = P2pStreamingState.Streaming(
-            localUrl = session.streamUrl,
-            downloadSpeed = session.downloadSpeedBps,
-            uploadSpeed = session.uploadSpeedBps,
-            peers = session.peerCount,
-            seeds = session.seedCount,
-            bufferProgress = 0f,
-            totalProgress = session.downloadProgress,
+        val streamItem = com.nuvio.app.features.streams.StreamItem(
+            infoHash = request.infoHash,
+            fileIdx = request.fileIdx,
+            torrentMagnetUri = null,
+            behaviorHints = com.nuvio.app.features.streams.BehaviorHints(filename = request.filename),
+            sources = request.trackers.map { "tracker:$it" }
         )
 
-        startStatsPolling(session.sessionId)
+        val resolveResult = com.nuvio.app.features.torrent.TorrentStreamResolver.resolve(streamItem, request.fileIdx)
+        if (resolveResult is com.nuvio.app.features.torrent.TorrentResolveResult.Error) {
+            throw P2pStreamingException(resolveResult.message)
+        }
 
-        return session.streamUrl
+        val successResult = resolveResult as com.nuvio.app.features.torrent.TorrentResolveResult.Success
+        activeSessionId = successResult.sessionId
+
+        if (activeSessionId != null) {
+            // Native session started, wait for initial status to get proper stream URL if needed
+            val status = NativeTorrentEngine.getSessionStatus(activeSessionId!!)
+            if (status != null) {
+                _state.value = P2pStreamingState.Streaming(
+                    localUrl = successResult.playbackUrl,
+                    downloadSpeed = status.downloadSpeedBps,
+                    uploadSpeed = status.uploadSpeedBps,
+                    peers = status.peerCount,
+                    seeds = status.seedCount,
+                    bufferProgress = 0f,
+                    totalProgress = status.downloadProgress,
+                )
+            } else {
+                _state.value = P2pStreamingState.Streaming(
+                    localUrl = successResult.playbackUrl,
+                    downloadSpeed = 0,
+                    uploadSpeed = 0,
+                    peers = 0,
+                    seeds = 0,
+                    bufferProgress = 0f,
+                    totalProgress = 0f,
+                )
+            }
+            startStatsPolling(activeSessionId!!)
+        } else {
+            // External server, just streaming URL, no stats polling
+            _state.value = P2pStreamingState.Streaming(
+                localUrl = successResult.playbackUrl,
+                downloadSpeed = 0,
+                uploadSpeed = 0,
+                peers = 0,
+                seeds = 0,
+                bufferProgress = 0f,
+                totalProgress = 0f,
+            )
+        }
+
+        return successResult.playbackUrl
     }
-
     actual fun stopStream() {
         activeSessionId?.let { sessionId ->
             NativeTorrentEngine.removeTorrent(sessionId)

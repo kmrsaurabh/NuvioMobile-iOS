@@ -137,7 +137,8 @@ import com.nuvio.app.features.library.toLibraryItem
 import com.nuvio.app.features.library.toMetaPreview
 import com.nuvio.app.features.notifications.EpisodeReleaseNotificationsRepository
 import com.nuvio.app.features.p2p.P2pConsentDialog
-import com.nuvio.app.features.p2p.P2pSettingsRepository
+import com.nuvio.app.features.torrent.TorrentStreamingRepository
+import com.nuvio.app.core.build.AppFeaturePolicy
 import com.nuvio.app.features.player.PlayerLaunch
 import com.nuvio.app.features.player.PlayerLaunchStore
 import com.nuvio.app.features.player.PlayerRoute
@@ -617,9 +618,9 @@ private fun MainAppContent(
         PlayerSettingsRepository.ensureLoaded()
         PlayerSettingsRepository.uiState
     }.collectAsStateWithLifecycle()
-    val p2pSettingsUiState by remember {
-        P2pSettingsRepository.ensureLoaded()
-        P2pSettingsRepository.uiState
+    val torrentSettingsUiState by remember {
+        TorrentStreamingRepository.ensureLoaded()
+        TorrentStreamingRepository.uiState
     }.collectAsStateWithLifecycle()
     val watchedUiState by remember {
         WatchedRepository.ensureLoaded()
@@ -1749,11 +1750,11 @@ private fun MainAppContent(
                             if (isAutoPlay) StreamsRepository.skipAutoPlayStream(stream)
                             return
                         }
-                        if (!P2pSettingsRepository.isVisible) {
+                        if (!AppFeaturePolicy.p2pEnabled) {
                             if (isAutoPlay) StreamsRepository.skipAutoPlayStream(stream)
                             return
                         }
-                        if (!p2pSettingsUiState.p2pEnabled) {
+                        if (!torrentSettingsUiState.enabled) {
                             pendingP2pStreamOpen = PendingP2pStreamOpen(
                                 stream = stream,
                                 resumePositionMs = resolvedResumePositionMs,
@@ -2164,7 +2165,7 @@ private fun MainAppContent(
                         pendingP2pStreamOpen?.let { pending ->
                             P2pConsentDialog(
                                 onEnableP2p = {
-                                    P2pSettingsRepository.setP2pEnabled(true)
+                                    TorrentStreamingRepository.setEnabled(true)
                                     pendingP2pStreamOpen = null
                                     openP2pStream(
                                         stream = pending.stream,

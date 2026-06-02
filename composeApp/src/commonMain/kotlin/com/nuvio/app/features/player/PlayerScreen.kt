@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nuvio.app.core.ui.NuvioToastController
+import com.nuvio.app.core.build.AppFeaturePolicy
+import com.nuvio.app.features.watched.WatchedRepository
 import com.nuvio.app.features.debrid.DebridSettingsRepository
 import com.nuvio.app.features.debrid.DirectDebridPlayableResult
 import com.nuvio.app.features.debrid.DirectDebridPlaybackResolver
@@ -77,7 +79,6 @@ import com.nuvio.app.features.streams.StreamsUiState
 import com.nuvio.app.features.tmdb.TmdbService
 import com.nuvio.app.features.trakt.TraktScrobbleItem
 import com.nuvio.app.features.trakt.TraktScrobbleRepository
-import com.nuvio.app.features.watched.WatchedRepository
 import com.nuvio.app.features.watchprogress.WatchProgressClock
 import com.nuvio.app.features.watchprogress.WatchProgressPlaybackSession
 import com.nuvio.app.features.watchprogress.WatchProgressRepository
@@ -353,16 +354,12 @@ fun PlayerScreen(
                 stringResource(Res.string.player_torrent_connecting_peers)
             }
             p2pStats != null -> {
-                if (p2pSettingsUiState.hideTorrentStats) {
-                    null
-                } else {
-                    stringResource(
-                        Res.string.player_torrent_buffered_status,
-                        formatP2pMegabytes(p2pStats.preloadedBytes),
-                        p2pPeerInfo.orEmpty(),
-                        p2pDownloadSpeed.orEmpty(),
-                    )
-                }
+                stringResource(
+                    Res.string.player_torrent_buffered_status,
+                    formatP2pMegabytes(p2pStats.preloadedBytes),
+                    p2pPeerInfo.orEmpty(),
+                    p2pDownloadSpeed.orEmpty(),
+                )
             }
             else -> stringResource(Res.string.player_torrent_starting_engine)
         }
@@ -373,8 +370,7 @@ fun PlayerScreen(
         val showP2pRebufferStats = isP2pPlaybackActive &&
             initialLoadCompleted &&
             playbackSnapshot.isLoading &&
-            p2pStats != null &&
-            !p2pSettingsUiState.hideTorrentStats
+            p2pStats != null
         val p2pRebufferMessage = when {
             !showP2pRebufferStats -> null
             else -> {
@@ -1943,7 +1939,7 @@ fun PlayerScreen(
             activeTorrentFileIdx,
             activeTorrentFilename,
             activeTorrentTrackers,
-            p2pSettingsUiState.p2pEnabled,
+            torrentSettingsUiState.enabled,
         ) {
             val infoHash = activeTorrentInfoHash
             if (infoHash == null) {
@@ -1951,7 +1947,7 @@ fun PlayerScreen(
                 P2pStreamingEngine.stopStream()
                 return@LaunchedEffect
             }
-            if (!AppFeaturePolicy.p2pEnabled || !p2pSettingsUiState.enabled) {
+            if (!AppFeaturePolicy.p2pEnabled || !torrentSettingsUiState.enabled) {
                 return@LaunchedEffect
             }
 

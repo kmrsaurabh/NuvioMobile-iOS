@@ -73,9 +73,24 @@ internal fun TorrentStreamingSettingsContent(
                     )
                     SettingsGroupDivider(isTablet = isTablet)
                     val isRunning = NativeTorrentEngine.isRunning()
+                    androidx.compose.runtime.LaunchedEffect(Unit) {
+                        while (true) {
+                            if (NativeTorrentEngine.isRunning()) {
+                                try {
+                                    val stats = NativeTorrentEngine.getStats()
+                                    testResult = "🟢 Running (Active sessions: ${stats.activeSessions})"
+                                } catch (e: Exception) {
+                                    testResult = "🟢 Running"
+                                }
+                            } else {
+                                testResult = "🔴 Offline"
+                            }
+                            kotlinx.coroutines.delay(1000)
+                        }
+                    }
                     SettingsNavigationRow(
                         title = if (isRunning) "Restart P2P Engine" else "Start P2P Engine",
-                        description = testResult ?: "Verify that the native torrent engine can start successfully",
+                        description = testResult ?: "Checking status...",
                         isTablet = isTablet,
                         onClick = {
                             try {

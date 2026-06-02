@@ -16,7 +16,7 @@ import com.nuvio.app.core.ui.PosterCardStyleRepository
 import com.nuvio.app.features.library.LibraryRepository
 import com.nuvio.app.features.mdblist.MdbListSettingsRepository
 import com.nuvio.app.features.notifications.EpisodeReleaseNotificationsRepository
-import com.nuvio.app.features.p2p.P2pSettingsRepository
+import com.nuvio.app.features.torrent.TorrentStreamingRepository
 import com.nuvio.app.features.player.PlayerSettingsRepository
 import com.nuvio.app.features.plugins.PluginRepository
 import com.nuvio.app.features.search.SearchHistoryRepository
@@ -150,7 +150,7 @@ object ProfileRepository {
         PosterCardStyleRepository.onProfileChanged()
         PlayerSettingsRepository.onProfileChanged()
         StreamBadgeSettingsRepository.onProfileChanged()
-        P2pSettingsRepository.onProfileChanged()
+        TorrentStreamingRepository.onProfileChanged()
         HomeCatalogSettingsRepository.onProfileChanged()
         HomeRepository.clear()
         MetaScreenSettingsRepository.onProfileChanged()

@@ -108,6 +108,16 @@ object TorrentStreamingRepository {
         )
     }
 
+    fun onProfileChanged() {
+        loaded = false
+        ensureLoaded()
+    }
+
+    fun clearLocalState() {
+        loaded = false
+        _uiState.value = TorrentStreamingSettings()
+    }
+
     private fun publish(settings: TorrentStreamingSettings) {
         _uiState.value = settings
     }
