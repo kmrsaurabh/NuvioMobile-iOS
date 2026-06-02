@@ -50,7 +50,6 @@ func StartEngine(dataDir string) string {
 
 	cfg := torrent.NewDefaultClientConfig()
 	cfg.DataDir = dataDir
-	cfg.DisableProcessTricks = true
 	cfg.NoDefaultPortForwarding = true
 
 	c, err := torrent.NewClient(cfg)
