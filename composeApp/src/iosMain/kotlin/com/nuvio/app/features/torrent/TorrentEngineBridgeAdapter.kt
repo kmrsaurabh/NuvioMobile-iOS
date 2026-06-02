@@ -98,7 +98,7 @@ class TorrentEngineBridgeAdapter(
     private fun mapStatus(status: String): TorrentSessionState {
         return when (status) {
             "initializing" -> TorrentSessionState.STARTING
-            "resolving_metadata" -> TorrentSessionState.DOWNLOADING_METADATA
+            "resolvingmetadata", "resolving_metadata" -> TorrentSessionState.DOWNLOADING_METADATA
             "downloading" -> TorrentSessionState.DOWNLOADING
             "streaming" -> TorrentSessionState.STREAMING_READY
             "completed" -> TorrentSessionState.SEEDING

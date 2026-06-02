@@ -44,30 +44,38 @@ actual object P2pStreamingEngine {
         activeSessionId = successResult.sessionId
 
         if (activeSessionId != null) {
-            // Native session started, wait for initial status to get proper stream URL if needed
-            val status = NativeTorrentEngine.getSessionStatus(activeSessionId!!)
-            if (status != null) {
-                _state.value = P2pStreamingState.Streaming(
-                    localUrl = successResult.playbackUrl,
-                    downloadSpeed = status.downloadSpeedBps,
-                    uploadSpeed = status.uploadSpeedBps,
-                    peers = status.peerCount,
-                    seeds = status.seedCount,
-                    bufferProgress = 0f,
-                    totalProgress = status.downloadProgress,
-                )
-            } else {
-                _state.value = P2pStreamingState.Streaming(
-                    localUrl = successResult.playbackUrl,
-                    downloadSpeed = 0,
-                    uploadSpeed = 0,
-                    peers = 0,
-                    seeds = 0,
-                    bufferProgress = 0f,
-                    totalProgress = 0f,
-                )
+            val sessionId = activeSessionId!!
+            var status = NativeTorrentEngine.getSessionStatus(sessionId)
+
+            // Native session started, wait for metadata to resolve so the HTTP server is ready
+            var waitCount = 0
+            while (status != null && 
+                (status.state == com.nuvio.app.features.torrent.TorrentSessionState.DOWNLOADING_METADATA || 
+                 status.state == com.nuvio.app.features.torrent.TorrentSessionState.STARTING) && 
+                waitCount < 20
+            ) {
+                delay(1000L)
+                status = NativeTorrentEngine.getSessionStatus(sessionId)
+                waitCount++
             }
-            startStatsPolling(activeSessionId!!)
+
+            if (status == null || 
+                status.state == com.nuvio.app.features.torrent.TorrentSessionState.DOWNLOADING_METADATA || 
+                status.state == com.nuvio.app.features.torrent.TorrentSessionState.STARTING ||
+                status.state == com.nuvio.app.features.torrent.TorrentSessionState.ERROR) {
+                throw P2pStreamingException("Failed to resolve torrent metadata or timed out")
+            }
+
+            _state.value = P2pStreamingState.Streaming(
+                localUrl = successResult.playbackUrl,
+                downloadSpeed = status.downloadSpeedBps,
+                uploadSpeed = status.uploadSpeedBps,
+                peers = status.peerCount,
+                seeds = status.seedCount,
+                bufferProgress = 0f,
+                totalProgress = status.downloadProgress,
+            )
+            startStatsPolling(sessionId)
         } else {
             // External server, just streaming URL, no stats polling
             _state.value = P2pStreamingState.Streaming(
