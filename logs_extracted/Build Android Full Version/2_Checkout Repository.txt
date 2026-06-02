@@ -1,0 +1,72 @@
+﻿2026-06-02T13:59:27.1958719Z ##[group]Run actions/checkout@v4
+2026-06-02T13:59:27.1960482Z with:
+2026-06-02T13:59:27.1961570Z   repository: kmrsaurabh/NuvioMobile-iOS
+2026-06-02T13:59:27.1971540Z   token: ***
+2026-06-02T13:59:27.1972481Z   ssh-strict: true
+2026-06-02T13:59:27.1973536Z   ssh-user: git
+2026-06-02T13:59:27.1974563Z   persist-credentials: true
+2026-06-02T13:59:27.1975604Z   clean: true
+2026-06-02T13:59:27.1976579Z   sparse-checkout-cone-mode: true
+2026-06-02T13:59:27.1977691Z   fetch-depth: 1
+2026-06-02T13:59:27.1978603Z   fetch-tags: false
+2026-06-02T13:59:27.1979619Z   show-progress: true
+2026-06-02T13:59:27.1980591Z   lfs: false
+2026-06-02T13:59:27.1981506Z   submodules: false
+2026-06-02T13:59:27.1982570Z   set-safe-directory: true
+2026-06-02T13:59:27.1984067Z ##[endgroup]
+2026-06-02T13:59:27.3212350Z Syncing repository: kmrsaurabh/NuvioMobile-iOS
+2026-06-02T13:59:27.3215924Z ##[group]Getting Git version info
+2026-06-02T13:59:27.3217510Z Working directory is '/home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS'
+2026-06-02T13:59:27.3220174Z [command]/usr/bin/git version
+2026-06-02T13:59:27.3299971Z git version 2.54.0
+2026-06-02T13:59:27.3328602Z ##[endgroup]
+2026-06-02T13:59:27.3344599Z Temporarily overriding HOME='/home/runner/work/_temp/cb1a8e9d-74f9-4e5c-9f3e-08b742778b6e' before making global git config changes
+2026-06-02T13:59:27.3347401Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-02T13:59:27.3358827Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS
+2026-06-02T13:59:27.3413685Z Deleting the contents of '/home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS'
+2026-06-02T13:59:27.3417691Z ##[group]Initializing the repository
+2026-06-02T13:59:27.3422024Z [command]/usr/bin/git init /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS
+2026-06-02T13:59:27.3558229Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-06-02T13:59:27.3561961Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-06-02T13:59:27.3565394Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-06-02T13:59:27.3567950Z hint: call:
+2026-06-02T13:59:27.3569589Z hint:
+2026-06-02T13:59:27.3571436Z hint: 	git config --global init.defaultBranch <name>
+2026-06-02T13:59:27.3573978Z hint:
+2026-06-02T13:59:27.3575975Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-06-02T13:59:27.3579315Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-06-02T13:59:27.3582085Z hint:
+2026-06-02T13:59:27.3583970Z hint: 	git branch -m <name>
+2026-06-02T13:59:27.3585694Z hint:
+2026-06-02T13:59:27.3588069Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-06-02T13:59:27.3591828Z Initialized empty Git repository in /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS/.git/
+2026-06-02T13:59:27.3598301Z [command]/usr/bin/git remote add origin https://github.com/kmrsaurabh/NuvioMobile-iOS
+2026-06-02T13:59:27.3650685Z ##[endgroup]
+2026-06-02T13:59:27.3654004Z ##[group]Disabling automatic garbage collection
+2026-06-02T13:59:27.3656411Z [command]/usr/bin/git config --local gc.auto 0
+2026-06-02T13:59:27.3691091Z ##[endgroup]
+2026-06-02T13:59:27.3694313Z ##[group]Setting up auth
+2026-06-02T13:59:27.3697533Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-02T13:59:27.3738071Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-02T13:59:27.4166004Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-02T13:59:27.4200941Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-02T13:59:27.4440037Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-02T13:59:27.4480001Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-02T13:59:27.4732609Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-06-02T13:59:27.4770139Z ##[endgroup]
+2026-06-02T13:59:27.4771932Z ##[group]Fetching the repository
+2026-06-02T13:59:27.4782679Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +bf4bc33559479157c72085fdabda206cfdc21a43:refs/remotes/origin/cmp-rewrite
+2026-06-02T13:59:31.3834127Z From https://github.com/kmrsaurabh/NuvioMobile-iOS
+2026-06-02T13:59:31.3836704Z  * [new ref]         bf4bc33559479157c72085fdabda206cfdc21a43 -> origin/cmp-rewrite
+2026-06-02T13:59:31.3928713Z ##[endgroup]
+2026-06-02T13:59:31.3929769Z ##[group]Determining the checkout info
+2026-06-02T13:59:31.3931458Z ##[endgroup]
+2026-06-02T13:59:31.3932551Z [command]/usr/bin/git sparse-checkout disable
+2026-06-02T13:59:31.3937401Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-06-02T13:59:31.3952000Z ##[group]Checking out the ref
+2026-06-02T13:59:31.3958182Z [command]/usr/bin/git checkout --progress --force -B cmp-rewrite refs/remotes/origin/cmp-rewrite
+2026-06-02T13:59:32.0411236Z Switched to a new branch 'cmp-rewrite'
+2026-06-02T13:59:32.0463402Z branch 'cmp-rewrite' set up to track 'origin/cmp-rewrite'.
+2026-06-02T13:59:32.0471193Z ##[endgroup]
+2026-06-02T13:59:32.0531691Z [command]/usr/bin/git log -1 --format=%H
+2026-06-02T13:59:32.0547072Z bf4bc33559479157c72085fdabda206cfdc21a43
