@@ -140,8 +140,9 @@ private class LibTorrentSession {
         let result = get_torrent_info()
         defer { free_result(result) }
         
-        for i in 0..<result.count {
-            let tInfo = result.torrents[Int(i)]
+        if let torrents = result.torrents {
+            for i in 0..<result.count {
+                let tInfo = torrents[Int(i)]
             
             if tInfo.hash == nil { continue }
             
@@ -187,6 +188,7 @@ private class LibTorrentSession {
                 )
             }
         }
+        }
         return nil
     }
     
@@ -196,10 +198,12 @@ private class LibTorrentSession {
         var totalDown: Int64 = 0
         var totalUp: Int64 = 0
         
-        for i in 0..<result.count {
-            let t = result.torrents[Int(i)]
-            totalDown += Int64(t.download_rate)
-            totalUp += Int64(t.upload_rate)
+        if let torrents = result.torrents {
+            for i in 0..<result.count {
+                let t = torrents[Int(i)]
+                totalDown += Int64(t.download_rate)
+                totalUp += Int64(t.upload_rate)
+            }
         }
         free_result(result)
         
@@ -218,9 +222,9 @@ private class LibTorrentSession {
         defer { free_files(filesStruct) }
         
         var result = [(name: String, size: Int64, downloaded: Int64)]()
-        if filesStruct.error == 0 {
+        if filesStruct.error == 0, let files = filesStruct.files {
             for i in 0..<filesStruct.size {
-                let file = filesStruct.files[Int(i)]
+                let file = files[Int(i)]
                 let nameStr = file.file_name != nil ? (String(validatingUTF8: file.file_name!) ?? "") : ""
                 result.append((
                     name: nameStr,
