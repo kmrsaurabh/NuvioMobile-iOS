@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - build-test
+      - cmp-rewrite
 
 jobs:
   build-ios-full:
