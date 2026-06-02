@@ -1,4 +1,4 @@
-﻿import Foundation
+import Foundation
 import GoTorrent
 
 @objc public class TorrentEngineSwiftBridge: NSObject {
@@ -25,8 +25,8 @@ import GoTorrent
             }
 
             let errStr = GotorrentStartEngine(downloadPath)
-            if let err = errStr, !err.isEmpty {
-                print("[GoTorrent] Failed to start engine: \(err)")
+            if !errStr.isEmpty {
+                print("[GoTorrent] Failed to start engine: \(errStr)")
                 return
             }
             
