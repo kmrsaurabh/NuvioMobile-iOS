@@ -1,0 +1,80 @@
+﻿2026-06-02T12:03:30.7532460Z ##[group]Run actions/checkout@v4
+2026-06-02T12:03:30.7533400Z with:
+2026-06-02T12:03:30.7533990Z   repository: kmrsaurabh/NuvioMobile-iOS
+2026-06-02T12:03:30.7541390Z   token: ***
+2026-06-02T12:03:30.7541950Z   ssh-strict: true
+2026-06-02T12:03:30.7542510Z   ssh-user: git
+2026-06-02T12:03:30.7543090Z   persist-credentials: true
+2026-06-02T12:03:30.7543720Z   clean: true
+2026-06-02T12:03:30.7544310Z   sparse-checkout-cone-mode: true
+2026-06-02T12:03:30.7544980Z   fetch-depth: 1
+2026-06-02T12:03:30.7545560Z   fetch-tags: false
+2026-06-02T12:03:30.7546160Z   show-progress: true
+2026-06-02T12:03:30.7546740Z   lfs: false
+2026-06-02T12:03:30.7547280Z   submodules: false
+2026-06-02T12:03:30.7547860Z   set-safe-directory: true
+2026-06-02T12:03:30.7548710Z ##[endgroup]
+2026-06-02T12:03:31.3350220Z Syncing repository: kmrsaurabh/NuvioMobile-iOS
+2026-06-02T12:03:31.3352310Z ##[group]Getting Git version info
+2026-06-02T12:03:31.3353160Z Working directory is '/Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS'
+2026-06-02T12:03:31.3354710Z [command]/opt/homebrew/bin/git version
+2026-06-02T12:03:31.3996950Z git version 2.54.0
+2026-06-02T12:03:31.4034050Z ##[endgroup]
+2026-06-02T12:03:31.4043050Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/948e9d8b-8359-4b7b-9a79-f5ab4cdbafa1/.gitconfig'
+2026-06-02T12:03:31.4049870Z Temporarily overriding HOME='/Users/runner/work/_temp/948e9d8b-8359-4b7b-9a79-f5ab4cdbafa1' before making global git config changes
+2026-06-02T12:03:31.4051780Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-02T12:03:31.4053370Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS
+2026-06-02T12:03:31.4272660Z Deleting the contents of '/Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS'
+2026-06-02T12:03:31.4276180Z ##[group]Initializing the repository
+2026-06-02T12:03:31.4281660Z [command]/opt/homebrew/bin/git init /Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS
+2026-06-02T12:03:31.4664270Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-06-02T12:03:31.4665640Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-06-02T12:03:31.4667100Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-06-02T12:03:31.4668320Z hint: call:
+2026-06-02T12:03:31.4669060Z hint:
+2026-06-02T12:03:31.4670380Z hint: 	git config --global init.defaultBranch <name>
+2026-06-02T12:03:31.4674580Z hint:
+2026-06-02T12:03:31.4676270Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-06-02T12:03:31.4677910Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-06-02T12:03:31.4679080Z hint:
+2026-06-02T12:03:31.4679740Z hint: 	git branch -m <name>
+2026-06-02T12:03:31.4680600Z hint:
+2026-06-02T12:03:31.4681450Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-06-02T12:03:31.4683630Z Initialized empty Git repository in /Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS/.git/
+2026-06-02T12:03:31.4686740Z [command]/opt/homebrew/bin/git remote add origin https://github.com/kmrsaurabh/NuvioMobile-iOS
+2026-06-02T12:03:31.4786100Z ##[endgroup]
+2026-06-02T12:03:31.4791860Z ##[group]Disabling automatic garbage collection
+2026-06-02T12:03:31.4797160Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-06-02T12:03:31.5027140Z ##[endgroup]
+2026-06-02T12:03:31.5028740Z ##[group]Setting up auth
+2026-06-02T12:03:31.5032010Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-02T12:03:31.5097720Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-02T12:03:31.6697680Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-02T12:03:31.6776920Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-02T12:03:31.8188560Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-02T12:03:31.8202610Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-02T12:03:31.9123720Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-06-02T12:03:31.9202110Z ##[endgroup]
+2026-06-02T12:03:31.9204430Z ##[group]Fetching the repository
+2026-06-02T12:03:31.9209600Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +5e5637c01dd7e849b35579ba8d3d5d22a4289061:refs/remotes/origin/cmp-rewrite
+2026-06-02T12:03:37.2871060Z From https://github.com/kmrsaurabh/NuvioMobile-iOS
+2026-06-02T12:03:37.2885960Z  * [new ref]         5e5637c01dd7e849b35579ba8d3d5d22a4289061 -> origin/cmp-rewrite
+2026-06-02T12:03:37.2975270Z ##[endgroup]
+2026-06-02T12:03:37.2976730Z ##[group]Determining the checkout info
+2026-06-02T12:03:37.2977590Z ##[endgroup]
+2026-06-02T12:03:37.2978300Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-06-02T12:03:37.3449510Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-06-02T12:03:37.3640940Z ##[group]Checking out the ref
+2026-06-02T12:03:37.3642020Z [command]/opt/homebrew/bin/git checkout --progress --force -B cmp-rewrite refs/remotes/origin/cmp-rewrite
+2026-06-02T12:03:38.5225960Z Updating files:  95% (714/750)
+2026-06-02T12:03:38.5926030Z Updating files:  96% (720/750)
+2026-06-02T12:03:38.6002100Z Updating files:  97% (728/750)
+2026-06-02T12:03:38.6018720Z Updating files:  98% (735/750)
+2026-06-02T12:03:38.6024090Z Updating files:  99% (743/750)
+2026-06-02T12:03:38.6025160Z Updating files: 100% (750/750)
+2026-06-02T12:03:38.6028790Z Updating files: 100% (750/750), done.
+2026-06-02T12:03:38.6086610Z Switched to a new branch 'cmp-rewrite'
+2026-06-02T12:03:38.6099710Z branch 'cmp-rewrite' set up to track 'origin/cmp-rewrite'.
+2026-06-02T12:03:38.6157000Z ##[endgroup]
+2026-06-02T12:03:38.6339330Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-06-02T12:03:38.6457770Z 5e5637c01dd7e849b35579ba8d3d5d22a4289061
