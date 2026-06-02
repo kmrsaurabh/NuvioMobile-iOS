@@ -1939,7 +1939,7 @@ fun PlayerScreen(
             activeTorrentFileIdx,
             activeTorrentFilename,
             activeTorrentTrackers,
-            torrentSettingsUiState.enabled,
+            p2pSettingsUiState.enabled,
         ) {
             val infoHash = activeTorrentInfoHash
             if (infoHash == null) {
@@ -1947,7 +1947,7 @@ fun PlayerScreen(
                 P2pStreamingEngine.stopStream()
                 return@LaunchedEffect
             }
-            if (!AppFeaturePolicy.p2pEnabled || !torrentSettingsUiState.enabled) {
+            if (!AppFeaturePolicy.p2pEnabled || !p2pSettingsUiState.enabled) {
                 return@LaunchedEffect
             }
 

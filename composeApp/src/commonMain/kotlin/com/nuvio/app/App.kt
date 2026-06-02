@@ -138,7 +138,6 @@ import com.nuvio.app.features.library.toMetaPreview
 import com.nuvio.app.features.notifications.EpisodeReleaseNotificationsRepository
 import com.nuvio.app.features.p2p.P2pConsentDialog
 import com.nuvio.app.features.torrent.TorrentStreamingRepository
-import com.nuvio.app.core.build.AppFeaturePolicy
 import com.nuvio.app.features.player.PlayerLaunch
 import com.nuvio.app.features.player.PlayerLaunchStore
 import com.nuvio.app.features.player.PlayerRoute

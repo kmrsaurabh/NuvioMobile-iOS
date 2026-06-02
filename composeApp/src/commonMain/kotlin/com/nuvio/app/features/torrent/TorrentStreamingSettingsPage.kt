@@ -15,8 +15,8 @@ import com.nuvio.app.features.settings.SettingsNavigationRow
 import com.nuvio.app.features.settings.SettingsSection
 import com.nuvio.app.features.settings.SettingsSwitchRow
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-@androidx.compose.material3.ExperimentalMaterial3Api
 internal fun TorrentStreamingSettingsContent(
     isTablet: Boolean,
 ) {
@@ -128,12 +128,12 @@ internal fun TorrentStreamingSettingsContent(
         var draft by remember { mutableStateOf(settings.externalServerUrl) }
         androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showUrlDialog = false }) {
             androidx.compose.material3.Surface(
-                modifier = androidx.compose.foundation.layout.fillMaxWidth(),
+                modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
                 color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
             ) {
                 Column(
-                    modifier = androidx.compose.foundation.layout.padding(20.dp),
+                    modifier = androidx.compose.ui.Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     androidx.compose.material3.Text(
@@ -144,12 +144,12 @@ internal fun TorrentStreamingSettingsContent(
                     androidx.compose.material3.OutlinedTextField(
                         value = draft,
                         onValueChange = { draft = it },
-                        modifier = androidx.compose.foundation.layout.fillMaxWidth(),
+                        modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
                         singleLine = true,
                         placeholder = { androidx.compose.material3.Text("http://...") }
                     )
                     androidx.compose.foundation.layout.Row(
-                        modifier = androidx.compose.foundation.layout.fillMaxWidth(),
+                        modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp, androidx.compose.ui.Alignment.End),
                     ) {
                         androidx.compose.material3.TextButton(onClick = { showUrlDialog = false }) {

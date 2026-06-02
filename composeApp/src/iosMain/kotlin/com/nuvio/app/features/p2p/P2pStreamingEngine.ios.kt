@@ -29,8 +29,9 @@ actual object P2pStreamingEngine {
         val streamItem = com.nuvio.app.features.streams.StreamItem(
             infoHash = request.infoHash,
             fileIdx = request.fileIdx,
-            torrentMagnetUri = null,
-            behaviorHints = com.nuvio.app.features.streams.BehaviorHints(filename = request.filename),
+            addonName = "p2p",
+            addonId = "p2p",
+            behaviorHints = com.nuvio.app.features.streams.StreamBehaviorHints(filename = request.filename),
             sources = request.trackers.map { "tracker:$it" }
         )
 
