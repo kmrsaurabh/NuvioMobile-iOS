@@ -18,7 +18,7 @@ actual object P2pStreamingEngine {
     private val _state = MutableStateFlow<P2pStreamingState>(P2pStreamingState.Idle)
     actual val state: StateFlow<P2pStreamingState> = _state.asStateFlow()
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var statsJob: Job? = null
     private var activeSessionId: String? = null
 
