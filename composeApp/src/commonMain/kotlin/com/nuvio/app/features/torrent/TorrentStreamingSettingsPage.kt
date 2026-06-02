@@ -71,7 +71,7 @@ internal fun TorrentStreamingSettingsContent(
                                     NativeTorrentEngine.start(settings)
                                 }
                                 val stats = NativeTorrentEngine.getStats()
-                                testResult = "Engine running. HTTP port: ${stats.httpServerPort}, Active sessions: ${stats.activeSessions}"
+                                testResult = "Engine running. Active sessions: ${stats.activeSessions}"
                             } catch (e: Exception) {
                                 testResult = "Engine failed to start: ${e.message}"
                             }
