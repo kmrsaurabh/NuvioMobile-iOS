@@ -63,6 +63,16 @@ private class SimpleHttpDelegate(
             completion.complete(HttpResponse(responseData, urlResponse))
         }
     }
+    override fun URLSession(
+        session: NSURLSession,
+        task: NSURLSessionTask,
+        willPerformHTTPRedirection: NSHTTPURLResponse,
+        newRequest: platform.Foundation.NSURLRequest,
+        completionHandler: (platform.Foundation.NSURLRequest?) -> Unit
+    ) {
+        // Do NOT follow redirects, we want to extract the Location header!
+        completionHandler(null)
+    }
 }
 
 @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
