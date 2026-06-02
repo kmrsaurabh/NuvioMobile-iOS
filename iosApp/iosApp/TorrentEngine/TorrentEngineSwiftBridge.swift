@@ -308,8 +308,8 @@ private class TorrentSessionDataProvider: NSObject, TorrentDataProvider {
     private func tryReadData(handle: FileHandle, offset: Int64, length: Int) -> Data? {
         do {
             try handle.seek(toOffset: UInt64(offset))
-            let data = handle.readData(ofLength: length)
-            return data.isEmpty ? nil : data
+            let data = try handle.read(upToCount: length)
+            return data?.isEmpty == false ? data : nil
         } catch {
             print("[DataProvider:\(sessionId)] Read error at offset \(offset): \(error.localizedDescription)")
             return nil
