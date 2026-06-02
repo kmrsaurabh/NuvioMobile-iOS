@@ -143,15 +143,13 @@ private class LibTorrentSession {
         for i in 0..<result.count {
             let tInfo = result.torrents[Int(i)]
             
-            // Safely check for NULL even if declared _Nonnull
-            let hashPtr = UnsafeRawPointer(tInfo.hash)
-            if Int(bitPattern: hashPtr) == 0 { continue }
+            if tInfo.hash == nil { continue }
             
             // Wait, tInfo.hash could also be a dangling pointer if the C++ wrapper is bad.
             // But we must read it to compare with infoHash.
             // We'll wrap it in a safe try if possible, but C strings can't be safely caught.
             // Let's assume tInfo.hash is a valid pointer because it's part of an allocated struct.
-            let currentHash = String(cString: tInfo.hash)
+            let currentHash = tInfo.hash != nil ? (String(validatingUTF8: tInfo.hash!) ?? "") : ""
             if currentHash.lowercased() == infoHash.lowercased() {
                 var status: TorrentStatus = .downloading
                 if tInfo.is_paused != 0 {
@@ -161,14 +159,12 @@ private class LibTorrentSession {
                 } else if tInfo.is_finished != 0 || tInfo.is_seed != 0 {
                     status = .completed
                 } else {
-                    let statePtr = UnsafeRawPointer(tInfo.state)
-                    if Int(bitPattern: statePtr) != 0 && String(cString: tInfo.state) == "downloading" {
+                    if let statePtr = tInfo.state, (String(validatingUTF8: statePtr) ?? "") == "downloading" {
                         status = .downloading
                     }
                 }
                 
-                let namePtr = UnsafeRawPointer(tInfo.name)
-                let nameStr = Int(bitPattern: namePtr) != 0 ? String(cString: tInfo.name) : ""
+                let nameStr = tInfo.name != nil ? (String(validatingUTF8: tInfo.name!) ?? "") : ""
                 
                 return TorrentSessionState(
                     sessionId: currentHash,
@@ -225,8 +221,7 @@ private class LibTorrentSession {
         if filesStruct.error == 0 {
             for i in 0..<filesStruct.size {
                 let file = filesStruct.files[Int(i)]
-                let namePtr = UnsafeRawPointer(file.file_name)
-                let nameStr = Int(bitPattern: namePtr) != 0 ? String(cString: file.file_name) : ""
+                let nameStr = file.file_name != nil ? (String(validatingUTF8: file.file_name!) ?? "") : ""
                 result.append((
                     name: nameStr,
                     size: file.file_size,

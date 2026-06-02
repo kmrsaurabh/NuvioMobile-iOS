@@ -12,11 +12,11 @@
 #include <time.h>
 
 typedef struct TorrentInfo {
-    char * _Nonnull name;
-    char * _Nonnull state;
-    char * _Nonnull hash;
-    char * _Nonnull creator;
-    char * _Nonnull comment;
+    char * _Nullable name;
+    char * _Nullable state;
+    char * _Nullable hash;
+    char * _Nullable creator;
+    char * _Nullable comment;
     float progress;
     long long total_wanted;
     long long total_wanted_done;
@@ -35,12 +35,12 @@ typedef struct TorrentInfo {
     int has_metadata;
     int sequential_download;
     int num_pieces;
-    int * _Nonnull pieces;
+    int * _Nullable pieces;
 } TorrentInfo;
 
 typedef struct TorrentResult {
     int count;
-    TorrentInfo * _Nonnull torrents;
+    TorrentInfo * _Nullable torrents;
 } TorrentResult;
 
 #endif /* result_struct_h */

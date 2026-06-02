@@ -10,7 +10,7 @@
 #define file_struct_h
 
 typedef struct File {
-    char * _Nonnull file_name;
+    char * _Nullable file_name;
     long long file_size;
     long long file_downloaded;
     int file_priority;
@@ -23,13 +23,13 @@ typedef struct File {
 typedef struct Files {
     int error;
     int size;
-    char* _Nonnull title;
-    File* _Nonnull files;
+    char* _Nullable title;
+    File* _Nullable files;
 } Files;
 
 typedef struct Tracker {
-    char * _Nonnull tracker_url;
-    char * _Nonnull messages;
+    char * _Nullable tracker_url;
+    char * _Nullable messages;
     int seeders;
     int peers;
     int leechs;
@@ -39,6 +39,6 @@ typedef struct Tracker {
 
 typedef struct Trackers {
 	int size;
-    Tracker * _Nonnull trackers;
+    Tracker * _Nullable trackers;
 } Trackers;
 #endif /* file_struct_h */
