@@ -196,7 +196,7 @@ final class MPVPlayerViewController: UIViewController {
     private var lastAppliedDrawableSize: CGSize = .zero
     private var pendingLoadRequest: PendingLoadRequest?
     private var pendingLoadRetryWorkItem: DispatchWorkItem?
-    private var mpv: OpaquePointer?
+    internal var mpv: OpaquePointer?
     private lazy var eventQueue = DispatchQueue(label: "mpv-events", qos: .userInitiated)
     private var recentPlaybackLogs: [String] = []
     private var activeRequestHeaders: [String: String] = [:]
@@ -252,6 +252,7 @@ final class MPVPlayerViewController: UIViewController {
         layoutMetalLayer()
 
         setupMpv()
+        setupPictureInPicture()
         setupNotifications()
         refreshImmersiveSystemUI()
     }
@@ -357,12 +358,18 @@ final class MPVPlayerViewController: UIViewController {
 
     @objc private func enterBackground() {
         guard mpv != nil else { return }
-        pausePlayback()
-        setStringProperty("vid", "no")
+        if isPictureInPictureActive { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            guard let self = self, self.mpv != nil else { return }
+            if self.isPictureInPictureActive { return }
+            self.pausePlayback()
+            self.setStringProperty("vid", "no")
+        }
     }
 
     @objc private func enterForeground() {
         guard mpv != nil else { return }
+        if isPictureInPictureActive { return }
         setStringProperty("vid", "auto")
         playPlayback()
     }

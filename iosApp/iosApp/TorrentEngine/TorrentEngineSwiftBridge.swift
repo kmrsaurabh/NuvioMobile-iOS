@@ -24,7 +24,7 @@ import GoTorrent
                 print("[GoTorrent] Failed to create cache dir: \(error)")
             }
 
-            let errStr = GotorrentStartEngine(downloadPath)
+            let errStr = GotorrentStartEngine(downloadPath, configJson)
             if !errStr.isEmpty {
                 print("[GoTorrent] Failed to start engine: \(errStr)")
                 return
