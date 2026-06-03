@@ -1,0 +1,25 @@
+﻿2026-06-03T11:11:01.0679980Z ##[group]Run git config --global user.name "github-actions[bot]"
+2026-06-03T11:11:01.0680570Z [36;1mgit config --global user.name "github-actions[bot]"[0m
+2026-06-03T11:11:01.0681050Z [36;1mgit config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"[0m
+2026-06-03T11:11:01.0681480Z [36;1mgit add iosApp/Configuration/Version.xcconfig[0m
+2026-06-03T11:11:01.0681850Z [36;1mgit commit -m "chore: bump iOS build version to 73 [skip ci]"[0m
+2026-06-03T11:11:01.0682190Z [36;1mgit push origin HEAD:refs/heads/cmp-rewrite[0m
+2026-06-03T11:11:01.0960660Z shell: /bin/bash -e {0}
+2026-06-03T11:11:01.0960940Z env:
+2026-06-03T11:11:01.0961150Z   MD_APPLE_SDK_ROOT: /Applications/Xcode_26.3.app
+2026-06-03T11:11:01.0961590Z   JAVA_HOME: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T11:11:01.0962170Z   JAVA_HOME_17_ARM64: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T11:11:01.0962970Z   GRADLE_ACTION_ID: gradle/actions/setup-gradle
+2026-06-03T11:11:01.0963300Z   GRADLE_BUILD_ACTION_SETUP_COMPLETED: true
+2026-06-03T11:11:01.0963560Z   GRADLE_BUILD_ACTION_CACHE_RESTORED: true
+2026-06-03T11:11:01.0963960Z   DEVELOCITY_INJECTION_INIT_SCRIPT_NAME: gradle-actions.inject-develocity.init.gradle
+2026-06-03T11:11:01.0964390Z   DEVELOCITY_AUTO_INJECTION_CUSTOM_VALUE: gradle-actions
+2026-06-03T11:11:01.0964810Z   GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+2026-06-03T11:11:01.0965040Z   BUMPED_VERSION: 73
+2026-06-03T11:11:01.0965250Z   IPA_FILENAME: Nuvio-v0.2.1-Full.ipa
+2026-06-03T11:11:01.0965470Z ##[endgroup]
+2026-06-03T11:11:02.2010040Z [cmp-rewrite 5f72af46] chore: bump iOS build version to 73 [skip ci]
+2026-06-03T11:11:02.2011770Z  1 file changed, 1 insertion(+), 1 deletion(-)
+2026-06-03T11:11:02.5973350Z remote: Permission to kmrsaurabh/NuvioMobile-iOS.git denied to github-actions[bot].
+2026-06-03T11:11:02.5977040Z fatal: unable to access 'https://github.com/kmrsaurabh/NuvioMobile-iOS/': The requested URL returned error: 403
+2026-06-03T11:11:02.6013710Z ##[error]Process completed with exit code 128.

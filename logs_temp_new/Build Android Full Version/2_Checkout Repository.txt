@@ -1,0 +1,76 @@
+﻿2026-06-03T10:18:54.8935382Z ##[group]Run actions/checkout@v4
+2026-06-03T10:18:54.8936861Z with:
+2026-06-03T10:18:54.8937659Z   fetch-depth: 0
+2026-06-03T10:18:54.8938586Z   repository: kmrsaurabh/NuvioMobile-iOS
+2026-06-03T10:18:54.8950107Z   token: ***
+2026-06-03T10:18:54.8950981Z   ssh-strict: true
+2026-06-03T10:18:54.8951808Z   ssh-user: git
+2026-06-03T10:18:54.8952787Z   persist-credentials: true
+2026-06-03T10:18:54.8953743Z   clean: true
+2026-06-03T10:18:54.8954629Z   sparse-checkout-cone-mode: true
+2026-06-03T10:18:54.8955652Z   fetch-tags: false
+2026-06-03T10:18:54.8956536Z   show-progress: true
+2026-06-03T10:18:54.8957399Z   lfs: false
+2026-06-03T10:18:54.8958183Z   submodules: false
+2026-06-03T10:18:54.8959039Z   set-safe-directory: true
+2026-06-03T10:18:54.8960253Z ##[endgroup]
+2026-06-03T10:18:55.0130346Z Syncing repository: kmrsaurabh/NuvioMobile-iOS
+2026-06-03T10:18:55.0133602Z ##[group]Getting Git version info
+2026-06-03T10:18:55.0135104Z Working directory is '/home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS'
+2026-06-03T10:18:55.0137270Z [command]/usr/bin/git version
+2026-06-03T10:18:55.0221276Z git version 2.54.0
+2026-06-03T10:18:55.0251313Z ##[endgroup]
+2026-06-03T10:18:55.0270021Z Temporarily overriding HOME='/home/runner/work/_temp/5572ac0e-78dd-4f47-92c6-4c3264879e64' before making global git config changes
+2026-06-03T10:18:55.0275232Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-03T10:18:55.0286865Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS
+2026-06-03T10:18:55.0340257Z Deleting the contents of '/home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS'
+2026-06-03T10:18:55.0344011Z ##[group]Initializing the repository
+2026-06-03T10:18:55.0348457Z [command]/usr/bin/git init /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS
+2026-06-03T10:18:55.0468334Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-06-03T10:18:55.0471042Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-06-03T10:18:55.0474272Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-06-03T10:18:55.0477178Z hint: call:
+2026-06-03T10:18:55.0478132Z hint:
+2026-06-03T10:18:55.0479210Z hint: 	git config --global init.defaultBranch <name>
+2026-06-03T10:18:55.0480469Z hint:
+2026-06-03T10:18:55.0481635Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-06-03T10:18:55.0484347Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-06-03T10:18:55.0485932Z hint:
+2026-06-03T10:18:55.0486730Z hint: 	git branch -m <name>
+2026-06-03T10:18:55.0487630Z hint:
+2026-06-03T10:18:55.0489325Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-06-03T10:18:55.0491464Z Initialized empty Git repository in /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS/.git/
+2026-06-03T10:18:55.0495478Z [command]/usr/bin/git remote add origin https://github.com/kmrsaurabh/NuvioMobile-iOS
+2026-06-03T10:18:55.0539193Z ##[endgroup]
+2026-06-03T10:18:55.0540681Z ##[group]Disabling automatic garbage collection
+2026-06-03T10:18:55.0542951Z [command]/usr/bin/git config --local gc.auto 0
+2026-06-03T10:18:55.0572951Z ##[endgroup]
+2026-06-03T10:18:55.0574401Z ##[group]Setting up auth
+2026-06-03T10:18:55.0579650Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-03T10:18:55.0615268Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-03T10:18:55.1011286Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-03T10:18:55.1048704Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-03T10:18:55.1275340Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-03T10:18:55.1309270Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-03T10:18:55.1548592Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-06-03T10:18:55.1588986Z ##[endgroup]
+2026-06-03T10:18:55.1591643Z ##[group]Fetching the repository
+2026-06-03T10:18:55.1601541Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+2026-06-03T10:18:58.7839813Z From https://github.com/kmrsaurabh/NuvioMobile-iOS
+2026-06-03T10:18:58.7841133Z  * [new branch]        cmp-rewrite -> origin/cmp-rewrite
+2026-06-03T10:18:58.7878925Z [command]/usr/bin/git branch --list --remote origin/cmp-rewrite
+2026-06-03T10:18:58.7907528Z   origin/cmp-rewrite
+2026-06-03T10:18:58.7917593Z [command]/usr/bin/git rev-parse refs/remotes/origin/cmp-rewrite
+2026-06-03T10:18:58.7939493Z 7c4393b214a9803dd39fe6a06b5aac59c0a24330
+2026-06-03T10:18:58.7945090Z ##[endgroup]
+2026-06-03T10:18:58.7945894Z ##[group]Determining the checkout info
+2026-06-03T10:18:58.7946712Z ##[endgroup]
+2026-06-03T10:18:58.7951288Z [command]/usr/bin/git sparse-checkout disable
+2026-06-03T10:18:58.8007171Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-06-03T10:18:58.8037502Z ##[group]Checking out the ref
+2026-06-03T10:18:58.8042949Z [command]/usr/bin/git checkout --progress --force -B cmp-rewrite refs/remotes/origin/cmp-rewrite
+2026-06-03T10:18:59.3258312Z Switched to a new branch 'cmp-rewrite'
+2026-06-03T10:18:59.3259220Z branch 'cmp-rewrite' set up to track 'origin/cmp-rewrite'.
+2026-06-03T10:18:59.3300771Z ##[endgroup]
+2026-06-03T10:18:59.3363300Z [command]/usr/bin/git log -1 --format=%H
+2026-06-03T10:18:59.3386400Z 7c4393b214a9803dd39fe6a06b5aac59c0a24330

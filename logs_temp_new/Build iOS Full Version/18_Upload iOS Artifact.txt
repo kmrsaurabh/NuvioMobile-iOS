@@ -1,0 +1,37 @@
+﻿2026-06-03T11:10:58.4702210Z ##[group]Run actions/upload-artifact@v4
+2026-06-03T11:10:58.4702570Z with:
+2026-06-03T11:10:58.4702850Z   name: Nuvio-iOS-Full
+2026-06-03T11:10:58.4703260Z   path: iosApp/build/Build/Products/Release-iphoneos/Nuvio-v0.2.1-Full.ipa
+2026-06-03T11:10:58.4703770Z   if-no-files-found: warn
+2026-06-03T11:10:58.4704020Z   compression-level: 6
+2026-06-03T11:10:58.4704320Z   overwrite: false
+2026-06-03T11:10:58.4704590Z   include-hidden-files: false
+2026-06-03T11:10:58.4704910Z env:
+2026-06-03T11:10:58.4705130Z   MD_APPLE_SDK_ROOT: /Applications/Xcode_26.3.app
+2026-06-03T11:10:58.4705680Z   JAVA_HOME: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T11:10:58.4706370Z   JAVA_HOME_17_ARM64: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T11:10:58.4706920Z   GRADLE_ACTION_ID: gradle/actions/setup-gradle
+2026-06-03T11:10:58.4707190Z   GRADLE_BUILD_ACTION_SETUP_COMPLETED: true
+2026-06-03T11:10:58.4707540Z   GRADLE_BUILD_ACTION_CACHE_RESTORED: true
+2026-06-03T11:10:58.4708130Z   DEVELOCITY_INJECTION_INIT_SCRIPT_NAME: gradle-actions.inject-develocity.init.gradle
+2026-06-03T11:10:58.4708680Z   DEVELOCITY_AUTO_INJECTION_CUSTOM_VALUE: gradle-actions
+2026-06-03T11:10:58.4709270Z   GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+2026-06-03T11:10:58.4709570Z   BUMPED_VERSION: 73
+2026-06-03T11:10:58.4710010Z   IPA_FILENAME: Nuvio-v0.2.1-Full.ipa
+2026-06-03T11:10:58.4710410Z ##[endgroup]
+2026-06-03T11:10:58.8581630Z With the provided path, there will be 1 file uploaded
+2026-06-03T11:10:58.8585320Z Artifact name is valid!
+2026-06-03T11:10:58.8586190Z Root directory input is valid!
+2026-06-03T11:10:59.3372440Z Beginning upload of artifact content to blob storage
+2026-06-03T11:11:00.1599760Z Uploaded bytes 8388608
+2026-06-03T11:11:00.3386010Z Uploaded bytes 16777216
+2026-06-03T11:11:00.4987340Z Uploaded bytes 25165824
+2026-06-03T11:11:00.5531040Z Uploaded bytes 33554432
+2026-06-03T11:11:00.7341190Z Uploaded bytes 41943040
+2026-06-03T11:11:00.8068670Z Uploaded bytes 42734870
+2026-06-03T11:11:00.8589680Z Finished uploading artifact content to blob storage!
+2026-06-03T11:11:00.8595950Z SHA256 digest of uploaded artifact zip is f5e810a1336e77ed855822abd283b0461ee7d31257bcb4ef337c17f041d7d76c
+2026-06-03T11:11:00.8599290Z Finalizing artifact upload
+2026-06-03T11:11:01.0428480Z Artifact Nuvio-iOS-Full.zip successfully finalized. Artifact ID 7382923654
+2026-06-03T11:11:01.0432300Z Artifact Nuvio-iOS-Full has been successfully uploaded! Final size is 42734870 bytes. Artifact ID is 7382923654
+2026-06-03T11:11:01.0468610Z Artifact download URL: https://github.com/kmrsaurabh/NuvioMobile-iOS/actions/runs/26878469138/artifacts/7382923654
