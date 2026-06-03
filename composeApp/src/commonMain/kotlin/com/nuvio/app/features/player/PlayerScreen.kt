@@ -354,10 +354,11 @@ fun PlayerScreen(
                 val state = p2pStreamingState as P2pStreamingState.Connecting
                 val peers = state.peers
                 val speedInfo = if (state.downloadSpeed > 0) ", ${formatP2pSpeed(state.downloadSpeed)}" else ""
+                val customMessage = state.message ?: "Searching for peers"
                 if (peers > 0) {
-                    "Resolving metadata (Connected to $peers peers$speedInfo)..."
+                    "$customMessage (Connected to $peers peers$speedInfo)..."
                 } else {
-                    "Searching for peers..."
+                    "$customMessage..."
                 }
             }
             p2pStats != null -> {

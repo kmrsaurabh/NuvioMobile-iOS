@@ -191,9 +191,11 @@ actual object P2pStreamingEngine {
             if (files.isNotEmpty()) break
             
             if (stats != null) {
+                val progressMessage = if (stats.downloadSpeed > 0) "Downloading metadata" else "Connecting to peers"
                 _state.value = P2pStreamingState.Connecting(
                     peers = stats.peers,
-                    downloadSpeed = stats.downloadSpeed
+                    downloadSpeed = stats.downloadSpeed,
+                    message = progressMessage
                 )
             }
             Log.d(TAG, "Waiting for torrent metadata...")
