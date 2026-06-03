@@ -7,10 +7,6 @@ on:
       - build-test
       - cmp-rewrite
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
   build-ios-full:
     name: Build iOS Full Version
@@ -105,13 +101,11 @@ jobs:
           go get golang.org/x/mobile/bind
           gomobile bind -target=ios,iossimulator -o ../iosApp/Frameworks/GoTorrent.xcframework .
 
-      - name: Bump iOS Build Version
+      - name: Generate Timestamp Build Version
         run: |
-          cd iosApp/Configuration
-          CURRENT_VERSION=$(grep 'CURRENT_PROJECT_VERSION' Version.xcconfig | cut -d'=' -f2)
-          NEW_VERSION=$((CURRENT_VERSION + 1))
-          sed -i '' "s/CURRENT_PROJECT_VERSION=.*/CURRENT_PROJECT_VERSION=${NEW_VERSION}/" Version.xcconfig
-          echo "BUMPED_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+          BUMPED_VERSION=$(date -u +%y%m%d%H%M)
+          echo "BUMPED_VERSION=${BUMPED_VERSION}" >> $GITHUB_ENV
+          echo "Build version: ${BUMPED_VERSION}"
 
       - name: Build iOS App via Xcode
         run: |
@@ -133,6 +127,10 @@ jobs:
         run: |
           cd iosApp/build/Build/Products/Release-iphoneos
           APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Nuvio.app/Info.plist)
+          
+          # Inject timestamp build number into the compiled app
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ env.BUMPED_VERSION }}" Nuvio.app/Info.plist
+          
           rm -rf Payload
           mkdir -p Payload
           cp -R Nuvio.app Payload/
@@ -162,8 +160,9 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add iosApp/Configuration/Version.xcconfig apps.json
-          git commit -m "chore: bump iOS build version to ${{ env.BUMPED_VERSION }} and update apps.json [skip ci]"
+          git pull --rebase origin ${{ github.ref_name }}
+          git add apps.json
+          git commit -m "chore: update apps.json for build ${{ env.BUMPED_VERSION }} [skip ci]"
           git push origin HEAD:${{ github.ref }}
 
   build-android:
