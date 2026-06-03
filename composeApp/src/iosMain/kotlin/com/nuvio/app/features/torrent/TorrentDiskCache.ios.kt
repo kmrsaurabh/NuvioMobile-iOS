@@ -126,8 +126,29 @@ actual object TorrentDiskCache {
     }
 
     actual fun currentSizeBytes(): Long {
-        val metadata = loadMetadata()
-        return metadata.entries.sumOf { it.sizeBytes }
+        val dir = cacheDirectory()
+        val fileManager = NSFileManager.defaultManager
+        var totalSize = 0L
+        
+        try {
+            val enumerator = fileManager.enumeratorAtPath(dir)
+            var file = enumerator?.nextObject() as? String
+            while (file != null) {
+                val filePath = "$dir/$file"
+                val attrs = fileManager.attributesOfItemAtPath(filePath, error = null)
+                val size = when (val value = attrs?.get("NSFileSize")) {
+                    is Long -> value
+                    is Number -> value.toLong()
+                    else -> 0L
+                }
+                totalSize += size
+                file = enumerator?.nextObject() as? String
+            }
+        } catch (e: Exception) {
+            Logger.w(TAG, e) { "Failed to calculate cache size" }
+        }
+        
+        return totalSize
     }
 
     actual fun clearAll() {
