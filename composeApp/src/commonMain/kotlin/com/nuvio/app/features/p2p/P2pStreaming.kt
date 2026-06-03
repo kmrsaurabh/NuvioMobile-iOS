@@ -16,7 +16,7 @@ data class P2pStreamRequest(
 
 sealed class P2pStreamingState {
     data object Idle : P2pStreamingState()
-    data class Connecting(val peers: Int = 0) : P2pStreamingState()
+    data class Connecting(val peers: Int = 0, val downloadSpeed: Long = 0) : P2pStreamingState()
 
     data class Streaming(
         val localUrl: String,
@@ -44,8 +44,7 @@ expect object P2pStreamingEngine {
 internal fun formatP2pSpeed(bytesPerSec: Long): String {
     return when {
         bytesPerSec >= 1_048_576 -> "${(bytesPerSec / 1_048_576.0).formatOneDecimal()} MB/s"
-        bytesPerSec >= 1_024 -> "${(bytesPerSec / 1_024.0).formatNoDecimal()} KB/s"
-        else -> "$bytesPerSec B/s"
+        else -> "${(bytesPerSec / 1_024.0).formatNoDecimal()} KB/s"
     }
 }
 

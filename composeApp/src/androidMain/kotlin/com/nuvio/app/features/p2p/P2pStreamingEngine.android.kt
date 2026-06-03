@@ -191,7 +191,10 @@ actual object P2pStreamingEngine {
             if (files.isNotEmpty()) break
             
             if (stats != null) {
-                _state.value = P2pStreamingState.Connecting(peers = stats.peers)
+                _state.value = P2pStreamingState.Connecting(
+                    peers = stats.peers,
+                    downloadSpeed = stats.downloadSpeed
+                )
             }
             Log.d(TAG, "Waiting for torrent metadata...")
             delay(1_000L)

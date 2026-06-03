@@ -56,7 +56,10 @@ actual object P2pStreamingEngine {
                 delay(1000L)
                 status = NativeTorrentEngine.getSessionStatus(sessionId)
                 if (status != null) {
-                    _state.value = P2pStreamingState.Connecting(peers = status.peerCount)
+                    _state.value = P2pStreamingState.Connecting(
+                        peers = status.peerCount,
+                        downloadSpeed = status.downloadSpeedBps
+                    )
                 }
             }
 
