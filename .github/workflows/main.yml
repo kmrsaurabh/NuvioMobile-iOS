@@ -94,6 +94,14 @@ jobs:
           go get golang.org/x/mobile/bind
           gomobile bind -target=ios,iossimulator -o ../iosApp/Frameworks/GoTorrent.xcframework .
 
+      - name: Bump iOS Build Version
+        run: |
+          cd iosApp/Configuration
+          CURRENT_VERSION=$(grep 'CURRENT_PROJECT_VERSION' Version.xcconfig | cut -d'=' -f2)
+          NEW_VERSION=$((CURRENT_VERSION + 1))
+          sed -i '' "s/CURRENT_PROJECT_VERSION=.*/CURRENT_PROJECT_VERSION=${NEW_VERSION}/" Version.xcconfig
+          echo "BUMPED_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+
       - name: Build iOS App via Xcode
         run: |
           cd iosApp
@@ -121,6 +129,14 @@ jobs:
         with:
           name: Nuvio-iOS-Full
           path: iosApp/build/Build/Products/Release-iphoneos/${{ env.IPA_FILENAME }}
+
+      - name: Commit Updated Build Version
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add iosApp/Configuration/Version.xcconfig
+          git commit -m "chore: bump iOS build version to ${{ env.BUMPED_VERSION }} [skip ci]"
+          git push origin HEAD:${{ github.ref }}
 
   build-android:
     name: Build Android Full Version
