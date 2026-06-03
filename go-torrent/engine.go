@@ -247,11 +247,22 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	filenameHint := r.URL.Query().Get("filename")
+
 	files := t.Files()
 	var targetFile *torrent.File
 	if fileIdx >= 0 && fileIdx < len(files) {
 		targetFile = files[fileIdx]
-	} else {
+	} else if filenameHint != "" {
+		for _, f := range files {
+			if strings.Contains(strings.ToLower(f.DisplayPath()), strings.ToLower(filenameHint)) {
+				targetFile = f
+				break
+			}
+		}
+	}
+	
+	if targetFile == nil {
 		var largestSize int64
 		for _, f := range files {
 			if f.Length() > largestSize {

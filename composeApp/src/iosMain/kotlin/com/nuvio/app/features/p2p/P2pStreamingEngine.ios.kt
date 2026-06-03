@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import io.ktor.http.encodeURLParameter
 
 actual object P2pStreamingEngine {
     private val _state = MutableStateFlow<P2pStreamingState>(P2pStreamingState.Idle)
@@ -66,8 +67,13 @@ actual object P2pStreamingEngine {
                 throw P2pStreamingException("Failed to resolve torrent metadata or timed out")
             }
 
+            var finalUrl = status.streamUrl
+            if (!request.filename.isNullOrBlank()) {
+                finalUrl += "&filename=${request.filename.encodeURLParameter()}"
+            }
+
             _state.value = P2pStreamingState.Streaming(
-                localUrl = status.streamUrl,
+                localUrl = finalUrl,
                 downloadSpeed = status.downloadSpeedBps,
                 uploadSpeed = status.uploadSpeedBps,
                 peers = status.peerCount,
@@ -76,7 +82,7 @@ actual object P2pStreamingEngine {
                 totalProgress = status.downloadProgress,
             )
             startStatsPolling(sessionId)
-            return status.streamUrl
+            return finalUrl
         } else {
             // External server, just streaming URL, no stats polling
             _state.value = P2pStreamingState.Streaming(
