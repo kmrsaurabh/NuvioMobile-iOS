@@ -149,11 +149,12 @@ jobs:
           # Update apps.json in the repository root
           cd ${GITHUB_WORKSPACE}
           jq --arg version "${APP_VERSION}" \
+             --arg buildVersion "${{ env.BUMPED_VERSION }}" \
              --arg date "$CURRENT_DATE" \
              --arg url "$DOWNLOAD_URL" \
              --arg size "$IPA_SIZE" \
              --arg sha "$IPA_SHA256" \
-             '.apps[0].versions = [{"version": $version, "date": $date, "localizedDescription": "Automated build from CI.", "downloadURL": $url, "size": ($size | tonumber), "sha256": $sha}] + .apps[0].versions' \
+             '.apps[0].versions = [{"version": $version, "buildVersion": $buildVersion, "date": $date, "localizedDescription": "Automated build from CI.", "downloadURL": $url, "size": ($size | tonumber), "sha256": $sha}] + .apps[0].versions' \
              apps.json > tmp.json && mv tmp.json apps.json
 
       - name: Commit Updated Metadata

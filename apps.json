@@ -17,6 +17,7 @@
       "versions": [
         {
           "version": "0.2.1",
+          "buildVersion": "2606031903",
           "date": "2026-06-03T19:03:00Z",
           "localizedDescription": "Manual injection for v0.2.1-2606031903",
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/v0.2.1-2606031903/Nuvio-v0.2.1-2606031903-Full.ipa",
