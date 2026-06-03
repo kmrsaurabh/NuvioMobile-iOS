@@ -55,6 +55,34 @@ actual object TorrentDiskCache {
         return "$root/Library/Caches/$CACHE_DIR_NAME"
     }
 
+    private fun engineCacheDirectory(): String {
+        val root = NSHomeDirectory().trimEnd('/')
+        return "$root/Library/Caches/TorrentCache"
+    }
+
+    private fun dirSizeBytes(dir: String): Long {
+        val fileManager = NSFileManager.defaultManager
+        var totalSize = 0L
+        try {
+            val enumerator = fileManager.enumeratorAtPath(dir)
+            var file = enumerator?.nextObject() as? String
+            while (file != null) {
+                val filePath = "$dir/$file"
+                val attrs = fileManager.attributesOfItemAtPath(filePath, error = null)
+                val size = when (val value = attrs?.get("NSFileSize")) {
+                    is Long -> value
+                    is Number -> value.toLong()
+                    else -> 0L
+                }
+                totalSize += size
+                file = enumerator?.nextObject() as? String
+            }
+        } catch (e: Exception) {
+            Logger.w(TAG, e) { "Failed to calculate size of $dir" }
+        }
+        return totalSize
+    }
+
     private fun metadataFilePath(): String =
         "${cacheDirectory()}/$METADATA_FILE_NAME"
 
@@ -126,40 +154,22 @@ actual object TorrentDiskCache {
     }
 
     actual fun currentSizeBytes(): Long {
-        val dir = cacheDirectory()
-        val fileManager = NSFileManager.defaultManager
-        var totalSize = 0L
-        
-        try {
-            val enumerator = fileManager.enumeratorAtPath(dir)
-            var file = enumerator?.nextObject() as? String
-            while (file != null) {
-                val filePath = "$dir/$file"
-                val attrs = fileManager.attributesOfItemAtPath(filePath, error = null)
-                val size = when (val value = attrs?.get("NSFileSize")) {
-                    is Long -> value
-                    is Number -> value.toLong()
-                    else -> 0L
-                }
-                totalSize += size
-                file = enumerator?.nextObject() as? String
-            }
-        } catch (e: Exception) {
-            Logger.w(TAG, e) { "Failed to calculate cache size" }
-        }
-        
-        return totalSize
+        return dirSizeBytes(cacheDirectory()) + dirSizeBytes(engineCacheDirectory())
     }
 
     actual fun clearAll() {
-        val dir = cacheDirectory()
         val fileManager = NSFileManager.defaultManager
-        if (fileManager.fileExistsAtPath(dir)) {
-            fileManager.removeItemAtPath(dir, null)
+        val metaDir = cacheDirectory()
+        if (fileManager.fileExistsAtPath(metaDir)) {
+            fileManager.removeItemAtPath(metaDir, null)
+        }
+        val engineDir = engineCacheDirectory()
+        if (fileManager.fileExistsAtPath(engineDir)) {
+            fileManager.removeItemAtPath(engineDir, null)
         }
         ensureCacheDirectoryExists()
         saveMetadata(CacheMetadata())
-        Logger.d(TAG) { "Cleared all torrent cache" }
+        Logger.d(TAG) { "Cleared all torrent cache (metadata + engine)" }
     }
 
     actual fun evictIfNeeded(maxSizeMb: Int) {

@@ -49,7 +49,7 @@ actual object P2pStreamingEngine {
     actual suspend fun startStream(request: P2pStreamRequest): String = withContext(Dispatchers.IO) {
         stopStreamNow(stopBinary = false)
         val generation = nextStreamGeneration()
-        _state.value = P2pStreamingState.Connecting
+        _state.value = P2pStreamingState.Connecting()
 
         try {
             binary.start()
