@@ -132,21 +132,21 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R Nuvio.app Payload/
-          IPA_NAME="Nuvio-v${APP_VERSION}-Full.ipa"
+          IPA_NAME="Nuvio-v${APP_VERSION}-${{ env.BUMPED_VERSION }}-Full.ipa"
           zip -q -r "$IPA_NAME" Payload
           
           # Create GitHub Release
-          gh release create "v1.0.${APP_VERSION}" "$IPA_NAME" --title "v1.0.${APP_VERSION}" --notes "Automated iOS build."
+          gh release create "v${APP_VERSION}-${{ env.BUMPED_VERSION }}" "$IPA_NAME" --title "v${APP_VERSION} (Build ${{ env.BUMPED_VERSION }})" --notes "Automated iOS build."
           
           # Compute hashes for SideStore
           IPA_SIZE=$(stat -f%z "$IPA_NAME")
           IPA_SHA256=$(shasum -a 256 "$IPA_NAME" | awk '{print $1}')
-          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/v1.0.${APP_VERSION}/$IPA_NAME"
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/v${APP_VERSION}-${{ env.BUMPED_VERSION }}/$IPA_NAME"
           CURRENT_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           
           # Update apps.json in the repository root
           cd ${GITHUB_WORKSPACE}
-          jq --arg version "1.0.${APP_VERSION}" \
+          jq --arg version "${APP_VERSION}.${{ env.BUMPED_VERSION }}" \
              --arg date "$CURRENT_DATE" \
              --arg url "$DOWNLOAD_URL" \
              --arg size "$IPA_SIZE" \
