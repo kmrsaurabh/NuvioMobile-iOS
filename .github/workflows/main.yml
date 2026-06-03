@@ -32,6 +32,17 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Gradle Cache
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Cache Konan (Kotlin Native Toolchain)
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle.kts', '**/*.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-konan-
+
       - name: Generate local.properties
         run: |
           cat << 'EOF' > local.properties
@@ -52,6 +63,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.21'
+          cache: true
+          cache-dependency-path: go-torrent/go.sum
           
       - name: Build GoTorrent Framework
         run: |
@@ -104,6 +117,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Gradle Cache
+        uses: gradle/actions/setup-gradle@v3
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
@@ -123,13 +139,7 @@ jobs:
           DIRECT_DEBRID_API_BASE_URL=${{ secrets.DIRECT_DEBRID_API_BASE_URL }}
           NUVIO_ANDROID_DISTRIBUTION=full
           EOF
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
 
       - name: Build Full APK
         run: |
