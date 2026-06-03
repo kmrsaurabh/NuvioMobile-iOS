@@ -351,7 +351,8 @@ fun PlayerScreen(
         val p2pInitialLoadingMessage = when {
             !isP2pPlaybackActive || initialLoadCompleted -> null
             p2pStreamingState is P2pStreamingState.Connecting -> {
-                val peers = p2pStreamingState.peers
+                val state = p2pStreamingState as P2pStreamingState.Connecting
+                val peers = state.peers
                 if (peers > 0) {
                     "Resolving metadata (Connected to $peers peers)..."
                 } else {
