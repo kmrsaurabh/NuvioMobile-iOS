@@ -120,8 +120,9 @@ jobs:
         run: |
           cd iosApp/build/Build/Products/Release-iphoneos
           APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Nuvio.app/Info.plist)
-          mkdir Payload
-          mv Nuvio.app Payload/
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R Nuvio.app Payload/
           zip -q -r "Nuvio-v${APP_VERSION}-Full.ipa" Payload
           echo "IPA_FILENAME=Nuvio-v${APP_VERSION}-Full.ipa" >> $GITHUB_ENV
       - name: Upload iOS Artifact
