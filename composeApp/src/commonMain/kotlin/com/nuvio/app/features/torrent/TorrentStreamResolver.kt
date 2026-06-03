@@ -51,7 +51,10 @@ object TorrentStreamResolver {
             if (!NativeTorrentEngine.isRunning()) {
                 NativeTorrentEngine.start(settings)
             }
-            val effectiveMagnet = magnetUri ?: "magnet:?xt=urn:btih:${infoHash!!}"
+            val effectiveMagnet = appendTrackersToMagnet(
+                baseMagnet = magnetUri ?: "magnet:?xt=urn:btih:${infoHash!!}",
+                trackers = settings.parsedCustomTrackers()
+            )
             val session = NativeTorrentEngine.addTorrent(effectiveMagnet, infoHash, fileIdx)
                 ?: return TorrentResolveResult.Error("Failed to start torrent session")
             Logger.d(TAG) { "Native torrent session started: streamUrl=${session.streamUrl}" }
@@ -59,6 +62,23 @@ object TorrentStreamResolver {
         } catch (e: Exception) {
             Logger.e(TAG, e) { "Native engine resolution failed" }
             TorrentResolveResult.Error("Torrent engine error: ${e.message}")
+        }
+    }
+
+    private fun appendTrackersToMagnet(baseMagnet: String, trackers: List<String>): String {
+        if (trackers.isEmpty()) return baseMagnet
+        val existingTrackers = baseMagnet.split("&tr=").drop(1).map { it.substringBefore("&") }
+        val newTrackers = trackers.filter { tracker ->
+            existingTrackers.none { it == tracker || it.contains(tracker) }
+        }
+        if (newTrackers.isEmpty()) return baseMagnet
+        
+        return buildString {
+            append(baseMagnet)
+            newTrackers.forEach { tracker ->
+                append("&tr=")
+                append(tracker) // Assume the tracker might not be URL encoded, though magnet spec says it should be. The engine handles standard ones.
+            }
         }
     }
 

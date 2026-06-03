@@ -1967,12 +1967,15 @@ fun PlayerScreen(
             initialLoadCompleted = false
 
             try {
+                val settings = TorrentStreamingRepository.uiState.value
+                val customTrackers = settings.parsedCustomTrackers()
+                
                 val localUrl = P2pStreamingEngine.startStream(
                     P2pStreamRequest(
                         infoHash = infoHash,
                         fileIdx = requestedFileIdx,
                         filename = requestedFilename,
-                        trackers = requestedTrackers,
+                        trackers = (requestedTrackers + customTrackers).distinct(),
                     ),
                 )
                 if (activeTorrentInfoHash == infoHash && activeTorrentFileIdx == requestedFileIdx) {
