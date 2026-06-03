@@ -70,6 +70,20 @@ object TorrentStreamingRepository {
         publish(_uiState.value.copy(enableUpnp = value))
     }
 
+    fun setForceTcp(value: Boolean) {
+        ensureLoaded()
+        if (_uiState.value.forceTcp == value) return
+        TorrentStreamingSettingsStorage.saveForceTcp(value)
+        publish(_uiState.value.copy(forceTcp = value))
+    }
+
+    fun setCustomTrackers(value: String) {
+        ensureLoaded()
+        if (_uiState.value.customTrackers == value) return
+        TorrentStreamingSettingsStorage.saveCustomTrackers(value)
+        publish(_uiState.value.copy(customTrackers = value))
+    }
+
     fun setPreferredPort(value: Int) {
         ensureLoaded()
         val clamped = value.coerceIn(0, 65535)
@@ -94,6 +108,8 @@ object TorrentStreamingRepository {
                 uploadSpeedLimitKbps = TorrentStreamingSettingsStorage.loadUploadSpeedLimit() ?: 0,
                 enableUpload = TorrentStreamingSettingsStorage.loadEnableUpload() ?: false,
                 enableUpnp = TorrentStreamingSettingsStorage.loadEnableUpnp() ?: false,
+                forceTcp = TorrentStreamingSettingsStorage.loadForceTcp() ?: false,
+                customTrackers = TorrentStreamingSettingsStorage.loadCustomTrackers() ?: "",
                 preferredPort = TorrentStreamingSettingsStorage.loadPreferredPort() ?: 0,
             ),
         )

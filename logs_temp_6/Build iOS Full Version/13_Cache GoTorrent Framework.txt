@@ -1,0 +1,25 @@
+﻿2026-06-03T14:04:24.3784390Z ##[group]Run actions/cache@v4
+2026-06-03T14:04:24.3785000Z with:
+2026-06-03T14:04:24.3785290Z   path: iosApp/Frameworks/GoTorrent.xcframework
+2026-06-03T14:04:24.3785990Z   key: macOS-gotorrent-3cc941795b69aa8f4cf905f14a29f6b2ddafef15d0cee6b1034e39c8116bfe9f
+2026-06-03T14:04:24.3786450Z   enableCrossOsArchive: false
+2026-06-03T14:04:24.3787000Z   fail-on-cache-miss: false
+2026-06-03T14:04:24.3787320Z   lookup-only: false
+2026-06-03T14:04:24.3787550Z   save-always: false
+2026-06-03T14:04:24.3787800Z env:
+2026-06-03T14:04:24.3788090Z   MD_APPLE_SDK_ROOT: /Applications/Xcode_26.3.app
+2026-06-03T14:04:24.3788570Z   JAVA_HOME: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T14:04:24.3789300Z   JAVA_HOME_17_ARM64: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T14:04:24.3789880Z   GRADLE_ACTION_ID: gradle/actions/setup-gradle
+2026-06-03T14:04:24.3790200Z   GRADLE_BUILD_ACTION_SETUP_COMPLETED: true
+2026-06-03T14:04:24.3790720Z   GRADLE_BUILD_ACTION_CACHE_RESTORED: true
+2026-06-03T14:04:24.3791140Z   DEVELOCITY_INJECTION_INIT_SCRIPT_NAME: gradle-actions.inject-develocity.init.gradle
+2026-06-03T14:04:24.3792000Z   DEVELOCITY_AUTO_INJECTION_CUSTOM_VALUE: gradle-actions
+2026-06-03T14:04:24.3792420Z   GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+2026-06-03T14:04:24.3813960Z ##[endgroup]
+2026-06-03T14:04:24.8930630Z Cache hit for: macOS-gotorrent-3cc941795b69aa8f4cf905f14a29f6b2ddafef15d0cee6b1034e39c8116bfe9f
+2026-06-03T14:04:25.8209750Z Received 35800159 of 35800159 (100.0%), 46.4 MBs/sec
+2026-06-03T14:04:25.8212600Z Cache Size: ~34 MB (35800159 B)
+2026-06-03T14:04:25.8267520Z [command]/opt/homebrew/bin/gtar -xf /Users/runner/work/_temp/5f524d2e-0190-43af-8c69-e6fe09913def/cache.tzst -P -C /Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS --delay-directory-restore --use-compress-program unzstd
+2026-06-03T14:04:26.0550360Z Cache restored successfully
+2026-06-03T14:04:26.0637720Z Cache restored from key: macOS-gotorrent-3cc941795b69aa8f4cf905f14a29f6b2ddafef15d0cee6b1034e39c8116bfe9f

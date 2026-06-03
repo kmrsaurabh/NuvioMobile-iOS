@@ -1,0 +1,37 @@
+﻿2026-06-03T14:04:06.2000940Z ##[group]Run actions/cache@v4
+2026-06-03T14:04:06.2001260Z with:
+2026-06-03T14:04:06.2001460Z   path: iosApp/build
+composeApp/build
+
+2026-06-03T14:04:06.2005630Z   key: macOS-xcode-composeapp-build-95a16edeac38e0a417f43422855b55bd0e24923f
+2026-06-03T14:04:06.2006120Z   restore-keys: macOS-xcode-composeapp-build-
+
+2026-06-03T14:04:06.2006370Z   enableCrossOsArchive: false
+2026-06-03T14:04:06.2006560Z   fail-on-cache-miss: false
+2026-06-03T14:04:06.2006730Z   lookup-only: false
+2026-06-03T14:04:06.2006890Z   save-always: false
+2026-06-03T14:04:06.2007030Z env:
+2026-06-03T14:04:06.2007240Z   MD_APPLE_SDK_ROOT: /Applications/Xcode_26.3.app
+2026-06-03T14:04:06.2007760Z   JAVA_HOME: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T14:04:06.2008370Z   JAVA_HOME_17_ARM64: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T14:04:06.2008830Z   GRADLE_ACTION_ID: gradle/actions/setup-gradle
+2026-06-03T14:04:06.2009110Z   GRADLE_BUILD_ACTION_SETUP_COMPLETED: true
+2026-06-03T14:04:06.2009420Z   GRADLE_BUILD_ACTION_CACHE_RESTORED: true
+2026-06-03T14:04:06.2009800Z   DEVELOCITY_INJECTION_INIT_SCRIPT_NAME: gradle-actions.inject-develocity.init.gradle
+2026-06-03T14:04:06.2010250Z   DEVELOCITY_AUTO_INJECTION_CUSTOM_VALUE: gradle-actions
+2026-06-03T14:04:06.2010580Z   GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+2026-06-03T14:04:06.2010850Z ##[endgroup]
+2026-06-03T14:04:06.5530370Z Cache hit for restore-key: macOS-xcode-composeapp-build-34c854747869e639b15b376c73a5189238f3d74b
+2026-06-03T14:04:07.7344860Z Received 46137344 of 823327648 (5.6%), 43.9 MBs/sec
+2026-06-03T14:04:08.7312150Z Received 155189248 of 823327648 (18.8%), 73.9 MBs/sec
+2026-06-03T14:04:09.7844800Z Received 268435456 of 823327648 (32.6%), 83.7 MBs/sec
+2026-06-03T14:04:10.7874560Z Received 360710144 of 823327648 (43.8%), 84.7 MBs/sec
+2026-06-03T14:04:11.7876330Z Received 457179136 of 823327648 (55.5%), 86.2 MBs/sec
+2026-06-03T14:04:12.7883640Z Received 541065216 of 823327648 (65.7%), 85.1 MBs/sec
+2026-06-03T14:04:13.7911590Z Received 658505728 of 823327648 (80.0%), 88.9 MBs/sec
+2026-06-03T14:04:14.7922380Z Received 750780416 of 823327648 (91.2%), 88.8 MBs/sec
+2026-06-03T14:04:15.7098270Z Received 823327648 of 823327648 (100.0%), 87.4 MBs/sec
+2026-06-03T14:04:15.7105120Z Cache Size: ~785 MB (823327648 B)
+2026-06-03T14:04:15.7211460Z [command]/opt/homebrew/bin/gtar -xf /Users/runner/work/_temp/669d7a7a-61c0-4c53-8208-bede4ab32a1d/cache.tzst -P -C /Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS --delay-directory-restore --use-compress-program unzstd
+2026-06-03T14:04:24.0057670Z Cache restored successfully
+2026-06-03T14:04:24.0946800Z Cache restored from key: macOS-xcode-composeapp-build-34c854747869e639b15b376c73a5189238f3d74b

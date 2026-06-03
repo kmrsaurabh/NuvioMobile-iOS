@@ -11,6 +11,8 @@ actual object TorrentStreamingSettingsStorage {
     private const val uploadSpeedLimitKey = "torrent_upload_speed_limit"
     private const val enableUploadKey = "torrent_enable_upload"
     private const val enableUpnpKey = "torrent_enable_upnp"
+    private const val forceTcpKey = "torrent_force_tcp"
+    private const val customTrackersKey = "torrent_custom_trackers"
     private const val preferredPortKey = "torrent_preferred_port"
 
     actual fun loadEnabled(): Boolean? = loadBoolean(enabledKey)
@@ -53,6 +55,18 @@ actual object TorrentStreamingSettingsStorage {
 
     actual fun saveEnableUpnp(enable: Boolean) {
         saveBoolean(enableUpnpKey, enable)
+    }
+
+    actual fun loadForceTcp(): Boolean? = loadBoolean(forceTcpKey)
+
+    actual fun saveForceTcp(force: Boolean) {
+        saveBoolean(forceTcpKey, force)
+    }
+
+    actual fun loadCustomTrackers(): String? = loadString(customTrackersKey)
+
+    actual fun saveCustomTrackers(trackers: String) {
+        saveString(customTrackersKey, trackers)
     }
 
     actual fun loadPreferredPort(): Int? = loadInt(preferredPortKey)

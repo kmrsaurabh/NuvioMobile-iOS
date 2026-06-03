@@ -11,14 +11,16 @@ import (
 	"time"
 
 	"github.com/anacrolix/torrent"
+	"github.com/anacrolix/torrent/metainfo"
 	"golang.org/x/time/rate"
 )
 
 var (
-	client *torrent.Client
-	server *http.Server
-	port   int
-	mu     sync.RWMutex
+	client               *torrent.Client
+	server               *http.Server
+	port                 int
+	mu                   sync.RWMutex
+	globalCustomTrackers []string
 )
 
 type SessionStatus struct {
@@ -46,9 +48,11 @@ type EngineConfig struct {
 	MaxCacheSizeBytes  int64 `json:"maxCacheSizeBytes"`
 	MaxDownloadRate    int64 `json:"maxDownloadRate"`
 	MaxUploadRate      int64 `json:"maxUploadRate"`
-	MaxPeerConnections int   `json:"maxPeerConnections"`
-	EnableUpnp         bool  `json:"enableUpnp"`
-	EnableDHT          bool  `json:"enableDHT"`
+	MaxPeerConnections int    `json:"maxPeerConnections"`
+	EnableUpnp         bool   `json:"enableUpnp"`
+	EnableDHT          bool   `json:"enableDHT"`
+	ForceTcp           bool   `json:"forceTcp"`
+	CustomTrackers     string `json:"customTrackers"`
 }
 
 func StartEngine(dataDir string, configJson string) string {
@@ -69,6 +73,19 @@ func StartEngine(dataDir string, configJson string) string {
 	
 	// Apply dynamic settings
 	cfg.NoDefaultPortForwarding = !parsedCfg.EnableUpnp
+	cfg.DisableUTP = parsedCfg.ForceTcp
+
+	globalCustomTrackers = nil
+	if parsedCfg.CustomTrackers != "" {
+		parts := strings.FieldsFunc(parsedCfg.CustomTrackers, func(c rune) bool {
+			return c == ',' || c == '\n' || c == '\r'
+		})
+		for _, p := range parts {
+			if p != "" {
+				globalCustomTrackers = append(globalCustomTrackers, strings.TrimSpace(p))
+			}
+		}
+	}
 	
 	if parsedCfg.MaxPeerConnections > 0 {
 		cfg.EstablishedConnsPerTorrent = parsedCfg.MaxPeerConnections
@@ -124,6 +141,15 @@ func AddMagnet(uri string, fileIdx int) string {
 
 	if client == nil {
 		return `{"errorMessage": "Engine not started"}`
+	}
+
+	if len(globalCustomTrackers) > 0 {
+		if mag, err := metainfo.ParseMagnetUri(uri); err == nil {
+			for _, tr := range globalCustomTrackers {
+				mag.Trackers = append(mag.Trackers, tr)
+			}
+			uri = mag.String()
+		}
 	}
 
 	t, err := client.AddMagnet(uri)

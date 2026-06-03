@@ -8,6 +8,8 @@ data class TorrentStreamingSettings(
     val uploadSpeedLimitKbps: Int = 0,
     val enableUpload: Boolean = false,
     val enableUpnp: Boolean = false,
+    val forceTcp: Boolean = false,
+    val customTrackers: String = "",
     val preferredPort: Int = 0,
 ) {
     val isNativeModeAvailable: Boolean
