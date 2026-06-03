@@ -14,7 +14,16 @@
       "localizedDescription": "Nuvio is a modern media hub delivering a shared Compose UI with playback, collections, and Stremio addon ecosystem integration.",
       "iconURL": "https://raw.githubusercontent.com/tapframe/NuvioTV/main/assets/brand/app_logo_wordmark.png",
       "tintColor": "#2196F3",
-      "versions": []
+      "versions": [
+        {
+          "version": "0.2.1.2606031903",
+          "date": "2026-06-03T19:03:00Z",
+          "localizedDescription": "Manual injection for v0.2.1-2606031903",
+          "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/v0.2.1-2606031903/Nuvio-v0.2.1-2606031903-Full.ipa",
+          "size": 40000000,
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
     }
   ]
 }
