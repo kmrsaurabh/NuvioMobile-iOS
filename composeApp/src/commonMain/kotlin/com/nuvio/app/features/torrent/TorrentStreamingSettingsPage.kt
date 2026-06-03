@@ -107,20 +107,7 @@ internal fun TorrentStreamingSettingsContent(
                             }
                         },
                     )
-                    SettingsGroupDivider(isTablet = isTablet)
-                    SettingsNavigationRow(
-                        title = "Max connections per torrent",
-                        description = settings.maxConnectionsPerTorrent.toString(),
-                        isTablet = isTablet,
-                        onClick = { /* TODO: show max connections dialog */ },
-                    )
-                    SettingsGroupDivider(isTablet = isTablet)
-                    SettingsNavigationRow(
-                        title = "Cache size",
-                        description = "${settings.cacheSizeMb} MB",
-                        isTablet = isTablet,
-                        onClick = { /* TODO: show cache size dialog */ },
-                    )
+
                 }
             }
         }
