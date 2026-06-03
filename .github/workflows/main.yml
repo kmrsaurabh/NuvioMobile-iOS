@@ -11,6 +11,8 @@ jobs:
   build-ios-full:
     name: Build iOS Full Version
     runs-on: macos-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository & Submodules
         uses: actions/checkout@v4
