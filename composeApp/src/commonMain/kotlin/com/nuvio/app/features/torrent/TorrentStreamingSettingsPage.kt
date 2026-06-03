@@ -72,6 +72,15 @@ internal fun TorrentStreamingSettingsContent(
                         isTablet = isTablet,
                         onCheckedChange = TorrentStreamingRepository::setEnableUpload,
                     )
+                    if (settings.enableUpload) {
+                        SettingsGroupDivider(isTablet = isTablet)
+                        SettingsNavigationRow(
+                            title = "Upload Speed Limit",
+                            description = if (settings.uploadSpeedLimitKbps == 0) "Unlimited" else "${settings.uploadSpeedLimitKbps} KB/s",
+                            isTablet = isTablet,
+                            onClick = { showUploadLimitDialog = true },
+                        )
+                    }
                     SettingsGroupDivider(isTablet = isTablet)
                     val isRunning = NativeTorrentEngine.isRunning()
                     androidx.compose.runtime.LaunchedEffect(Unit) {
@@ -139,16 +148,7 @@ internal fun TorrentStreamingSettingsContent(
                             }
                         }
                     )
-                    SettingsGroupDivider(isTablet = isTablet)
-                    if (settings.enableUpload) {
-                        SettingsNavigationRow(
-                            title = "Upload Speed Limit",
-                            description = if (settings.uploadSpeedLimitKbps == 0) "Unlimited" else "${settings.uploadSpeedLimitKbps} KB/s",
-                            isTablet = isTablet,
-                            onClick = { showUploadLimitDialog = true },
-                        )
-                        SettingsGroupDivider(isTablet = isTablet)
-                    }
+
                     SettingsNavigationRow(
                         title = "Disk Cache Size Limit",
                         description = if (settings.cacheSizeMb == 0) "Unlimited" else "${settings.cacheSizeMb} MB",
