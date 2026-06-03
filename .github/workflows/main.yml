@@ -7,6 +7,10 @@ on:
       - build-test
       - cmp-rewrite
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-ios-full:
     name: Build iOS Full Version
