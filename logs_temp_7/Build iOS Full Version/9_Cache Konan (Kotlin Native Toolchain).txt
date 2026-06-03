@@ -1,0 +1,33 @@
+﻿2026-06-03T14:33:12.2325740Z ##[group]Run actions/cache@v4
+2026-06-03T14:33:12.2326040Z with:
+2026-06-03T14:33:12.2326260Z   path: ~/.konan
+2026-06-03T14:33:12.2326550Z   key: macOS-konan-c07bc849baa468f23c22b58b54a38a5fe9c60b344bbb5eef0d1783956aee7efb
+2026-06-03T14:33:12.2326900Z   restore-keys: macOS-konan-
+
+2026-06-03T14:33:12.2327130Z   enableCrossOsArchive: false
+2026-06-03T14:33:12.2327320Z   fail-on-cache-miss: false
+2026-06-03T14:33:12.2327590Z   lookup-only: false
+2026-06-03T14:33:12.2327750Z   save-always: false
+2026-06-03T14:33:12.2327900Z env:
+2026-06-03T14:33:12.2328060Z   MD_APPLE_SDK_ROOT: /Applications/Xcode_26.3.app
+2026-06-03T14:33:12.2328450Z   JAVA_HOME: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T14:33:12.2328970Z   JAVA_HOME_17_ARM64: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T14:33:12.2329370Z   GRADLE_ACTION_ID: gradle/actions/setup-gradle
+2026-06-03T14:33:12.2329610Z   GRADLE_BUILD_ACTION_SETUP_COMPLETED: true
+2026-06-03T14:33:12.2329880Z   GRADLE_BUILD_ACTION_CACHE_RESTORED: true
+2026-06-03T14:33:12.2330230Z   DEVELOCITY_INJECTION_INIT_SCRIPT_NAME: gradle-actions.inject-develocity.init.gradle
+2026-06-03T14:33:12.2330630Z   DEVELOCITY_AUTO_INJECTION_CUSTOM_VALUE: gradle-actions
+2026-06-03T14:33:12.2330900Z   GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+2026-06-03T14:33:12.2331090Z ##[endgroup]
+2026-06-03T14:33:12.7639100Z Cache hit for: macOS-konan-c07bc849baa468f23c22b58b54a38a5fe9c60b344bbb5eef0d1783956aee7efb
+2026-06-03T14:33:14.0796070Z Received 0 of 360922365 (0.0%), 0.0 MBs/sec
+2026-06-03T14:33:15.0892350Z Received 75497472 of 360922365 (20.9%), 36.0 MBs/sec
+2026-06-03T14:33:16.0814700Z Received 134217728 of 360922365 (37.2%), 42.7 MBs/sec
+2026-06-03T14:33:17.0821730Z Received 218103808 of 360922365 (60.4%), 52.0 MBs/sec
+2026-06-03T14:33:18.0852540Z Received 268435456 of 360922365 (74.4%), 51.2 MBs/sec
+2026-06-03T14:33:19.0864080Z Received 344145149 of 360922365 (95.4%), 54.6 MBs/sec
+2026-06-03T14:33:19.5455940Z Received 360922365 of 360922365 (100.0%), 53.2 MBs/sec
+2026-06-03T14:33:19.5463940Z Cache Size: ~344 MB (360922365 B)
+2026-06-03T14:33:19.5598870Z [command]/opt/homebrew/bin/gtar -xf /Users/runner/work/_temp/e94938c6-c303-4da2-ba83-52c52353495d/cache.tzst -P -C /Users/runner/work/NuvioMobile-iOS/NuvioMobile-iOS --delay-directory-restore --use-compress-program unzstd
+2026-06-03T14:33:35.2943870Z Cache restored successfully
+2026-06-03T14:33:35.3573620Z Cache restored from key: macOS-konan-c07bc849baa468f23c22b58b54a38a5fe9c60b344bbb5eef0d1783956aee7efb

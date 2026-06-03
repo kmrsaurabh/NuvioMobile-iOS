@@ -1,0 +1,36 @@
+﻿2026-06-03T14:32:51.7987470Z Current runner version: '2.334.0'
+2026-06-03T14:32:51.8002580Z ##[group]Runner Image Provisioner
+2026-06-03T14:32:51.8003090Z Hosted Compute Agent
+2026-06-03T14:32:51.8003460Z Version: 20260520.533
+2026-06-03T14:32:51.8003860Z Commit: 189110e25284a9812c124fd27b339e2fb4f2f9db
+2026-06-03T14:32:51.8004330Z Build Date: 2026-05-20T17:44:04Z
+2026-06-03T14:32:51.8004770Z Worker ID: {26e1ccad-72b4-4e15-8af9-23aea0628fdc}
+2026-06-03T14:32:51.8005250Z Azure Region: westus
+2026-06-03T14:32:51.8005610Z ##[endgroup]
+2026-06-03T14:32:51.8006430Z ##[group]Operating System
+2026-06-03T14:32:51.8006810Z macOS
+2026-06-03T14:32:51.8007140Z 15.7.7
+2026-06-03T14:32:51.8007500Z 24G720
+2026-06-03T14:32:51.8007830Z ##[endgroup]
+2026-06-03T14:32:51.8008190Z ##[group]Runner Image
+2026-06-03T14:32:51.8008570Z Image: macos-15-arm64
+2026-06-03T14:32:51.8009080Z Version: 20260527.0100.1
+2026-06-03T14:32:51.8009820Z Included Software: https://github.com/actions/runner-images/blob/macos-15-arm64/20260527.0100/images/macos/macos-15-arm64-Readme.md
+2026-06-03T14:32:51.8010930Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-15-arm64%2F20260527.0100
+2026-06-03T14:32:51.8011580Z ##[endgroup]
+2026-06-03T14:32:51.8012280Z ##[group]GITHUB_TOKEN Permissions
+2026-06-03T14:32:51.8013270Z Contents: write
+2026-06-03T14:32:51.8013650Z Metadata: read
+2026-06-03T14:32:51.8014010Z ##[endgroup]
+2026-06-03T14:32:51.8015330Z Secret source: Actions
+2026-06-03T14:32:51.8015780Z Prepare workflow directory
+2026-06-03T14:32:51.8226370Z Prepare all required actions
+2026-06-03T14:32:51.8259770Z Getting action download info
+2026-06-03T14:32:52.8226290Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-06-03T14:32:53.0261700Z Download action repository 'chetan/git-restore-mtime-action@v2' (SHA:d186aca54f8760da4dec55313195e51ed3ebb0b3)
+2026-06-03T14:32:53.4210300Z Download action repository 'maxim-lobanov/setup-xcode@v1' (SHA:ed7a3b1fda3918c0306d1b724322adc0b8cc0a90)
+2026-06-03T14:32:53.8791080Z Download action repository 'actions/setup-java@v4' (SHA:c1e323688fd81a25caa38c78aa6df2d33d3e20d9)
+2026-06-03T14:32:54.4556560Z Download action repository 'gradle/actions@v3' (SHA:d9c87d481d55275bb5441eef3fe0e46805f9ef70)
+2026-06-03T14:32:55.2970280Z Download action repository 'actions/cache@v4' (SHA:0057852bfaa89a56745cba8c7296529d2fc39830)
+2026-06-03T14:32:55.4011190Z Download action repository 'actions/setup-go@v5' (SHA:40f1582b2485089dde7abd97c1529aa768e1baff)
+2026-06-03T14:32:56.0264060Z Complete job name: Build iOS Full Version

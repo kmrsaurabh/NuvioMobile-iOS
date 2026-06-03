@@ -1,0 +1,78 @@
+﻿2026-06-03T14:33:35.4888040Z ##[group]Run actions/setup-go@v5
+2026-06-03T14:33:35.4888310Z with:
+2026-06-03T14:33:35.4888540Z   go-version: 1.21
+2026-06-03T14:33:35.4888730Z   cache: true
+2026-06-03T14:33:35.4889000Z   cache-dependency-path: go-torrent/go.sum
+2026-06-03T14:33:35.4889320Z   check-latest: false
+2026-06-03T14:33:35.4891360Z   token: ***
+2026-06-03T14:33:35.4891590Z env:
+2026-06-03T14:33:35.4891860Z   MD_APPLE_SDK_ROOT: /Applications/Xcode_26.3.app
+2026-06-03T14:33:35.4892290Z   JAVA_HOME: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T14:33:35.4892940Z   JAVA_HOME_17_ARM64: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T14:33:35.4893410Z   GRADLE_ACTION_ID: gradle/actions/setup-gradle
+2026-06-03T14:33:35.4893750Z   GRADLE_BUILD_ACTION_SETUP_COMPLETED: true
+2026-06-03T14:33:35.4894080Z   GRADLE_BUILD_ACTION_CACHE_RESTORED: true
+2026-06-03T14:33:35.4894470Z   DEVELOCITY_INJECTION_INIT_SCRIPT_NAME: gradle-actions.inject-develocity.init.gradle
+2026-06-03T14:33:35.4895320Z   DEVELOCITY_AUTO_INJECTION_CUSTOM_VALUE: gradle-actions
+2026-06-03T14:33:35.4895660Z   GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+2026-06-03T14:33:35.4896010Z ##[endgroup]
+2026-06-03T14:33:35.6898860Z Setup go version spec 1.21
+2026-06-03T14:33:35.6988180Z Attempting to download 1.21...
+2026-06-03T14:33:36.9566800Z matching 1.21...
+2026-06-03T14:33:36.9922400Z Acquiring 1.21.13 from https://github.com/actions/go-versions/releases/download/1.21.13-10277905115/go-1.21.13-darwin-arm64.tar.gz
+2026-06-03T14:33:37.8471020Z Extracting Go...
+2026-06-03T14:33:37.8841670Z [command]/usr/bin/tar xz -C /Users/runner/work/_temp/9d656b5d-e053-40ac-9ee2-ffe4f8808e9a -f /Users/runner/work/_temp/f19cdbcd-6fcd-4b0f-b655-6f00d71a00da
+2026-06-03T14:33:40.9044530Z Successfully extracted go to /Users/runner/work/_temp/9d656b5d-e053-40ac-9ee2-ffe4f8808e9a
+2026-06-03T14:33:40.9045090Z Adding to the cache ...
+2026-06-03T14:33:45.8603900Z Successfully cached go to /Users/runner/hostedtoolcache/go/1.21.13/arm64
+2026-06-03T14:33:45.8605370Z Added go to the path
+2026-06-03T14:33:45.8607800Z Successfully set up Go version 1.21
+2026-06-03T14:33:45.9441870Z [command]/Users/runner/hostedtoolcache/go/1.21.13/arm64/bin/go env GOMODCACHE
+2026-06-03T14:33:45.9464040Z [command]/Users/runner/hostedtoolcache/go/1.21.13/arm64/bin/go env GOCACHE
+2026-06-03T14:33:45.9553200Z /Users/runner/go/pkg/mod
+2026-06-03T14:33:45.9558420Z /Users/runner/Library/Caches/go-build
+2026-06-03T14:33:45.9616830Z ##[warning]Restore cache failed: Some specified paths were not resolved, unable to cache dependencies.
+2026-06-03T14:33:45.9687580Z go version go1.21.13 darwin/arm64
+2026-06-03T14:33:45.9687810Z 
+2026-06-03T14:33:45.9688270Z ##[group]go env
+2026-06-03T14:33:49.6797840Z GO111MODULE=''
+2026-06-03T14:33:49.6799720Z GOARCH='arm64'
+2026-06-03T14:33:49.6800800Z GOBIN=''
+2026-06-03T14:33:49.6801800Z GOCACHE='/Users/runner/Library/Caches/go-build'
+2026-06-03T14:33:49.6802340Z GOENV='/Users/runner/Library/Application Support/go/env'
+2026-06-03T14:33:49.6802850Z GOEXE=''
+2026-06-03T14:33:49.6814810Z GOEXPERIMENT=''
+2026-06-03T14:33:49.6815810Z GOFLAGS=''
+2026-06-03T14:33:49.6816300Z GOHOSTARCH='arm64'
+2026-06-03T14:33:49.6816770Z GOHOSTOS='darwin'
+2026-06-03T14:33:49.6817340Z GOINSECURE=''
+2026-06-03T14:33:49.6817740Z GOMODCACHE='/Users/runner/go/pkg/mod'
+2026-06-03T14:33:49.6818240Z GONOPROXY=''
+2026-06-03T14:33:49.6818630Z GONOSUMDB=''
+2026-06-03T14:33:49.6819000Z GOOS='darwin'
+2026-06-03T14:33:49.6819440Z GOPATH='/Users/runner/go'
+2026-06-03T14:33:49.6819880Z GOPRIVATE=''
+2026-06-03T14:33:49.6820230Z GOPROXY='https://proxy.golang.org,direct'
+2026-06-03T14:33:49.6820620Z GOROOT='/Users/runner/hostedtoolcache/go/1.21.13/arm64'
+2026-06-03T14:33:49.6821030Z GOSUMDB='sum.golang.org'
+2026-06-03T14:33:49.6821360Z GOTMPDIR=''
+2026-06-03T14:33:49.6821580Z GOTOOLCHAIN='auto'
+2026-06-03T14:33:49.6822020Z GOTOOLDIR='/Users/runner/hostedtoolcache/go/1.21.13/arm64/pkg/tool/darwin_arm64'
+2026-06-03T14:33:49.6822420Z GOVCS=''
+2026-06-03T14:33:49.6823470Z GOVERSION='go1.21.13'
+2026-06-03T14:33:49.6823800Z GCCGO='gccgo'
+2026-06-03T14:33:49.6824010Z AR='ar'
+2026-06-03T14:33:49.6824300Z CC='clang'
+2026-06-03T14:33:49.6824510Z CXX='clang++'
+2026-06-03T14:33:49.6824790Z CGO_ENABLED='1'
+2026-06-03T14:33:49.6825070Z GOMOD='/dev/null'
+2026-06-03T14:33:49.6825280Z GOWORK=''
+2026-06-03T14:33:49.6825550Z CGO_CFLAGS='-O2 -g'
+2026-06-03T14:33:49.6825780Z CGO_CPPFLAGS=''
+2026-06-03T14:33:49.6826060Z CGO_CXXFLAGS='-O2 -g'
+2026-06-03T14:33:49.6826380Z CGO_FFLAGS='-O2 -g'
+2026-06-03T14:33:49.6826610Z CGO_LDFLAGS='-O2 -g'
+2026-06-03T14:33:49.6826960Z PKG_CONFIG='pkg-config'
+2026-06-03T14:33:49.6827900Z GOGCCFLAGS='-fPIC -arch arm64 -pthread -fno-caret-diagnostics -Qunused-arguments -fmessage-length=0 -ffile-prefix-map=/var/folders/8d/778wjbv96mq1760tv6gk374m0000gn/T/go-build3696619480=/tmp/go-build -gno-record-gcc-switches -fno-common'
+2026-06-03T14:33:49.6828760Z 
+2026-06-03T14:33:49.6829210Z ##[endgroup]

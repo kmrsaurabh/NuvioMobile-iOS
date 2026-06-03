@@ -1,0 +1,40 @@
+﻿2026-06-03T14:38:41.1777367Z Post job cleanup.
+2026-06-03T14:38:41.5790324Z In post-action step
+2026-06-03T14:38:41.5791454Z Stopping all Gradle daemons before saving Gradle User Home state
+2026-06-03T14:38:41.5793898Z Stopping Gradle daemons for /home/runner/.gradle/wrapper/dists/gradle-8.14.3-bin/cv11ve7ro1n3o1j4so8xd9n66/gradle-8.14.3
+2026-06-03T14:38:41.5795796Z [command]/home/runner/.gradle/wrapper/dists/gradle-8.14.3-bin/cv11ve7ro1n3o1j4so8xd9n66/gradle-8.14.3/bin/gradle --stop
+2026-06-03T14:38:42.6146532Z Stopping Daemon(s)
+2026-06-03T14:38:42.6186105Z 1 Daemon stopped
+2026-06-03T14:38:42.6357434Z ##[group]Caching Gradle state
+2026-06-03T14:38:42.6807002Z Not saving configuration-cache state, as no encryption key was provided
+2026-06-03T14:38:42.6938218Z Caching generated-gradle-jars with path '/home/runner/.gradle/caches/8.14.3/generated-gradle-jars/gradle-api-8.14.3.jar' and cache key: gradle-generated-gradle-jars-v1-4434c59050703a48bf14168622b59891
+2026-06-03T14:38:42.6971618Z Caching wrapper-zips with path '/home/runner/.gradle/wrapper/dists/gradle-8.14.3-bin/cv11ve7ro1n3o1j4so8xd9n66' and cache key: gradle-wrapper-zips-v1-5ae5d3da5e8e0c748d04bcdd9bc97bdb
+2026-06-03T14:38:42.7167010Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS --files-from manifest.txt --use-compress-program zstdmt
+2026-06-03T14:38:42.7243776Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS --files-from manifest.txt --use-compress-program zstdmt
+2026-06-03T14:38:43.9300330Z Caching dependencies with path '/home/runner/.gradle/caches/modules-*/files-*/*/*/*/*' and cache key: gradle-dependencies-v1-4aa5c575d6867c28e12f8199f95f2474
+2026-06-03T14:38:43.9322306Z ##[warning]Failed to save cache entry with path '/home/runner/.gradle/caches/8.14.3/generated-gradle-jars/gradle-api-8.14.3.jar' and key: gradle-generated-gradle-jars-v1-4434c59050703a48bf14168622b59891: Error: <h2>Our services aren't available right now</h2><p>We're working to restore all services as soon as possible. Please check back soon.</p>0czwgagAAAAArybN1bSOnTL4/MmjEgk4/UEhYMzFFREdFMDUxOQBFZGdl
+2026-06-03T14:38:43.9570281Z ##[warning]Failed to save cache entry with path '/home/runner/.gradle/wrapper/dists/gradle-8.14.3-bin/cv11ve7ro1n3o1j4so8xd9n66' and key: gradle-wrapper-zips-v1-5ae5d3da5e8e0c748d04bcdd9bc97bdb: Error: <h2>Our services aren't available right now</h2><p>We're working to restore all services as soon as possible. Please check back soon.</p>0czwgagAAAADH5i47FvvIRZkjmgzoeHFJUEhYMzFFREdFMDYyMABFZGdl
+2026-06-03T14:38:43.9819886Z Caching instrumented-jars with path '/home/runner/.gradle/caches/jars-*/*/' and cache key: gradle-instrumented-jars-v1-8f450753c9721b29dba103bda37ca909
+2026-06-03T14:38:43.9979958Z Caching kotlin-dsl with path '/home/runner/.gradle/caches/*/kotlin-dsl/accessors/*/
+2026-06-03T14:38:43.9981310Z /home/runner/.gradle/caches/*/kotlin-dsl/scripts/*/' and cache key: gradle-kotlin-dsl-v1-019b5fb7add664b63c7175ceddbf1d76
+2026-06-03T14:38:44.0008337Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS --files-from manifest.txt --use-compress-program zstdmt
+2026-06-03T14:38:44.0168785Z Caching groovy-dsl with path '/home/runner/.gradle/caches/*/groovy-dsl/*/' and cache key: gradle-groovy-dsl-v1-e56f2cfc9fd018b61f95b83757172511
+2026-06-03T14:38:44.0459532Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS --files-from manifest.txt --use-compress-program zstdmt
+2026-06-03T14:38:44.0654232Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS --files-from manifest.txt --use-compress-program zstdmt
+2026-06-03T14:38:44.0850411Z ##[warning]Failed to save cache entry with path '/home/runner/.gradle/caches/jars-*/*/' and key: gradle-instrumented-jars-v1-8f450753c9721b29dba103bda37ca909: Error: <h2>Our services aren't available right now</h2><p>We're working to restore all services as soon as possible. Please check back soon.</p>0dDwgagAAAACht4OLCjSfS6uK9f+/Y/fcUEhYMzFFREdFMDIxMgBFZGdl
+2026-06-03T14:38:44.1130893Z ##[warning]Failed to save cache entry with path '/home/runner/.gradle/caches/*/groovy-dsl/*/' and key: gradle-groovy-dsl-v1-e56f2cfc9fd018b61f95b83757172511: Error: <h2>Our services aren't available right now</h2><p>We're working to restore all services as soon as possible. Please check back soon.</p>0dDwgagAAAABhBWWfallRTovpMDz5G+TOUEhYMzFFREdFMDYxMABFZGdl
+2026-06-03T14:38:44.1328390Z ##[warning]Failed to save cache entry with path '/home/runner/.gradle/caches/*/kotlin-dsl/accessors/*/
+/home/runner/.gradle/caches/*/kotlin-dsl/scripts/*/' and key: gradle-kotlin-dsl-v1-019b5fb7add664b63c7175ceddbf1d76: Error: <h2>Our services aren't available right now</h2><p>We're working to restore all services as soon as possible. Please check back soon.</p>0dDwgagAAAAAjQIDFU3peT6AK1gY17QrpUEhYMzFFREdFMDYwOQBFZGdl
+2026-06-03T14:38:44.7116968Z Caching transforms with path '/home/runner/.gradle/caches/transforms-4/*/
+2026-06-03T14:38:44.7117891Z /home/runner/.gradle/caches/*/transforms/*/' and cache key: gradle-transforms-v1-b08ac08710d51dfd9dea78a7fc54158e
+2026-06-03T14:38:44.7709770Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS --files-from manifest.txt --use-compress-program zstdmt
+2026-06-03T14:38:45.3666609Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS --files-from manifest.txt --use-compress-program zstdmt
+2026-06-03T14:38:45.8792082Z ##[warning]Failed to save cache entry with path '/home/runner/.gradle/caches/modules-*/files-*/*/*/*/*' and key: gradle-dependencies-v1-4aa5c575d6867c28e12f8199f95f2474: Error: <h2>Our services aren't available right now</h2><p>We're working to restore all services as soon as possible. Please check back soon.</p>0dTwgagAAAADvrpM3PrOjSI+eA1+6FUZmUEhYMzFFREdFMDYxMABFZGdl
+2026-06-03T14:38:47.6233734Z ##[warning]Failed to save cache entry with path '/home/runner/.gradle/caches/transforms-4/*/
+/home/runner/.gradle/caches/*/transforms/*/' and key: gradle-transforms-v1-b08ac08710d51dfd9dea78a7fc54158e: Error: <h2>Our services aren't available right now</h2><p>We're working to restore all services as soon as possible. Please check back soon.</p>0dzwgagAAAABLIvQHJvKKRq7Kdwvn78sSUEhYMzFFREdFMDIxMABFZGdl
+2026-06-03T14:38:48.2000733Z Caching Gradle User Home with cache key: gradle-home-v1|Linux|build-android[3bdaaf9ca670b23318534fed7737c38e]-c64cc75a11418f2128e390058f79d04404e21ef5
+2026-06-03T14:38:48.2085045Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/NuvioMobile-iOS/NuvioMobile-iOS --files-from manifest.txt --use-compress-program zstdmt
+2026-06-03T14:38:48.4832277Z ##[warning]Failed to save cache entry with path '/home/runner/.gradle/caches,/home/runner/.gradle/notifications,/home/runner/.gradle/.setup-gradle' and key: gradle-home-v1|Linux|build-android[3bdaaf9ca670b23318534fed7737c38e]-c64cc75a11418f2128e390058f79d04404e21ef5: Error: <h2>Our services aren't available right now</h2><p>We're working to restore all services as soon as possible. Please check back soon.</p>0eDwgagAAAAASov75WQEXR7oz5ctkblh4UEhYMzFFREdFMDUxMgBFZGdl
+2026-06-03T14:38:48.4835076Z ##[endgroup]
+2026-06-03T14:38:48.4835661Z Generating Job Summary
+2026-06-03T14:38:48.4848169Z Completed post-action step

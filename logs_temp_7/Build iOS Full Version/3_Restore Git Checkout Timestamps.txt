@@ -1,0 +1,15 @@
+﻿2026-06-03T14:33:09.2072390Z ##[group]Run chetan/git-restore-mtime-action@v2
+2026-06-03T14:33:09.2072780Z with:
+2026-06-03T14:33:09.2072990Z   working-directory: .
+2026-06-03T14:33:09.2073250Z ##[endgroup]
+2026-06-03T14:33:09.2173870Z ##[group]Run cd "." && "$GITHUB_ACTION_PATH"/git-restore-mtime 
+2026-06-03T14:33:09.2174440Z [36;1mcd "." && "$GITHUB_ACTION_PATH"/git-restore-mtime [0m
+2026-06-03T14:33:09.2245940Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-03T14:33:09.2246620Z ##[endgroup]
+2026-06-03T14:33:09.5543480Z 778 files to be processed in work dir
+2026-06-03T14:33:09.6819150Z Statistics:
+2026-06-03T14:33:09.6920240Z          0.19 seconds
+2026-06-03T14:33:09.7021570Z         8,725 log lines processed
+2026-06-03T14:33:09.7123300Z         1,174 commits evaluated
+2026-06-03T14:33:09.7225190Z           206 directories updated
+2026-06-03T14:33:09.7326320Z           778 files updated

@@ -1,0 +1,30 @@
+﻿2026-06-03T14:33:11.3148780Z ##[group]Run gradle/actions/setup-gradle@v3
+2026-06-03T14:33:11.3149160Z with:
+2026-06-03T14:33:11.3149320Z   cache-disabled: false
+2026-06-03T14:33:11.3149510Z   cache-read-only: false
+2026-06-03T14:33:11.3149740Z   cache-write-only: false
+2026-06-03T14:33:11.3149930Z   cache-overwrite-existing: false
+2026-06-03T14:33:11.3150320Z   gradle-home-cache-includes: caches
+notifications
+
+2026-06-03T14:33:11.3150600Z   gradle-home-cache-cleanup: false
+2026-06-03T14:33:11.3164190Z   add-job-summary: always
+2026-06-03T14:33:11.3164490Z   add-job-summary-as-pr-comment: never
+2026-06-03T14:33:11.3164740Z   dependency-graph: disabled
+2026-06-03T14:33:11.3164980Z   dependency-graph-continue-on-failure: true
+2026-06-03T14:33:11.3165230Z   build-scan-publish: false
+2026-06-03T14:33:11.3165420Z   validate-wrappers: false
+2026-06-03T14:33:11.3165630Z   generate-job-summary: true
+2026-06-03T14:33:11.3165850Z   gradle-home-cache-strict-match: false
+2026-06-03T14:33:11.3166070Z   workflow-job-context: null
+2026-06-03T14:33:11.3168490Z   github-token: ***
+2026-06-03T14:33:11.3168660Z env:
+2026-06-03T14:33:11.3168850Z   MD_APPLE_SDK_ROOT: /Applications/Xcode_26.3.app
+2026-06-03T14:33:11.3169260Z   JAVA_HOME: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T14:33:11.3170080Z   JAVA_HOME_17_ARM64: /Users/runner/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/arm64/Contents/Home
+2026-06-03T14:33:11.3170510Z ##[endgroup]
+2026-06-03T14:33:11.8529320Z Merged default JDK locations into /Users/runner/.m2/toolchains.xml
+2026-06-03T14:33:11.8533080Z ##[group]Restore Gradle state from cache
+2026-06-03T14:33:12.0410070Z ##[warning]Failed to restore gradle-home-v1|macOS|build-ios-full[3bdaaf9ca670b23318534fed7737c38e]-c64cc75a11418f2128e390058f79d04404e21ef5: Error: Cache service responded with 400
+2026-06-03T14:33:12.0453350Z Gradle User Home cache not found. Will initialize empty.
+2026-06-03T14:33:12.0453970Z ##[endgroup]

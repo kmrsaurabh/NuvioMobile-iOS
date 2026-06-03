@@ -1,0 +1,29 @@
+﻿2026-06-03T14:33:02.2606007Z ##[group]Run gradle/actions/setup-gradle@v3
+2026-06-03T14:33:02.2606337Z with:
+2026-06-03T14:33:02.2606540Z   cache-disabled: false
+2026-06-03T14:33:02.2606790Z   cache-read-only: false
+2026-06-03T14:33:02.2607031Z   cache-write-only: false
+2026-06-03T14:33:02.2607275Z   cache-overwrite-existing: false
+2026-06-03T14:33:02.2607587Z   gradle-home-cache-includes: caches
+notifications
+
+2026-06-03T14:33:02.2607918Z   gradle-home-cache-cleanup: false
+2026-06-03T14:33:02.2608178Z   add-job-summary: always
+2026-06-03T14:33:02.2608428Z   add-job-summary-as-pr-comment: never
+2026-06-03T14:33:02.2608705Z   dependency-graph: disabled
+2026-06-03T14:33:02.2608980Z   dependency-graph-continue-on-failure: true
+2026-06-03T14:33:02.2609275Z   build-scan-publish: false
+2026-06-03T14:33:02.2609528Z   validate-wrappers: false
+2026-06-03T14:33:02.2609767Z   generate-job-summary: true
+2026-06-03T14:33:02.2610025Z   gradle-home-cache-strict-match: false
+2026-06-03T14:33:02.2610302Z   workflow-job-context: null
+2026-06-03T14:33:02.2613277Z   github-token: ***
+2026-06-03T14:33:02.2613482Z env:
+2026-06-03T14:33:02.2613800Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-06-03T14:33:02.2614501Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.19-10/x64
+2026-06-03T14:33:02.2614882Z ##[endgroup]
+2026-06-03T14:33:02.6773816Z Merged default JDK locations into /home/runner/.m2/toolchains.xml
+2026-06-03T14:33:02.6776242Z ##[group]Restore Gradle state from cache
+2026-06-03T14:33:02.7540428Z ##[warning]Failed to restore gradle-home-v1|Linux|build-android[3bdaaf9ca670b23318534fed7737c38e]-c64cc75a11418f2128e390058f79d04404e21ef5: Error: Cache service responded with 400
+2026-06-03T14:33:02.7600024Z Gradle User Home cache not found. Will initialize empty.
+2026-06-03T14:33:02.7600937Z ##[endgroup]

@@ -222,6 +222,7 @@ internal fun SettingsNavigationRow(
     iconPainter: Painter? = null,
     enabled: Boolean = true,
     isTablet: Boolean,
+    actionIcon: @Composable (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     val iconSize = if (isTablet) 42.dp else 36.dp
@@ -289,6 +290,9 @@ internal fun SettingsNavigationRow(
                     modifier = Modifier.alpha(0.92f),
                 )
             }
+        }
+        if (actionIcon != null) {
+            actionIcon()
         }
     }
 }
