@@ -152,7 +152,7 @@ internal fun PlayerControlsShell(
                 seasonNumber = seasonNumber,
                 episodeNumber = episodeNumber,
                 episodeTitle = episodeTitle,
-                torrentSessionStatus = torrentSessionStatus,
+                torrentSessionStatus = if (isInitialBuffering) torrentSessionStatus else null,
                 metrics = metrics,
                 isLocked = isLocked,
                 showActions = showPlaybackControls,
