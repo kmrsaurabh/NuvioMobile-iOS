@@ -366,7 +366,33 @@ extension MPVPictureInPictureController: AVPictureInPictureSampleBufferPlaybackD
         completion completionHandler: @escaping () -> Void
     ) {
         let offsetMs = Int64(CMTimeGetSeconds(skipInterval) * 1000.0)
+        let currentPositionMs = playbackController?.positionMs ?? 0
+        let durationMs = playbackController?.durationMs ?? 0
+        let estimatedNewPositionMs = max(0, min(currentPositionMs + offsetMs, durationMs))
+
+        // Perform the actual seek in MPV
         playbackController?.seek(byMs: offsetMs)
-        completionHandler()
+
+        // Immediately update the display layer timebase to the estimated new position
+        // so AVKit doesn't think playback has stalled
+        invalidatePlaybackState(
+            positionMs: estimatedNewPositionMs,
+            isPlaying: playbackController?.isPlaying ?? true
+        )
+
+        // Flush any stale frames from the display layer
+        if displayLayer.status == .failed {
+            displayLayer.flush()
+        }
+
+        // Force an immediate frame refresh at the new position
+        renderQueue.async { [weak self] in
+            self?.enqueueNextFrame()
+        }
+
+        // Delay completion to give MPV time to settle its internal position
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            completionHandler()
+        }
     }
 }
