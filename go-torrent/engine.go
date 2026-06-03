@@ -51,6 +51,12 @@ func StartEngine(dataDir string) string {
 	cfg := torrent.NewDefaultClientConfig()
 	cfg.DataDir = dataDir
 	cfg.NoDefaultPortForwarding = true
+	
+	// Aggressive connection limits for faster swarm discovery & streaming
+	cfg.EstablishedConnsPerTorrent = 100
+	cfg.HalfOpenConnsPerTorrent = 50
+	cfg.TorrentPeersHighWater = 500
+	cfg.TorrentPeersLowWater = 150
 
 	c, err := torrent.NewClient(cfg)
 	if err != nil {
@@ -265,6 +271,8 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 	defer reader.Close()
 
 	reader.SetResponsive()
+	// Aggressively buffer the next 100MB sequentially for smooth playback of large files
+	reader.SetReadahead(100 * 1024 * 1024)
 
 	w.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(targetFile.DisplayPath())+"\"")
 	http.ServeContent(w, r, filepath.Base(targetFile.DisplayPath()), time.Time{}, reader)
