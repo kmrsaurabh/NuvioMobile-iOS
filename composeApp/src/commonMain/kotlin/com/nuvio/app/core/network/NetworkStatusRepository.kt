@@ -136,6 +136,10 @@ object NetworkStatusRepository {
             return NetworkCondition.NoInternet
         }
 
+        if (SupabaseConfig.URL.isBlank() || SupabaseConfig.ANON_KEY.isBlank()) {
+            return NetworkCondition.Online
+        }
+
         val supabaseReachable = probeReachable(
             url = "${SupabaseConfig.URL.trimEnd('/')}/rest/v1/",
             headers = mapOf("apikey" to SupabaseConfig.ANON_KEY),

@@ -45,6 +45,12 @@ object AuthRepository {
         }
 
         scope.launch {
+            if (com.nuvio.app.core.network.SupabaseConfig.URL.isBlank() || com.nuvio.app.core.network.SupabaseConfig.ANON_KEY.isBlank()) {
+                if (savedAnonId == null) {
+                    _state.value = AuthState.Unauthenticated
+                }
+                return@launch
+            }
             SupabaseProvider.client.auth.sessionStatus.collect { status ->
                 if (AuthStorage.loadAnonymousUserId() != null) return@collect
                 when (status) {
