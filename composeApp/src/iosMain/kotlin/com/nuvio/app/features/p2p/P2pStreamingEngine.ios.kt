@@ -52,7 +52,7 @@ actual object P2pStreamingEngine {
             while (status != null && 
                 (status.state == com.nuvio.app.features.torrent.TorrentSessionState.DOWNLOADING_METADATA || 
                  status.state == com.nuvio.app.features.torrent.TorrentSessionState.STARTING) && 
-                waitCount < 20
+                waitCount < 60
             ) {
                 delay(1000L)
                 status = NativeTorrentEngine.getSessionStatus(sessionId)
@@ -67,7 +67,7 @@ actual object P2pStreamingEngine {
             }
 
             _state.value = P2pStreamingState.Streaming(
-                localUrl = successResult.playbackUrl,
+                localUrl = status.streamUrl,
                 downloadSpeed = status.downloadSpeedBps,
                 uploadSpeed = status.uploadSpeedBps,
                 peers = status.peerCount,
@@ -76,6 +76,7 @@ actual object P2pStreamingEngine {
                 totalProgress = status.downloadProgress,
             )
             startStatsPolling(sessionId)
+            return status.streamUrl
         } else {
             // External server, just streaming URL, no stats polling
             _state.value = P2pStreamingState.Streaming(
@@ -87,9 +88,8 @@ actual object P2pStreamingEngine {
                 bufferProgress = 0f,
                 totalProgress = 0f,
             )
+            return successResult.playbackUrl
         }
-
-        return successResult.playbackUrl
     }
     actual fun stopStream() {
         activeSessionId?.let { sessionId ->

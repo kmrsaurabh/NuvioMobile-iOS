@@ -92,17 +92,16 @@ internal fun TorrentStreamingSettingsContent(
                         }
                     }
                     SettingsNavigationRow(
-                        title = if (isRunning) "Restart P2P Engine" else "Start P2P Engine",
+                        title = if (isRunning) "Stop P2P Engine" else "Start P2P Engine",
                         description = testResult ?: "Checking status...",
                         isTablet = isTablet,
                         onClick = {
                             try {
                                 if (NativeTorrentEngine.isRunning()) {
                                     NativeTorrentEngine.stop()
+                                } else {
+                                    NativeTorrentEngine.start(settings)
                                 }
-                                NativeTorrentEngine.start(settings)
-                                val stats = NativeTorrentEngine.getStats()
-                                testResult = "🟢 Running (Active sessions: ${stats.activeSessions})"
                             } catch (e: Exception) {
                                 testResult = "🔴 Offline (${e.message})"
                             }
