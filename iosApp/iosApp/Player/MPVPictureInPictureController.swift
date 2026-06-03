@@ -7,6 +7,7 @@ import UIKit
 
 protocol MPVPictureInPicturePlaybackController: AnyObject {
     var isPlaying: Bool { get }
+    var isBuffering: Bool { get }
     var positionMs: Int64 { get }
     var durationMs: Int64 { get }
     func play()
@@ -151,7 +152,7 @@ final class MPVPictureInPictureController: NSObject {
         enqueuePixelBuffer(pb)
     }
 
-    func invalidatePlaybackState(positionMs: Int64, isPlaying: Bool) {
+    func invalidatePlaybackState(positionMs: Int64, isPlaying: Bool, isBuffering: Bool = false) {
         if displayLayer.controlTimebase == nil {
             var newTimebase: CMTimebase?
             CMTimebaseCreateWithSourceClock(
@@ -165,14 +166,18 @@ final class MPVPictureInPictureController: NSObject {
         guard let timebase = displayLayer.controlTimebase else { return }
         let positionTime = CMTime(value: max(positionMs, 0), timescale: 1000)
         CMTimebaseSetTime(timebase, time: positionTime)
-        CMTimebaseSetRate(timebase, rate: isPlaying ? 1.0 : 0.0)
+        
+        // Trick iOS into allowing auto-PiP when buffering by keeping the timebase running.
+        let shouldPretendPlaying = isPlaying || isBuffering
+        CMTimebaseSetRate(timebase, rate: shouldPretendPlaying ? 1.0 : 0.0)
     }
 
     private func syncControlTimebaseToPlayback() {
         guard let playbackController = playbackController else { return }
         invalidatePlaybackState(
             positionMs: playbackController.positionMs,
-            isPlaying: playbackController.isPlaying
+            isPlaying: playbackController.isPlaying,
+            isBuffering: playbackController.isBuffering
         )
     }
 

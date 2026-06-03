@@ -78,6 +78,11 @@ extension MPVPlayerViewController: MPVPictureInPicturePlaybackController {
         refreshPlaybackState()
         return isPlayerPlaying
     }
+
+    var isBuffering: Bool {
+        refreshPlaybackState()
+        return isPlayerLoading
+    }
 }
 
 extension MPVPlayerViewController: MPVPictureInPictureFrameSource {
