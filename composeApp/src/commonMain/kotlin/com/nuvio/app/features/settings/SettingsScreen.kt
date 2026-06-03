@@ -594,10 +594,10 @@ private fun MobileSettingsScreen(
                 )
                 SettingsPage.Integrations -> integrationsContent(
                     isTablet = false,
+                    onDebridClick = { onPageChange(SettingsPage.Debrid) },
                     onTraktClick = { onPageChange(SettingsPage.TraktAuthentication) },
                     onTmdbClick = { onPageChange(SettingsPage.TmdbEnrichment) },
                     onMdbListClick = { onPageChange(SettingsPage.MdbListRatings) },
-                    onDebridClick = { onPageChange(SettingsPage.Debrid) },
                 )
                 SettingsPage.TraktAuthentication -> traktSettingsContent(
                     isTablet = false,
@@ -970,10 +970,10 @@ private fun TabletSettingsScreen(
                     )
                     SettingsPage.Integrations -> integrationsContent(
                         isTablet = true,
+                        onDebridClick = { onPageChange(SettingsPage.Debrid) },
                         onTraktClick = { onPageChange(SettingsPage.TraktAuthentication) },
                         onTmdbClick = { onPageChange(SettingsPage.TmdbEnrichment) },
                         onMdbListClick = { onPageChange(SettingsPage.MdbListRatings) },
-                        onDebridClick = { onPageChange(SettingsPage.Debrid) },
                     )
                     SettingsPage.TraktAuthentication -> traktSettingsContent(
                         isTablet = true,
