@@ -1,14 +1,14 @@
 {
-  "name": "Nuvio Repo",
-  "identifier": "com.nuviomedia.nuviomobile.repo",
-  "subtitle": "Official builds of Nuvio Mobile",
-  "description": "A modern media hub built with Kotlin Multiplatform.",
+  "name": "NuvioPlus Repo",
+  "identifier": "com.nuviomedia.nuvioplus.repo",
+  "subtitle": "Official builds of Nuvio Plus",
+  "description": "A modern media hub with P2P streaming",
   "iconURL": "https://raw.githubusercontent.com/tapframe/NuvioTV/main/assets/brand/app_logo_wordmark.png",
   "tintColor": "#2196F3",
   "apps": [
     {
-      "name": "Nuvio",
-      "bundleIdentifier": "com.nuviomedia.nuviomobile",
+      "name": "NuvioPlus",
+      "bundleIdentifier": "com.nuviomedia.nuvioplus",
       "developerName": "NuvioPlus",
       "subtitle": "Cross-platform Media Hub",
       "localizedDescription": "Nuvio is a modern media hub delivering a shared Compose UI with playback, collections, and Stremio addon ecosystem integration.",
