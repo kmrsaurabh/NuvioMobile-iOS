@@ -2332,7 +2332,7 @@ fun PlayerScreen(
 
         DisposableEffect(Unit) {
             onDispose {
-                P2pStreamingEngine.shutdown()
+                P2pStreamingEngine.stopStream()
                 PlayerStreamsRepository.clearAll()
             }
         }
