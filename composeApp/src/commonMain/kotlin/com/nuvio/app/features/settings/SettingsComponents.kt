@@ -300,6 +300,7 @@ internal fun SettingsSwitchRow(
     checked: Boolean,
     enabled: Boolean = true,
     isTablet: Boolean,
+    actionIcon: @Composable (() -> Unit)? = null,
     onCheckedChange: (Boolean) -> Unit,
 ) {
     val verticalPadding = if (isTablet) 16.dp else 14.dp
@@ -334,6 +335,9 @@ internal fun SettingsSwitchRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+        if (actionIcon != null) {
+            actionIcon()
         }
         Switch(
             checked = checked,

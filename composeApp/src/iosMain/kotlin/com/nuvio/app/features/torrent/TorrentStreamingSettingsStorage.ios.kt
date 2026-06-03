@@ -19,12 +19,6 @@ actual object TorrentStreamingSettingsStorage {
         saveBoolean(enabledKey, enabled)
     }
 
-
-    }
-
-
-    }
-
     actual fun loadCacheSizeMb(): Int? = loadInt(cacheSizeMbKey)
 
     actual fun saveCacheSizeMb(sizeMb: Int) {

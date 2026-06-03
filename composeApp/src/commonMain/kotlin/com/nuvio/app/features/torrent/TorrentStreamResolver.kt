@@ -32,28 +32,12 @@ object TorrentStreamResolver {
             return TorrentResolveResult.Error("No torrent info hash or magnet URI available")
         }
 
-        Logger.d(TAG) { "Resolving torrent: infoHash=$infoHash, fileIdx=$effectiveFileIdx, external=${settings.useExternalServer}" }
+        Logger.d(TAG) { "Resolving torrent: infoHash=$infoHash, fileIdx=$effectiveFileIdx" }
 
-        return if (settings.useExternalServer && settings.externalServerUrl.isNotBlank()) {
-            resolveViaExternalServer(settings.externalServerUrl, infoHash, magnetUri, effectiveFileIdx)
-        } else if (settings.isNativeModeAvailable) {
+        return if (settings.isNativeModeAvailable) {
             resolveViaNativeEngine(settings, magnetUri, infoHash, effectiveFileIdx)
         } else {
             TorrentResolveResult.Error("No torrent streaming engine available")
-        }
-    }
-
-    private suspend fun resolveViaExternalServer(
-        serverUrl: String,
-        infoHash: String?,
-        magnetUri: String?,
-        fileIdx: Int?,
-    ): TorrentResolveResult {
-        return try {
-            ExternalTorrentServerClient.resolve(serverUrl, infoHash, magnetUri, fileIdx)
-        } catch (e: Exception) {
-            Logger.e(TAG, e) { "External server resolution failed" }
-            TorrentResolveResult.Error("External server error: ${e.message}")
         }
     }
 
