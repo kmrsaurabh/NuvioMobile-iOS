@@ -38,7 +38,7 @@ internal fun TorrentStreamingSettingsContent(
     
     var currentCacheSizeBytes by remember { mutableStateOf(0L) }
     androidx.compose.runtime.LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             currentCacheSizeBytes = TorrentDiskCache.currentSizeBytes()
         }
     }
