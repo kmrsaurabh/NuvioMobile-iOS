@@ -92,6 +92,13 @@ object TorrentStreamingRepository {
         publish(_uiState.value.copy(preferredPort = clamped))
     }
 
+    fun setBatterySaver(value: Boolean) {
+        ensureLoaded()
+        if (_uiState.value.batterySaver == value) return
+        TorrentStreamingSettingsStorage.saveBatterySaver(value)
+        publish(_uiState.value.copy(batterySaver = value))
+    }
+
     fun canHandleStream(stream: StreamItem): Boolean {
         ensureLoaded()
         val settings = _uiState.value
@@ -111,6 +118,7 @@ object TorrentStreamingRepository {
                 forceTcp = TorrentStreamingSettingsStorage.loadForceTcp() ?: false,
                 customTrackers = TorrentStreamingSettingsStorage.loadCustomTrackers() ?: "",
                 preferredPort = TorrentStreamingSettingsStorage.loadPreferredPort() ?: 0,
+                batterySaver = TorrentStreamingSettingsStorage.loadBatterySaver() ?: true,
             ),
         )
     }

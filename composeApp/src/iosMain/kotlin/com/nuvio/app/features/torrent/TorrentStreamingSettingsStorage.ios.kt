@@ -14,6 +14,7 @@ actual object TorrentStreamingSettingsStorage {
     private const val forceTcpKey = "torrent_force_tcp"
     private const val customTrackersKey = "torrent_custom_trackers"
     private const val preferredPortKey = "torrent_preferred_port"
+    private const val batterySaverKey = "torrent_battery_saver"
 
     actual fun loadEnabled(): Boolean? = loadBoolean(enabledKey)
 
@@ -73,6 +74,12 @@ actual object TorrentStreamingSettingsStorage {
 
     actual fun savePreferredPort(port: Int) {
         saveInt(preferredPortKey, port)
+    }
+
+    actual fun loadBatterySaver(): Boolean? = loadBoolean(batterySaverKey)
+
+    actual fun saveBatterySaver(enabled: Boolean) {
+        saveBoolean(batterySaverKey, enabled)
     }
 
     private fun loadBoolean(key: String): Boolean? {

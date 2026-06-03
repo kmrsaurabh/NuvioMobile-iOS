@@ -21,4 +21,6 @@ actual object TorrentStreamingSettingsStorage {
     actual fun saveCustomTrackers(trackers: String) {}
     actual fun loadPreferredPort(): Int? = null
     actual fun savePreferredPort(port: Int) {}
+    actual fun loadBatterySaver(): Boolean? = null
+    actual fun saveBatterySaver(enabled: Boolean) {}
 }

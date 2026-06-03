@@ -11,6 +11,7 @@ data class TorrentStreamingSettings(
     val forceTcp: Boolean = false,
     val customTrackers: String = "",
     val preferredPort: Int = 0,
+    val batterySaver: Boolean = true,
 ) {
     val isNativeModeAvailable: Boolean
         get() = com.nuvio.app.core.build.AppFeaturePolicy.p2pEnabled

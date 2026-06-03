@@ -38,6 +38,7 @@ internal fun TorrentStreamingSettingsContent(
     var showTcpInfoDialog by remember { mutableStateOf(false) }
     var showTrackersInfoDialog by remember { mutableStateOf(false) }
     var showCustomTrackersDialog by remember { mutableStateOf(false) }
+    var showBatterySaverInfoDialog by remember { mutableStateOf(false) }
     
     var currentCacheSizeBytes by remember { mutableStateOf(0L) }
     androidx.compose.runtime.LaunchedEffect(Unit) {
@@ -103,6 +104,23 @@ internal fun TorrentStreamingSettingsContent(
                                 testResult = "🔴 Offline (${e.message})"
                             }
                         },
+                    )
+                    SettingsGroupDivider(isTablet = isTablet)
+                    SettingsSwitchRow(
+                        title = "Battery Saver Mode (Low Power)",
+                        description = "Saves battery by disabling DHT & PEX and limiting peers.",
+                        checked = settings.batterySaver,
+                        onCheckedChange = { TorrentStreamingRepository.setBatterySaver(it) },
+                        isTablet = isTablet,
+                        actionIcon = {
+                            IconButton(onClick = { showBatterySaverInfoDialog = true }) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Info,
+                                    contentDescription = "Battery Saver Information",
+                                    tint = androidx.compose.material3.MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     )
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsSwitchRow(
@@ -186,6 +204,45 @@ internal fun TorrentStreamingSettingsContent(
         }
     }
     
+    
+    if (showBatterySaverInfoDialog) {
+        androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showBatterySaverInfoDialog = false }) {
+            androidx.compose.material3.Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    androidx.compose.material3.Text(
+                        text = "Battery Saver Mode (Low Power)",
+                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+                    )
+                    androidx.compose.material3.Text(
+                        text = "When enabled, the Torrent Engine disables UDP chatter (DHT & PEX) and strictly limits active peer connections.\n\n" +
+                               "• Extremely friendly for device battery and temperature.\n" +
+                               "• No speed impact on popular torrents with many seeds.\n" +
+                               "• May take a few extra seconds to find seeds on very rare/dead torrents.\n\n" +
+                               "Recommended to keep ON unless you stream very obscure content.",
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    androidx.compose.foundation.layout.Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        androidx.compose.material3.TextButton(onClick = { showBatterySaverInfoDialog = false }) {
+                            androidx.compose.material3.Text("Close")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     if (showUpnpInfoDialog) {
         androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showUpnpInfoDialog = false }) {
             androidx.compose.material3.Surface(

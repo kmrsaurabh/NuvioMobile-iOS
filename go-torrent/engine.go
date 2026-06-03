@@ -53,6 +53,7 @@ type EngineConfig struct {
 	EnableDHT          bool   `json:"enableDHT"`
 	ForceTcp           bool   `json:"forceTcp"`
 	CustomTrackers     string `json:"customTrackers"`
+	BatterySaver       bool   `json:"batterySaver"`
 }
 
 func StartEngine(dataDir string, configJson string) string {
@@ -94,6 +95,18 @@ func StartEngine(dataDir string, configJson string) string {
 		cfg.EstablishedConnsPerTorrent = 100
 		cfg.HalfOpenConnsPerTorrent = 50
 	}
+	
+	if parsedCfg.BatterySaver {
+		cfg.NoDHT = true
+		cfg.DisablePEX = true
+		if parsedCfg.MaxPeerConnections <= 0 || parsedCfg.MaxPeerConnections > 20 {
+			cfg.EstablishedConnsPerTorrent = 20
+			cfg.HalfOpenConnsPerTorrent = 10
+		}
+	} else {
+		cfg.NoDHT = !parsedCfg.EnableDHT
+	}
+
 	cfg.TorrentPeersHighWater = 500
 	cfg.TorrentPeersLowWater = 150
 

@@ -26,7 +26,8 @@ class TorrentEngineBridgeAdapter(
             append("\"forceTcp\":${settings.forceTcp},")
             val escapedTrackers = settings.customTrackers.replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "")
             append("\"customTrackers\":\"${escapedTrackers}\",")
-            append("\"enableDHT\":true")
+            append("\"enableDHT\":true,")
+            append("\"batterySaver\":${settings.batterySaver}")
             append("}")
         }
         swiftBridge.startEngine(configJson)
