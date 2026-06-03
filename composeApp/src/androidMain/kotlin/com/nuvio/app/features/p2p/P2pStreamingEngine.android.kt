@@ -183,12 +183,16 @@ actual object P2pStreamingEngine {
     }
 
     private suspend fun resolveFileIndex(hash: String, requestedIdx: Int?, filename: String?): Int {
-        val deadline = System.currentTimeMillis() + 15_000L
         var files: List<TorrServerFile> = emptyList()
 
-        while (System.currentTimeMillis() < deadline) {
-            files = api.getTorrentStats(hash)?.files ?: emptyList()
+        while (true) {
+            val stats = api.getTorrentStats(hash)
+            files = stats?.files ?: emptyList()
             if (files.isNotEmpty()) break
+            
+            if (stats != null) {
+                _state.value = P2pStreamingState.Connecting(peers = stats.peers)
+            }
             Log.d(TAG, "Waiting for torrent metadata...")
             delay(1_000L)
         }

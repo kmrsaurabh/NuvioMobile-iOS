@@ -351,7 +351,12 @@ fun PlayerScreen(
         val p2pInitialLoadingMessage = when {
             !isP2pPlaybackActive || initialLoadCompleted -> null
             p2pStreamingState is P2pStreamingState.Connecting -> {
-                stringResource(Res.string.player_torrent_connecting_peers)
+                val peers = p2pStreamingState.peers
+                if (peers > 0) {
+                    "Resolving metadata (Connected to $peers peers)..."
+                } else {
+                    "Searching for peers..."
+                }
             }
             p2pStats != null -> {
                 stringResource(
@@ -367,10 +372,7 @@ fun PlayerScreen(
             !isP2pPlaybackActive || initialLoadCompleted || p2pStats == null -> null
             else -> (p2pStats.preloadedBytes.toFloat() / P2pInitialPreloadTargetBytes.toFloat()).coerceIn(0f, 1f)
         }
-        val showP2pRebufferStats = isP2pPlaybackActive &&
-            initialLoadCompleted &&
-            playbackSnapshot.isLoading &&
-            p2pStats != null
+        val showP2pRebufferStats = false
         val p2pRebufferMessage = when {
             !showP2pRebufferStats -> null
             else -> {

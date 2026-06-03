@@ -25,7 +25,7 @@ actual object P2pStreamingEngine {
 
     actual suspend fun startStream(request: P2pStreamRequest): String {
         stopStream()
-        _state.value = P2pStreamingState.Connecting
+        _state.value = P2pStreamingState.Connecting()
 
         val streamItem = com.nuvio.app.features.streams.StreamItem(
             infoHash = request.infoHash,
@@ -49,22 +49,19 @@ actual object P2pStreamingEngine {
             var status = NativeTorrentEngine.getSessionStatus(sessionId)
 
             // Native session started, wait for metadata to resolve so the HTTP server is ready
-            var waitCount = 0
             while (status != null && 
                 (status.state == com.nuvio.app.features.torrent.TorrentSessionState.DOWNLOADING_METADATA || 
-                 status.state == com.nuvio.app.features.torrent.TorrentSessionState.STARTING) && 
-                waitCount < 60
+                 status.state == com.nuvio.app.features.torrent.TorrentSessionState.STARTING)
             ) {
                 delay(1000L)
                 status = NativeTorrentEngine.getSessionStatus(sessionId)
-                waitCount++
+                if (status != null) {
+                    _state.value = P2pStreamingState.Connecting(peers = status.peerCount)
+                }
             }
 
-            if (status == null || 
-                status.state == com.nuvio.app.features.torrent.TorrentSessionState.DOWNLOADING_METADATA || 
-                status.state == com.nuvio.app.features.torrent.TorrentSessionState.STARTING ||
-                status.state == com.nuvio.app.features.torrent.TorrentSessionState.ERROR) {
-                throw P2pStreamingException("Failed to resolve torrent metadata or timed out")
+            if (status == null || status.state == com.nuvio.app.features.torrent.TorrentSessionState.ERROR) {
+                throw P2pStreamingException("Failed to start torrent session or engine error")
             }
 
             var finalUrl = status.streamUrl

@@ -16,7 +16,7 @@ data class P2pStreamRequest(
 
 sealed class P2pStreamingState {
     data object Idle : P2pStreamingState()
-    data object Connecting : P2pStreamingState()
+    data class Connecting(val peers: Int = 0) : P2pStreamingState()
 
     data class Streaming(
         val localUrl: String,
