@@ -12,6 +12,7 @@ actual object TorrentStreamingSettingsStorage {
     private const val downloadSpeedLimitKey = "torrent_download_speed_limit"
     private const val uploadSpeedLimitKey = "torrent_upload_speed_limit"
     private const val enableUploadKey = "torrent_enable_upload"
+    private const val enableUpnpKey = "torrent_enable_upnp"
     private const val preferredPortKey = "torrent_preferred_port"
 
     actual fun loadEnabled(): Boolean? = loadBoolean(enabledKey)
@@ -60,6 +61,12 @@ actual object TorrentStreamingSettingsStorage {
 
     actual fun saveEnableUpload(enable: Boolean) {
         saveBoolean(enableUploadKey, enable)
+    }
+
+    actual fun loadEnableUpnp(): Boolean? = loadBoolean(enableUpnpKey)
+
+    actual fun saveEnableUpnp(enable: Boolean) {
+        saveBoolean(enableUpnpKey, enable)
     }
 
     actual fun loadPreferredPort(): Int? = loadInt(preferredPortKey)

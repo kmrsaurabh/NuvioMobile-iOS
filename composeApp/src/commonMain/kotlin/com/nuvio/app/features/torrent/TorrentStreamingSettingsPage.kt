@@ -27,6 +27,8 @@ internal fun TorrentStreamingSettingsContent(
     val sectionSpacing = if (isTablet) 18.dp else 12.dp
     var testResult by remember { mutableStateOf<String?>(null) }
     var showUrlDialog by remember { mutableStateOf(false) }
+    var showUploadLimitDialog by remember { mutableStateOf(false) }
+    var showCacheSizeDialog by remember { mutableStateOf(false) }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(sectionSpacing),
@@ -107,6 +109,38 @@ internal fun TorrentStreamingSettingsContent(
                             }
                         },
                     )
+                    SettingsGroupDivider(isTablet = isTablet)
+                    SettingsSwitchRow(
+                        title = "Enable UPnP (Port Forwarding)",
+                        description = "Allows incoming connections for faster streaming (may crash older routers).",
+                        checked = settings.enableUpnp,
+                        onCheckedChange = { TorrentStreamingRepository.setEnableUpnp(it) },
+                        isTablet = isTablet,
+                    )
+                    SettingsGroupDivider(isTablet = isTablet)
+                    SettingsNavigationRow(
+                        title = "Upload Speed Limit",
+                        description = if (settings.uploadSpeedLimitKbps == 0) "Unlimited" else "${settings.uploadSpeedLimitKbps} KB/s",
+                        isTablet = isTablet,
+                        onClick = { showUploadLimitDialog = true },
+                    )
+                    SettingsGroupDivider(isTablet = isTablet)
+                    SettingsNavigationRow(
+                        title = "Disk Cache Size Limit",
+                        description = if (settings.cacheSizeMb == 0) "Unlimited" else "${settings.cacheSizeMb} MB",
+                        isTablet = isTablet,
+                        onClick = { showCacheSizeDialog = true },
+                    )
+                    SettingsGroupDivider(isTablet = isTablet)
+                    SettingsNavigationRow(
+                        title = "Clear Cached Videos",
+                        description = "Free up storage space used by P2P streams.",
+                        isTablet = isTablet,
+                        onClick = { 
+                            NativeTorrentEngine.stop()
+                            com.nuvio.app.features.torrent.TorrentDiskCache.clearAll()
+                        },
+                    )
 
                 }
             }
@@ -148,6 +182,106 @@ internal fun TorrentStreamingSettingsContent(
                             onClick = {
                                 TorrentStreamingRepository.setExternalServerUrl(draft)
                                 showUrlDialog = false
+                            },
+                        ) {
+                            androidx.compose.material3.Text("Save")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showUploadLimitDialog) {
+        var draft by remember { mutableStateOf(if (settings.uploadSpeedLimitKbps == 0) "" else settings.uploadSpeedLimitKbps.toString()) }
+        androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showUploadLimitDialog = false }) {
+            androidx.compose.material3.Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    androidx.compose.material3.Text(
+                        text = "Upload Speed Limit (KB/s)",
+                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+                    )
+                    androidx.compose.material3.Text(
+                        text = "Leave empty or 0 for unlimited.",
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    androidx.compose.material3.OutlinedTextField(
+                        value = draft,
+                        onValueChange = { draft = it.filter { char -> char.isDigit() } },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        placeholder = { androidx.compose.material3.Text("e.g. 500") }
+                    )
+                    androidx.compose.foundation.layout.Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, androidx.compose.ui.Alignment.End),
+                    ) {
+                        androidx.compose.material3.TextButton(onClick = { showUploadLimitDialog = false }) {
+                            androidx.compose.material3.Text("Cancel")
+                        }
+                        androidx.compose.material3.Button(
+                            onClick = {
+                                TorrentStreamingRepository.setUploadSpeedLimit(draft.toIntOrNull() ?: 0)
+                                showUploadLimitDialog = false
+                            },
+                        ) {
+                            androidx.compose.material3.Text("Save")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showCacheSizeDialog) {
+        var draft by remember { mutableStateOf(if (settings.cacheSizeMb == 0) "" else settings.cacheSizeMb.toString()) }
+        androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showCacheSizeDialog = false }) {
+            androidx.compose.material3.Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    androidx.compose.material3.Text(
+                        text = "Disk Cache Size Limit (MB)",
+                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+                    )
+                    androidx.compose.material3.Text(
+                        text = "Leave empty or 0 for unlimited (not recommended). Default is 2048 MB.",
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    androidx.compose.material3.OutlinedTextField(
+                        value = draft,
+                        onValueChange = { draft = it.filter { char -> char.isDigit() } },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        placeholder = { androidx.compose.material3.Text("e.g. 2048") }
+                    )
+                    androidx.compose.foundation.layout.Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, androidx.compose.ui.Alignment.End),
+                    ) {
+                        androidx.compose.material3.TextButton(onClick = { showCacheSizeDialog = false }) {
+                            androidx.compose.material3.Text("Cancel")
+                        }
+                        androidx.compose.material3.Button(
+                            onClick = {
+                                TorrentStreamingRepository.setCacheSizeMb(draft.toIntOrNull() ?: 0)
+                                showCacheSizeDialog = false
                             },
                         ) {
                             androidx.compose.material3.Text("Save")

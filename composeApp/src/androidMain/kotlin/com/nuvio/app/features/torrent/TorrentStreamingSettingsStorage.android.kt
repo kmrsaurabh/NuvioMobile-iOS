@@ -17,6 +17,8 @@ actual object TorrentStreamingSettingsStorage {
     actual fun saveUploadSpeedLimit(kbps: Int) {}
     actual fun loadEnableUpload(): Boolean? = null
     actual fun saveEnableUpload(enable: Boolean) {}
+    actual fun loadEnableUpnp(): Boolean? = null
+    actual fun saveEnableUpnp(enable: Boolean) {}
     actual fun loadPreferredPort(): Int? = null
     actual fun savePreferredPort(port: Int) {}
 }

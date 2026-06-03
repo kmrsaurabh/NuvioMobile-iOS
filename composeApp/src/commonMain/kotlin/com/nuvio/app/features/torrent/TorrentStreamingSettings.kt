@@ -9,6 +9,7 @@ data class TorrentStreamingSettings(
     val downloadSpeedLimitKbps: Int = 0,
     val uploadSpeedLimitKbps: Int = 0,
     val enableUpload: Boolean = false,
+    val enableUpnp: Boolean = false,
     val preferredPort: Int = 0,
 ) {
     val isNativeModeAvailable: Boolean

@@ -134,8 +134,10 @@ actual object TorrentDiskCache {
         val dir = cacheDirectory()
         val fileManager = NSFileManager.defaultManager
         if (fileManager.fileExistsAtPath(dir)) {
-            fileManager.removeItemAtPath(dir, error = null)
+            fileManager.removeItemAtPath(dir, null)
         }
+        ensureCacheDirectoryExists()
+        saveMetadata(CacheMetadata())
         Logger.d(TAG) { "Cleared all torrent cache" }
     }
 

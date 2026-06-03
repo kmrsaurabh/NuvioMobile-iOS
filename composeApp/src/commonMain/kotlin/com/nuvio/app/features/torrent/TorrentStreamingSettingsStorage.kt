@@ -17,6 +17,8 @@ expect object TorrentStreamingSettingsStorage {
     fun saveUploadSpeedLimit(kbps: Int)
     fun loadEnableUpload(): Boolean?
     fun saveEnableUpload(enable: Boolean)
+    fun loadEnableUpnp(): Boolean?
+    fun saveEnableUpnp(enable: Boolean)
     fun loadPreferredPort(): Int?
     fun savePreferredPort(port: Int)
 }

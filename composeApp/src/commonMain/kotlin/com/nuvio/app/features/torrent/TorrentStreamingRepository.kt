@@ -78,6 +78,13 @@ object TorrentStreamingRepository {
         publish(_uiState.value.copy(enableUpload = value))
     }
 
+    fun setEnableUpnp(value: Boolean) {
+        ensureLoaded()
+        if (_uiState.value.enableUpnp == value) return
+        TorrentStreamingSettingsStorage.saveEnableUpnp(value)
+        publish(_uiState.value.copy(enableUpnp = value))
+    }
+
     fun setPreferredPort(value: Int) {
         ensureLoaded()
         val clamped = value.coerceIn(0, 65535)
@@ -103,6 +110,7 @@ object TorrentStreamingRepository {
                 downloadSpeedLimitKbps = TorrentStreamingSettingsStorage.loadDownloadSpeedLimit() ?: 0,
                 uploadSpeedLimitKbps = TorrentStreamingSettingsStorage.loadUploadSpeedLimit() ?: 0,
                 enableUpload = TorrentStreamingSettingsStorage.loadEnableUpload() ?: false,
+                enableUpnp = TorrentStreamingSettingsStorage.loadEnableUpnp() ?: false,
                 preferredPort = TorrentStreamingSettingsStorage.loadPreferredPort() ?: 0,
             ),
         )

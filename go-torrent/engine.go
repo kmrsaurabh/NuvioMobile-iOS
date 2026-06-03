@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/anacrolix/torrent"
+	"golang.org/x/time/rate"
 )
 
 var (
@@ -40,7 +41,17 @@ type SessionStatus struct {
 	ErrorMessage       string  `json:"errorMessage,omitempty"`
 }
 
-func StartEngine(dataDir string) string {
+type EngineConfig struct {
+	HttpPort           int   `json:"httpPort"`
+	MaxCacheSizeBytes  int64 `json:"maxCacheSizeBytes"`
+	MaxDownloadRate    int64 `json:"maxDownloadRate"`
+	MaxUploadRate      int64 `json:"maxUploadRate"`
+	MaxPeerConnections int   `json:"maxPeerConnections"`
+	EnableUpnp         bool  `json:"enableUpnp"`
+	EnableDHT          bool  `json:"enableDHT"`
+}
+
+func StartEngine(dataDir string, configJson string) string {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -48,15 +59,30 @@ func StartEngine(dataDir string) string {
 		return ""
 	}
 
+	var parsedCfg EngineConfig
+	if configJson != "" {
+		_ = json.Unmarshal([]byte(configJson), &parsedCfg)
+	}
+
 	cfg := torrent.NewDefaultClientConfig()
 	cfg.DataDir = dataDir
-	cfg.NoDefaultPortForwarding = true
 	
-	// Aggressive connection limits for faster swarm discovery & streaming
-	cfg.EstablishedConnsPerTorrent = 100
-	cfg.HalfOpenConnsPerTorrent = 50
+	// Apply dynamic settings
+	cfg.NoDefaultPortForwarding = !parsedCfg.EnableUpnp
+	
+	if parsedCfg.MaxPeerConnections > 0 {
+		cfg.EstablishedConnsPerTorrent = parsedCfg.MaxPeerConnections
+		cfg.HalfOpenConnsPerTorrent = parsedCfg.MaxPeerConnections / 2
+	} else {
+		cfg.EstablishedConnsPerTorrent = 100
+		cfg.HalfOpenConnsPerTorrent = 50
+	}
 	cfg.TorrentPeersHighWater = 500
 	cfg.TorrentPeersLowWater = 150
+
+	if parsedCfg.MaxUploadRate > 0 {
+		cfg.UploadRateLimiter = rate.NewLimiter(rate.Limit(parsedCfg.MaxUploadRate), int(parsedCfg.MaxUploadRate))
+	}
 
 	c, err := torrent.NewClient(cfg)
 	if err != nil {

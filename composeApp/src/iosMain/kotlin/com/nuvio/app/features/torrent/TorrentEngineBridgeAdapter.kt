@@ -22,6 +22,7 @@ class TorrentEngineBridgeAdapter(
             append("\"maxDownloadRate\":${settings.downloadSpeedLimitKbps * 1024},")
             append("\"maxUploadRate\":${settings.uploadSpeedLimitKbps * 1024},")
             append("\"maxPeerConnections\":${settings.maxConnectionsPerTorrent},")
+            append("\"enableUpnp\":${settings.enableUpnp},")
             append("\"enableDHT\":true")
             append("}")
         }
