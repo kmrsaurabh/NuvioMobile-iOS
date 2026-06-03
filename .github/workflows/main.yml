@@ -22,6 +22,14 @@ jobs:
       - name: Restore Git Checkout Timestamps
         uses: chetan/git-restore-mtime-action@v2
 
+      - name: Auto-increment Patch Version
+        run: |
+          CURRENT_VERSION=$(awk -F'=' '/MARKETING_VERSION/ {print $2}' iosApp/Configuration/Version.xcconfig | tr -d ' ')
+          IFS='.' read -ra ADDR <<< "$CURRENT_VERSION"
+          NEW_VERSION="${ADDR[0]}.${ADDR[1]}.$((ADDR[2] + 1))"
+          perl -pi -e "s/MARKETING_VERSION=.*/MARKETING_VERSION=$NEW_VERSION/" iosApp/Configuration/Version.xcconfig
+          echo "Bumped version from $CURRENT_VERSION to $NEW_VERSION"
+
       - name: Fetch iOS Specific Submodule
         run: git submodule update --init --recursive MPVKit
 
@@ -162,8 +170,8 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git pull --rebase origin ${{ github.ref_name }}
-          git add apps.json
-          git commit -m "chore: update apps.json for build ${{ env.BUMPED_VERSION }} [skip ci]"
+          git add apps.json iosApp/Configuration/Version.xcconfig
+          git commit -m "chore: bump version and update apps.json for build ${{ env.BUMPED_VERSION }} [skip ci]"
           git push origin HEAD:${{ github.ref }}
 
   build-android:
@@ -177,6 +185,14 @@ jobs:
 
       - name: Restore Git Checkout Timestamps
         uses: chetan/git-restore-mtime-action@v2
+
+      - name: Auto-increment Patch Version
+        run: |
+          CURRENT_VERSION=$(awk -F'=' '/MARKETING_VERSION/ {print $2}' iosApp/Configuration/Version.xcconfig | tr -d ' ' | tr -d '\r')
+          IFS='.' read -ra ADDR <<< "$CURRENT_VERSION"
+          NEW_VERSION="${ADDR[0]}.${ADDR[1]}.$((ADDR[2] + 1))"
+          sed -i "s/MARKETING_VERSION=.*/MARKETING_VERSION=$NEW_VERSION/" iosApp/Configuration/Version.xcconfig
+          echo "Bumped version from $CURRENT_VERSION to $NEW_VERSION"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
