@@ -17,6 +17,12 @@ import com.nuvio.app.features.settings.SettingsGroupDivider
 import com.nuvio.app.features.settings.SettingsNavigationRow
 import com.nuvio.app.features.settings.SettingsSection
 import com.nuvio.app.features.settings.SettingsSwitchRow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -26,9 +32,16 @@ internal fun TorrentStreamingSettingsContent(
     val settings by TorrentStreamingRepository.uiState.collectAsStateWithLifecycle()
     val sectionSpacing = if (isTablet) 18.dp else 12.dp
     var testResult by remember { mutableStateOf<String?>(null) }
-    var showUrlDialog by remember { mutableStateOf(false) }
     var showUploadLimitDialog by remember { mutableStateOf(false) }
     var showCacheSizeDialog by remember { mutableStateOf(false) }
+    var showUpnpInfoDialog by remember { mutableStateOf(false) }
+    
+    var currentCacheSizeBytes by remember { mutableStateOf(0L) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            currentCacheSizeBytes = TorrentDiskCache.currentSizeBytes()
+        }
+    }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(sectionSpacing),
@@ -47,27 +60,6 @@ internal fun TorrentStreamingSettingsContent(
                 )
 
                 if (settings.enabled) {
-                    SettingsGroupDivider(isTablet = isTablet)
-                    SettingsSwitchRow(
-                        title = "Use external torrent server",
-                        description = if (settings.useExternalServer && settings.externalServerUrl.isNotBlank()) {
-                            settings.externalServerUrl
-                        } else {
-                            "Connect to a remote torrent server instead of the built-in engine"
-                        },
-                        checked = settings.useExternalServer,
-                        isTablet = isTablet,
-                        onCheckedChange = TorrentStreamingRepository::setUseExternalServer,
-                    )
-                    if (settings.useExternalServer) {
-                        SettingsGroupDivider(isTablet = isTablet)
-                        SettingsNavigationRow(
-                            title = "External server URL",
-                            description = settings.externalServerUrl.ifBlank { "Tap to configure" },
-                            isTablet = isTablet,
-                            onClick = { showUrlDialog = true }
-                        )
-                    }
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsSwitchRow(
                         title = "Enable upload (seeding)",
@@ -116,6 +108,15 @@ internal fun TorrentStreamingSettingsContent(
                         checked = settings.enableUpnp,
                         onCheckedChange = { TorrentStreamingRepository.setEnableUpnp(it) },
                         isTablet = isTablet,
+                        actionIcon = {
+                            IconButton(onClick = { showUpnpInfoDialog = true }) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Info,
+                                    contentDescription = "UPnP Information",
+                                    tint = androidx.compose.material3.MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     )
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
@@ -132,13 +133,15 @@ internal fun TorrentStreamingSettingsContent(
                         onClick = { showCacheSizeDialog = true },
                     )
                     SettingsGroupDivider(isTablet = isTablet)
+                    val cacheMb = currentCacheSizeBytes / (1024 * 1024)
                     SettingsNavigationRow(
                         title = "Clear Cached Videos",
-                        description = "Free up storage space used by P2P streams.",
+                        description = "Free up storage space used by P2P streams. (Currently used: $cacheMb MB)",
                         isTablet = isTablet,
                         onClick = { 
                             NativeTorrentEngine.stop()
                             com.nuvio.app.features.torrent.TorrentDiskCache.clearAll()
+                            currentCacheSizeBytes = 0L
                         },
                     )
 
@@ -146,10 +149,9 @@ internal fun TorrentStreamingSettingsContent(
             }
         }
     }
-
-    if (showUrlDialog) {
-        var draft by remember { mutableStateOf(settings.externalServerUrl) }
-        androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showUrlDialog = false }) {
+    
+    if (showUpnpInfoDialog) {
+        androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showUpnpInfoDialog = false }) {
             androidx.compose.material3.Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
@@ -160,37 +162,33 @@ internal fun TorrentStreamingSettingsContent(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     androidx.compose.material3.Text(
-                        text = "External Server URL",
+                        text = "UPnP (Universal Plug and Play)",
                         style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
                         color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                     )
-                    androidx.compose.material3.OutlinedTextField(
-                        value = draft,
-                        onValueChange = { draft = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        placeholder = { androidx.compose.material3.Text("http://...") }
+                    androidx.compose.material3.Text(
+                        text = "UPnP automatically opens a port on your home router to accept incoming peer connections.\n\n" +
+                               "• Helpful on Home Wi-Fi for faster P2P streaming.\n" +
+                               "• Useless on Cellular networks (due to Carrier NAT).\n" +
+                               "• May crash older/buggy routers.\n\n" +
+                               "Turn ON for home Wi-Fi. Turn OFF if you experience router issues or use Cellular data.",
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     androidx.compose.foundation.layout.Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, androidx.compose.ui.Alignment.End),
+                        horizontalArrangement = Arrangement.End,
                     ) {
-                        androidx.compose.material3.TextButton(onClick = { showUrlDialog = false }) {
-                            androidx.compose.material3.Text("Cancel")
-                        }
-                        androidx.compose.material3.Button(
-                            onClick = {
-                                TorrentStreamingRepository.setExternalServerUrl(draft)
-                                showUrlDialog = false
-                            },
-                        ) {
-                            androidx.compose.material3.Text("Save")
+                        androidx.compose.material3.TextButton(onClick = { showUpnpInfoDialog = false }) {
+                            androidx.compose.material3.Text("Close")
                         }
                     }
                 }
             }
         }
     }
+
+
 
     if (showUploadLimitDialog) {
         var draft by remember { mutableStateOf(if (settings.uploadSpeedLimitKbps == 0) "" else settings.uploadSpeedLimitKbps.toString()) }

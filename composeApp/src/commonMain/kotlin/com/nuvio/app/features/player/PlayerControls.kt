@@ -80,6 +80,7 @@ internal fun PlayerControlsShell(
     episodeNumber: Int?,
     episodeTitle: String?,
     playbackSnapshot: PlayerPlaybackSnapshot,
+    isInitialBuffering: Boolean,
     torrentSessionStatus: TorrentSessionStatus? = null,
     displayedPositionMs: Long,
     metrics: PlayerLayoutMetrics,
@@ -176,6 +177,7 @@ internal fun PlayerControlsShell(
             if (showPlaybackControls) {
                 CenterControls(
                     snapshot = playbackSnapshot,
+                    isInitialBuffering = isInitialBuffering,
                     torrentSessionStatus = torrentSessionStatus,
                     metrics = metrics,
                     onSeekBack = onSeekBack,
@@ -415,6 +417,7 @@ private fun PlayerHeaderIconButton(
 @Composable
 private fun CenterControls(
     snapshot: PlayerPlaybackSnapshot,
+    isInitialBuffering: Boolean,
     torrentSessionStatus: TorrentSessionStatus?,
     metrics: PlayerLayoutMetrics,
     onSeekBack: () -> Unit,
@@ -436,6 +439,7 @@ private fun CenterControls(
         PlayPauseControlButton(
             isPlaying = snapshot.isPlaying,
             isBuffering = snapshot.isLoading,
+            isInitialBuffering = isInitialBuffering,
             torrentSessionStatus = torrentSessionStatus,
             metrics = metrics,
             onClick = onTogglePlayback,
@@ -476,6 +480,7 @@ private fun SideControlButton(
 private fun PlayPauseControlButton(
     isPlaying: Boolean,
     isBuffering: Boolean,
+    isInitialBuffering: Boolean,
     torrentSessionStatus: TorrentSessionStatus?,
     metrics: PlayerLayoutMetrics,
     onClick: () -> Unit,
@@ -501,7 +506,7 @@ private fun PlayPauseControlButton(
                     strokeWidth = 3.dp,
                     modifier = Modifier.size(metrics.playIconSize),
                 )
-                if (torrentSessionStatus != null) {
+                if (torrentSessionStatus != null && isInitialBuffering) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Buffering ${formatSpeed(torrentSessionStatus.downloadSpeedBps)}",

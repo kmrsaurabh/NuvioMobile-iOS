@@ -3,10 +3,6 @@ package com.nuvio.app.features.torrent
 actual object TorrentStreamingSettingsStorage {
     actual fun loadEnabled(): Boolean? = null
     actual fun saveEnabled(enabled: Boolean) {}
-    actual fun loadUseExternalServer(): Boolean? = null
-    actual fun saveUseExternalServer(useExternal: Boolean) {}
-    actual fun loadExternalServerUrl(): String? = null
-    actual fun saveExternalServerUrl(url: String) {}
     actual fun loadCacheSizeMb(): Int? = null
     actual fun saveCacheSizeMb(sizeMb: Int) {}
     actual fun loadMaxConnections(): Int? = null

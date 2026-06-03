@@ -105,6 +105,11 @@ internal fun LazyListScope.playbackSettingsContent(
     libassRenderType: String,
 ) {
     item {
+        TorrentStreamingSettingsContent(
+            isTablet = isTablet,
+        )
+    }
+    item {
         PlaybackSettingsSection(
             isTablet = isTablet,
             showLoadingOverlay = showLoadingOverlay,
@@ -121,11 +126,6 @@ internal fun LazyListScope.playbackSettingsContent(
             tunnelingEnabled = tunnelingEnabled,
             useLibass = useLibass,
             libassRenderType = libassRenderType,
-        )
-    }
-    item {
-        TorrentStreamingSettingsContent(
-            isTablet = isTablet,
         )
     }
 }

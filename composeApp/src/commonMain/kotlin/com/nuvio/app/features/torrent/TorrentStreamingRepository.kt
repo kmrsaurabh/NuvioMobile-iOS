@@ -24,21 +24,6 @@ object TorrentStreamingRepository {
         publish(_uiState.value.copy(enabled = value))
     }
 
-    fun setUseExternalServer(value: Boolean) {
-        ensureLoaded()
-        if (_uiState.value.useExternalServer == value) return
-        TorrentStreamingSettingsStorage.saveUseExternalServer(value)
-        publish(_uiState.value.copy(useExternalServer = value))
-    }
-
-    fun setExternalServerUrl(value: String) {
-        ensureLoaded()
-        val trimmed = value.trim()
-        if (_uiState.value.externalServerUrl == trimmed) return
-        TorrentStreamingSettingsStorage.saveExternalServerUrl(trimmed)
-        publish(_uiState.value.copy(externalServerUrl = trimmed))
-    }
-
     fun setCacheSizeMb(value: Int) {
         ensureLoaded()
         val clamped = value.coerceIn(256, 16384)
@@ -103,8 +88,6 @@ object TorrentStreamingRepository {
         publish(
             TorrentStreamingSettings(
                 enabled = TorrentStreamingSettingsStorage.loadEnabled() ?: true,
-                useExternalServer = TorrentStreamingSettingsStorage.loadUseExternalServer() ?: false,
-                externalServerUrl = TorrentStreamingSettingsStorage.loadExternalServerUrl().orEmpty(),
                 cacheSizeMb = TorrentStreamingSettingsStorage.loadCacheSizeMb() ?: 2048,
                 maxConnectionsPerTorrent = TorrentStreamingSettingsStorage.loadMaxConnections() ?: 100,
                 downloadSpeedLimitKbps = TorrentStreamingSettingsStorage.loadDownloadSpeedLimit() ?: 0,

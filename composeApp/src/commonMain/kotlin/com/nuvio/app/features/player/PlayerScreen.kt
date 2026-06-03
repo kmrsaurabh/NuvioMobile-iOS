@@ -2563,6 +2563,7 @@ fun PlayerScreen(
                     episodeNumber = activeEpisodeNumber,
                     episodeTitle = activeEpisodeTitle,
                     playbackSnapshot = playbackSnapshot,
+                    isInitialBuffering = !initialLoadCompleted,
                     torrentSessionStatus = torrentSessionStatus,
                     displayedPositionMs = scrubbingPositionMs ?: playbackSnapshot.positionMs,
                     metrics = metrics,

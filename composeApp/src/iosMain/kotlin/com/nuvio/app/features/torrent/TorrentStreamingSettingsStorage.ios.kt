@@ -5,8 +5,6 @@ import platform.Foundation.NSUserDefaults
 
 actual object TorrentStreamingSettingsStorage {
     private const val enabledKey = "torrent_enabled"
-    private const val useExternalServerKey = "torrent_use_external_server"
-    private const val externalServerUrlKey = "torrent_external_server_url"
     private const val cacheSizeMbKey = "torrent_cache_size_mb"
     private const val maxConnectionsKey = "torrent_max_connections"
     private const val downloadSpeedLimitKey = "torrent_download_speed_limit"
@@ -21,16 +19,10 @@ actual object TorrentStreamingSettingsStorage {
         saveBoolean(enabledKey, enabled)
     }
 
-    actual fun loadUseExternalServer(): Boolean? = loadBoolean(useExternalServerKey)
 
-    actual fun saveUseExternalServer(useExternal: Boolean) {
-        saveBoolean(useExternalServerKey, useExternal)
     }
 
-    actual fun loadExternalServerUrl(): String? = loadString(externalServerUrlKey)
 
-    actual fun saveExternalServerUrl(url: String) {
-        saveString(externalServerUrlKey, url)
     }
 
     actual fun loadCacheSizeMb(): Int? = loadInt(cacheSizeMbKey)
