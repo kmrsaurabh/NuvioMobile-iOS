@@ -324,6 +324,7 @@ extension MPVPictureInPictureController: AVPictureInPictureControllerDelegate {
             self.hostView?.layoutIfNeeded()
             self.updateLayout()
             completionHandler(true)
+        }
     }
 }
 
