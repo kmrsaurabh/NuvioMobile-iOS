@@ -79,7 +79,8 @@ import Foundation
             resultJson = LibtorrentBridge.shared().addMagnet(magnetUri, fileIndex: fileIdx)
             
             // Override the port in the result JSON to point to our Swift HTTP Server
-            if var obj = try? JSONSerialization.jsonObject(with: resultJson.data(using: .utf8)!) as? [String: Any],
+            if let data = resultJson.data(using: .utf8),
+               var obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let oldStreamUrl = obj["streamUrl"] as? String {
                 let httpPort = LibtorrentHTTPServer.shared.port
                 obj["streamUrl"] = "http://127.0.0.1:\(httpPort)/stream/\(infoHash)?fileIdx=\(fileIdx)"
@@ -106,7 +107,8 @@ import Foundation
             resultJson = LibtorrentBridge.shared().getStatusForHash(sessionId, magnetUri: "", fileIndex: Int32(-1))
             
             // Override the port in the result JSON to point to our Swift HTTP Server
-            if var obj = try? JSONSerialization.jsonObject(with: resultJson.data(using: .utf8)!) as? [String: Any],
+            if let data = resultJson.data(using: .utf8),
+               var obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let oldStreamUrl = obj["streamUrl"] as? String {
                 let httpPort = LibtorrentHTTPServer.shared.port
                 obj["streamUrl"] = "http://127.0.0.1:\(httpPort)/stream/\(sessionId)?fileIdx=-1" // fileIdx is ignored on GET
