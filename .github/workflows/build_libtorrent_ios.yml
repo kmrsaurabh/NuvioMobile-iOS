@@ -28,4 +28,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: libtorrent-ios-compiled-libs
-        path: vcpkg/packages/libtorrent_arm64-ios/
+        path: vcpkg/installed/arm64-ios/
