@@ -66,6 +66,7 @@ final class MPVPictureInPictureController: NSObject {
         detachFromHost()
         hostView = host
         displayLayer.frame = host.bounds
+        displayLayer.opacity = 0.0
         host.layer.insertSublayer(displayLayer, at: 0)
 
         let controller = AVPictureInPictureController(
@@ -303,6 +304,7 @@ extension MPVPictureInPictureController: AVPictureInPictureControllerDelegate {
 
     func pictureInPictureControllerWillStartPictureInPicture(_ controller: AVPictureInPictureController) {
         isActive = true
+        displayLayer.opacity = 1.0
         ensureFramePumpRunning()
     }
 
@@ -321,7 +323,12 @@ extension MPVPictureInPictureController: AVPictureInPictureControllerDelegate {
 
     func pictureInPictureControllerDidStopPictureInPicture(_ controller: AVPictureInPictureController) {
         isActive = false
-        ensureFramePumpRunning()
+        stopFramePump()
+        displayLayer.opacity = 0.0
+        displayLayer.flushAndRemoveImage()
+        if let host = hostView {
+            host.layer.insertSublayer(displayLayer, at: 0)
+        }
     }
 
     func pictureInPictureController(
