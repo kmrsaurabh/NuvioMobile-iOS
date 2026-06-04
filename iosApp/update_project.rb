@@ -3,7 +3,7 @@ require 'fileutils'
 
 project_path = 'iosApp.xcodeproj'
 project = Xcodeproj::Project.open(project_path)
-target = project.targets.first
+target = project.targets.find { |t| t.name == 'iosApp' }
 
 # 1. Remove GoTorrent
 project.frameworks_group.files.each do |f|
@@ -26,15 +26,7 @@ target.build_phases.each do |phase|
   end
 end
 
-# 2. Add C++ Engine Files
-bridge_h = project.new_file('iosApp/TorrentEngine/cpp/LibtorrentBridge.h')
-bridge_mm = project.new_file('iosApp/TorrentEngine/cpp/LibtorrentBridge.mm')
-server_swift = project.new_file('iosApp/TorrentEngine/cpp/LibtorrentHTTPServer.swift')
-
-# Add to compile phase
-compile_phase = target.source_build_phase
-compile_phase.add_file_reference(bridge_mm)
-compile_phase.add_file_reference(server_swift)
+# 2. Add C++ Engine Files (skipped because Xcode 16 Synchronized Groups will pick them up automatically)
 
 # 3. Link LibTorrent static libs (.a) and libc++.tbd
 Dir.glob('Frameworks/LibTorrent/lib/*.a').each do |lib_path|
