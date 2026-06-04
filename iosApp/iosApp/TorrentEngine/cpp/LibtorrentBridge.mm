@@ -18,10 +18,8 @@
 #include "libtorrent/torrent_info.hpp"
 #include "libtorrent/magnet_uri.hpp"
 #include "libtorrent/alert_types.hpp"
-#include "libtorrent/read_piece.hpp"
-#include "libtorrent/extensions/ut_metadata.hpp"
-#include "libtorrent/extensions/ut_pex.hpp"
-#include "libtorrent/extensions/smart_ban.hpp"
+
+
 
 #include <string>
 #include <mutex>
@@ -148,11 +146,8 @@ static NSString *gDataDir = nil;
         lt::session_params params(pack);
         gSession = new lt::session(std::move(params));
 
-        // ── 3. Install plugins ───────────────────────────────────────────────
-        gSession->add_extension(&lt::create_ut_metadata_plugin);  // magnet metadata
-        gSession->add_extension(&lt::create_ut_pex_plugin);       // peer exchange
-        gSession->add_extension(&lt::create_smart_ban_plugin);    // ban malicious peers
-
+        // ── 3. Extensions are native in libtorrent 2.x (enabled via settings_pack) ──
+        
         // ── 4. Start alert pump thread ───────────────────────────────────────
         gRunning = true;
         gAlertThread = std::thread([](){
