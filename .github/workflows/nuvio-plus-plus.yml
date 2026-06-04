@@ -148,7 +148,7 @@ jobs:
           mkdir -p iosApp/Frameworks/LibTorrent/lib
           mkdir -p iosApp/Frameworks/LibTorrent/include
           cp libtorrent-built/lib/libtorrent-rasterbar.a iosApp/Frameworks/LibTorrent/lib/
-          cp -R libtorrent-built/include/ iosApp/Frameworks/LibTorrent/include/
+          cp -R libtorrent-built/include/* iosApp/Frameworks/LibTorrent/include/
           # Also copy Boost and OpenSSL static libs needed for linking
           find libtorrent-built/lib -name "*.a" ! -name "libtorrent-rasterbar.a" \
             -exec cp {} iosApp/Frameworks/LibTorrent/lib/ \;
