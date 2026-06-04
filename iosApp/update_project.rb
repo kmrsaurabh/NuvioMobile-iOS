@@ -27,15 +27,9 @@ target.build_phases.each do |phase|
 end
 
 # 2. Add C++ Engine Files
-engine_group = project.main_group.find_subpath('iosApp/TorrentEngine', true)
-cpp_group = engine_group.find_subpath('cpp', true)
-
-# Remove old refs if they exist to avoid duplicates
-cpp_group.clear
-
-bridge_h = cpp_group.new_file('iosApp/TorrentEngine/cpp/LibtorrentBridge.h')
-bridge_mm = cpp_group.new_file('iosApp/TorrentEngine/cpp/LibtorrentBridge.mm')
-server_swift = cpp_group.new_file('iosApp/TorrentEngine/cpp/LibtorrentHTTPServer.swift')
+bridge_h = project.new_file('iosApp/TorrentEngine/cpp/LibtorrentBridge.h')
+bridge_mm = project.new_file('iosApp/TorrentEngine/cpp/LibtorrentBridge.mm')
+server_swift = project.new_file('iosApp/TorrentEngine/cpp/LibtorrentHTTPServer.swift')
 
 # Add to compile phase
 compile_phase = target.source_build_phase
@@ -43,15 +37,13 @@ compile_phase.add_file_reference(bridge_mm)
 compile_phase.add_file_reference(server_swift)
 
 # 3. Link LibTorrent static libs (.a) and libc++.tbd
-lib_group = project.main_group.find_subpath('Frameworks/LibTorrent', true)
 Dir.glob('Frameworks/LibTorrent/lib/*.a').each do |lib_path|
-  lib_ref = lib_group.new_file(lib_path)
+  lib_ref = project.new_file(lib_path)
   target.frameworks_build_phase.add_file_reference(lib_ref)
 end
 
 # Add libc++.tbd for C++ standard library
-system_frameworks = project.main_group.find_subpath('Frameworks', true)
-libcxx = system_frameworks.new_file('usr/lib/libc++.tbd')
+libcxx = project.new_file('usr/lib/libc++.tbd')
 libcxx.source_tree = 'SDKROOT'
 target.frameworks_build_phase.add_file_reference(libcxx)
 
