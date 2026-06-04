@@ -92,8 +92,10 @@ func StartEngine(dataDir string, configJson string) string {
 		cfg.EstablishedConnsPerTorrent = parsedCfg.MaxPeerConnections
 		cfg.HalfOpenConnsPerTorrent = parsedCfg.MaxPeerConnections / 2
 	} else {
-		cfg.EstablishedConnsPerTorrent = 250
-		cfg.HalfOpenConnsPerTorrent = 100
+		// Mobile-appropriate defaults: each connection holds ~64KB of buffers,
+		// so 80 conns ≈ 10MB overhead vs 250 conns ≈ 32MB.
+		cfg.EstablishedConnsPerTorrent = 80
+		cfg.HalfOpenConnsPerTorrent = 40
 	}
 	
 	if parsedCfg.BatterySaver {
@@ -107,8 +109,11 @@ func StartEngine(dataDir string, configJson string) string {
 		cfg.NoDHT = !parsedCfg.EnableDHT
 	}
 
-	cfg.TorrentPeersHighWater = 500
-	cfg.TorrentPeersLowWater = 150
+	// Peer discovery water marks — controls how many peer addresses are kept
+	// in memory for potential connection. Lower values save RAM.
+	cfg.TorrentPeersHighWater = 200
+	cfg.TorrentPeersLowWater = 50
+
 
 	if parsedCfg.MaxUploadRate > 0 {
 		cfg.UploadRateLimiter = rate.NewLimiter(rate.Limit(parsedCfg.MaxUploadRate), int(parsedCfg.MaxUploadRate))
