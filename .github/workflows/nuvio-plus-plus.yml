@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'Nuvio++'
+      - 'nuvio-cpp'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -220,5 +220,5 @@ jobs:
           git add apps.json iosApp/Configuration/Version.xcconfig
           git commit -m "chore(nuvio++): bump version and update apps.json for build ${{ env.BUMPED_VERSION }} [skip ci]" || echo "No changes to commit"
           git stash --include-untracked
-          git pull --rebase origin "Nuvio++"
-          git push origin HEAD:"Nuvio++"
+          git pull --rebase origin "nuvio-cpp"
+          git push origin HEAD:"nuvio-cpp"
