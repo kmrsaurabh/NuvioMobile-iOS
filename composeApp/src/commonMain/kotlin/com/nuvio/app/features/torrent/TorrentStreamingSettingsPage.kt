@@ -31,14 +31,10 @@ internal fun TorrentStreamingSettingsContent(
 ) {
     val settings by TorrentStreamingRepository.uiState.collectAsStateWithLifecycle()
     val sectionSpacing = if (isTablet) 18.dp else 12.dp
-    var testResult by remember { mutableStateOf<String?>(null) }
     var showUploadLimitDialog by remember { mutableStateOf(false) }
     var showCacheSizeDialog by remember { mutableStateOf(false) }
-    var showUpnpInfoDialog by remember { mutableStateOf(false) }
-    var showTcpInfoDialog by remember { mutableStateOf(false) }
-    var showTrackersInfoDialog by remember { mutableStateOf(false) }
-    var showCustomTrackersDialog by remember { mutableStateOf(false) }
     var showBatterySaverInfoDialog by remember { mutableStateOf(false) }
+    var showTcpInfoDialog by remember { mutableStateOf(false) }
     
     var currentCacheSizeBytes by remember { mutableStateOf(0L) }
     androidx.compose.runtime.LaunchedEffect(Unit) {
@@ -50,6 +46,7 @@ internal fun TorrentStreamingSettingsContent(
     Column(
         verticalArrangement = Arrangement.spacedBy(sectionSpacing),
     ) {
+        // ── Main Torrent Streaming Section ──
         SettingsSection(
             title = "Torrent Streaming",
             isTablet = isTablet,
@@ -64,6 +61,23 @@ internal fun TorrentStreamingSettingsContent(
                 )
 
                 if (settings.enabled) {
+                    SettingsGroupDivider(isTablet = isTablet)
+                    SettingsSwitchRow(
+                        title = "Battery Saver Mode",
+                        description = "Limit connections and disable DHT to save battery",
+                        checked = settings.batterySaver,
+                        onCheckedChange = { TorrentStreamingRepository.setBatterySaver(it) },
+                        isTablet = isTablet,
+                        actionIcon = {
+                            IconButton(onClick = { showBatterySaverInfoDialog = true }) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Info,
+                                    contentDescription = "Battery Saver Information",
+                                    tint = androidx.compose.material3.MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    )
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsSwitchRow(
                         title = "Enable upload (seeding)",
@@ -82,111 +96,11 @@ internal fun TorrentStreamingSettingsContent(
                         )
                     }
                     SettingsGroupDivider(isTablet = isTablet)
-                    val isRunning = NativeTorrentEngine.isRunning()
-                    androidx.compose.runtime.LaunchedEffect(Unit) {
-                        while (true) {
-                            if (NativeTorrentEngine.isRunning()) {
-                                try {
-                                    val stats = NativeTorrentEngine.getStats()
-                                    testResult = "🟢 Running (Active sessions: ${stats.activeSessions})"
-                                } catch (e: Exception) {
-                                    testResult = "🟢 Running"
-                                }
-                            } else {
-                                testResult = "🔴 Offline"
-                            }
-                            kotlinx.coroutines.delay(1000)
-                        }
-                    }
-                    SettingsNavigationRow(
-                        title = if (isRunning) "Stop P2P Engine" else "Start P2P Engine",
-                        description = testResult ?: "Checking status...",
-                        isTablet = isTablet,
-                        onClick = {
-                            try {
-                                if (NativeTorrentEngine.isRunning()) {
-                                    NativeTorrentEngine.stop()
-                                } else {
-                                    NativeTorrentEngine.start(settings)
-                                }
-                            } catch (e: Exception) {
-                                testResult = "🔴 Offline (${e.message})"
-                            }
-                        },
-                    )
-                    SettingsGroupDivider(isTablet = isTablet)
-                    SettingsSwitchRow(
-                        title = "Battery Saver Mode (Low Power)",
-                        description = "Saves battery by disabling DHT & PEX and limiting peers.",
-                        checked = settings.batterySaver,
-                        onCheckedChange = { TorrentStreamingRepository.setBatterySaver(it) },
-                        isTablet = isTablet,
-                        actionIcon = {
-                            IconButton(onClick = { showBatterySaverInfoDialog = true }) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Info,
-                                    contentDescription = "Battery Saver Information",
-                                    tint = androidx.compose.material3.MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    )
-                    SettingsGroupDivider(isTablet = isTablet)
-                    SettingsSwitchRow(
-                        title = "Enable UPnP (Port Forwarding)",
-                        description = "Allows incoming connections for faster streaming (may crash older routers).",
-                        checked = settings.enableUpnp,
-                        onCheckedChange = { TorrentStreamingRepository.setEnableUpnp(it) },
-                        isTablet = isTablet,
-                        actionIcon = {
-                            IconButton(onClick = { showUpnpInfoDialog = true }) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Info,
-                                    contentDescription = "UPnP Information",
-                                    tint = androidx.compose.material3.MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    )
-
                     SettingsNavigationRow(
                         title = "Disk Cache Size Limit",
                         description = if (settings.cacheSizeMb == 0) "Unlimited" else "${settings.cacheSizeMb} MB",
                         isTablet = isTablet,
                         onClick = { showCacheSizeDialog = true },
-                    )
-                    SettingsGroupDivider(isTablet = isTablet)
-                    SettingsSwitchRow(
-                        title = "Force TCP Connections",
-                        description = "Disable uTP and force aggressive TCP peer connections.",
-                        checked = settings.forceTcp,
-                        onCheckedChange = { TorrentStreamingRepository.setForceTcp(it) },
-                        isTablet = isTablet,
-                        actionIcon = {
-                            IconButton(onClick = { showTcpInfoDialog = true }) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Info,
-                                    contentDescription = "Force TCP Information",
-                                    tint = androidx.compose.material3.MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    )
-                    SettingsGroupDivider(isTablet = isTablet)
-                    SettingsNavigationRow(
-                        title = "Custom Trackers",
-                        description = "Auto-inject high-speed trackers to magnet links.",
-                        isTablet = isTablet,
-                        onClick = { showCustomTrackersDialog = true },
-                        actionIcon = {
-                            IconButton(onClick = { showTrackersInfoDialog = true }) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Info,
-                                    contentDescription = "Custom Trackers Information",
-                                    tint = androidx.compose.material3.MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
                     )
                     SettingsGroupDivider(isTablet = isTablet)
                     val cacheMb = currentCacheSizeBytes / (1024 * 1024)
@@ -200,13 +114,40 @@ internal fun TorrentStreamingSettingsContent(
                             currentCacheSizeBytes = 0L
                         },
                     )
+                }
+            }
+        }
 
+        // ── Advanced Section (only visible when P2P is enabled) ──
+        if (settings.enabled) {
+            SettingsSection(
+                title = "Advanced",
+                isTablet = isTablet,
+            ) {
+                SettingsGroup(isTablet = isTablet) {
+                    SettingsSwitchRow(
+                        title = "Force TCP Connections",
+                        description = "Use TCP instead of uTP. Enable if your ISP throttles UDP.",
+                        checked = settings.forceTcp,
+                        onCheckedChange = { TorrentStreamingRepository.setForceTcp(it) },
+                        isTablet = isTablet,
+                        actionIcon = {
+                            IconButton(onClick = { showTcpInfoDialog = true }) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Info,
+                                    contentDescription = "Force TCP Information",
+                                    tint = androidx.compose.material3.MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    )
                 }
             }
         }
     }
     
-    
+    // ── Dialogs ──
+
     if (showBatterySaverInfoDialog) {
         androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showBatterySaverInfoDialog = false }) {
             androidx.compose.material3.Surface(
@@ -219,7 +160,7 @@ internal fun TorrentStreamingSettingsContent(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     androidx.compose.material3.Text(
-                        text = "Battery Saver Mode (Low Power)",
+                        text = "Battery Saver Mode",
                         style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
                         color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                     )
@@ -244,46 +185,6 @@ internal fun TorrentStreamingSettingsContent(
             }
         }
     }
-
-    if (showUpnpInfoDialog) {
-        androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showUpnpInfoDialog = false }) {
-            androidx.compose.material3.Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    androidx.compose.material3.Text(
-                        text = "UPnP (Universal Plug and Play)",
-                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                    )
-                    androidx.compose.material3.Text(
-                        text = "UPnP automatically opens a port on your home router to accept incoming peer connections.\n\n" +
-                               "• Helpful on Home Wi-Fi for faster P2P streaming.\n" +
-                               "• Useless on Cellular networks (due to Carrier NAT).\n" +
-                               "• May crash older/buggy routers.\n\n" +
-                               "Turn ON for home Wi-Fi. Turn OFF if you experience router issues or use Cellular data.",
-                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    androidx.compose.foundation.layout.Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        androidx.compose.material3.TextButton(onClick = { showUpnpInfoDialog = false }) {
-                            androidx.compose.material3.Text("Close")
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
 
     if (showUploadLimitDialog) {
         var draft by remember { mutableStateOf(if (settings.uploadSpeedLimitKbps == 0) "" else settings.uploadSpeedLimitKbps.toString()) }
@@ -416,94 +317,6 @@ internal fun TorrentStreamingSettingsContent(
                     ) {
                         androidx.compose.material3.TextButton(onClick = { showTcpInfoDialog = false }) {
                             androidx.compose.material3.Text("Close")
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (showTrackersInfoDialog) {
-        androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showTrackersInfoDialog = false }) {
-            androidx.compose.material3.Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    androidx.compose.material3.Text(
-                        text = "Auto-Inject Custom Trackers",
-                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                    )
-                    androidx.compose.material3.Text(
-                        text = "Addons often provide magnet links with very few or dead trackers. This feature automatically injects your list of high-speed public trackers into every magnet link before starting the download.\n\n" +
-                               "• Pros: Massively speeds up the initial 'Resolving Metadata' phase and finds more peers.\n" +
-                               "• Tradeoffs: Slight overhead when resolving large tracker lists.\n\n" +
-                               "Interference Note: If you enable DHT (Distributed Hash Table), you might not need custom trackers, but having both is the absolute best for instant streaming.",
-                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    androidx.compose.foundation.layout.Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        androidx.compose.material3.TextButton(onClick = { showTrackersInfoDialog = false }) {
-                            androidx.compose.material3.Text("Close")
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (showCustomTrackersDialog) {
-        var draft by remember { mutableStateOf(settings.customTrackers) }
-        androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showCustomTrackersDialog = false }) {
-            androidx.compose.material3.Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    androidx.compose.material3.Text(
-                        text = "Custom Trackers",
-                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                    )
-                    androidx.compose.material3.Text(
-                        text = "Enter a list of tracker URLs (separated by commas or newlines).",
-                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    androidx.compose.material3.OutlinedTextField(
-                        value = draft,
-                        onValueChange = { draft = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 4,
-                        maxLines = 10,
-                        placeholder = { androidx.compose.material3.Text("udp://tracker.opentrackr.org:1337/announce\nudp://tracker.coppersurfer.tk:6969/announce") }
-                    )
-                    androidx.compose.foundation.layout.Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, androidx.compose.ui.Alignment.End),
-                    ) {
-                        androidx.compose.material3.TextButton(onClick = { showCustomTrackersDialog = false }) {
-                            androidx.compose.material3.Text("Cancel")
-                        }
-                        androidx.compose.material3.Button(
-                            onClick = {
-                                TorrentStreamingRepository.setCustomTrackers(draft.trim())
-                                showCustomTrackersDialog = false
-                            },
-                        ) {
-                            androidx.compose.material3.Text("Save")
                         }
                     }
                 }

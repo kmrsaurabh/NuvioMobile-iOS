@@ -28,3 +28,6 @@ asset
 scripts/scrape_android_compose_animation_docs.py
 tools
 AGENTS.md
+ci_logs/
+Nuvio-v0.2.2-2606032039-Full.ipa
+logs_72224541448.zip
