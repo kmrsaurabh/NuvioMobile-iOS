@@ -16,6 +16,15 @@
       "tintColor": "#2196F3",
       "versions": [
         {
+          "version": "0.2.3",
+          "buildVersion": "2606040417",
+          "date": "2026-06-04T05:11:43Z",
+          "localizedDescription": "Automated build from CI.",
+          "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/v0.2.3-2606040417/Nuvio-v0.2.3-2606040417-Full.ipa",
+          "size": 45583868,
+          "sha256": "388624f11c3e9f323fc6038940b048f6ec1bfbb02b134780a6c485cde6f432fc"
+        },
+        {
           "version": "0.2.2",
           "buildVersion": "2606040116",
           "date": "2026-06-04T02:06:40Z",
