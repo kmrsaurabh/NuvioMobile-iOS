@@ -17,8 +17,6 @@ expect object TorrentStreamingSettingsStorage {
     fun saveEnableUpnp(enable: Boolean)
     fun loadForceTcp(): Boolean?
     fun saveForceTcp(force: Boolean)
-    fun loadCustomTrackers(): String?
-    fun saveCustomTrackers(trackers: String)
     fun loadPreferredPort(): Int?
     fun savePreferredPort(port: Int)
     fun loadBatterySaver(): Boolean?

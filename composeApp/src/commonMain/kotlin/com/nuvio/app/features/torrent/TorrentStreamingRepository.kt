@@ -77,12 +77,6 @@ object TorrentStreamingRepository {
         publish(_uiState.value.copy(forceTcp = value))
     }
 
-    fun setCustomTrackers(value: String) {
-        ensureLoaded()
-        if (_uiState.value.customTrackers == value) return
-        TorrentStreamingSettingsStorage.saveCustomTrackers(value)
-        publish(_uiState.value.copy(customTrackers = value))
-    }
 
     fun setPreferredPort(value: Int) {
         ensureLoaded()
@@ -116,7 +110,7 @@ object TorrentStreamingRepository {
                 enableUpload = TorrentStreamingSettingsStorage.loadEnableUpload() ?: false,
                 enableUpnp = TorrentStreamingSettingsStorage.loadEnableUpnp() ?: false,
                 forceTcp = TorrentStreamingSettingsStorage.loadForceTcp() ?: false,
-                customTrackers = TorrentStreamingSettingsStorage.loadCustomTrackers() ?: "",
+
                 preferredPort = TorrentStreamingSettingsStorage.loadPreferredPort() ?: 0,
                 batterySaver = TorrentStreamingSettingsStorage.loadBatterySaver() ?: true,
             ),

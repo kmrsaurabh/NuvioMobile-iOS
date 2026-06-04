@@ -20,7 +20,6 @@ var (
 	server               *http.Server
 	port                 int
 	mu                   sync.RWMutex
-	globalCustomTrackers []string
 )
 
 type SessionStatus struct {
@@ -52,7 +51,6 @@ type EngineConfig struct {
 	EnableUpnp         bool   `json:"enableUpnp"`
 	EnableDHT          bool   `json:"enableDHT"`
 	ForceTcp           bool   `json:"forceTcp"`
-	CustomTrackers     string `json:"customTrackers"`
 	BatterySaver       bool   `json:"batterySaver"`
 }
 
@@ -76,18 +74,6 @@ func StartEngine(dataDir string, configJson string) string {
 	cfg.NoDefaultPortForwarding = !parsedCfg.EnableUpnp
 	cfg.DisableUTP = parsedCfg.ForceTcp
 
-	globalCustomTrackers = nil
-	if parsedCfg.CustomTrackers != "" {
-		parts := strings.FieldsFunc(parsedCfg.CustomTrackers, func(c rune) bool {
-			return c == ',' || c == '\n' || c == '\r'
-		})
-		for _, p := range parts {
-			if p != "" {
-				globalCustomTrackers = append(globalCustomTrackers, strings.TrimSpace(p))
-			}
-		}
-	}
-	
 	if parsedCfg.MaxPeerConnections > 0 {
 		cfg.EstablishedConnsPerTorrent = parsedCfg.MaxPeerConnections
 		cfg.HalfOpenConnsPerTorrent = parsedCfg.MaxPeerConnections / 2
@@ -161,27 +147,6 @@ func AddMagnet(uri string, fileIdx int) string {
 
 	if client == nil {
 		return `{"errorMessage": "Engine not started"}`
-	}
-
-	if len(globalCustomTrackers) > 0 {
-		if mag, err := metainfo.ParseMagnetUri(uri); err == nil {
-			// Prepend custom trackers so they are contacted FIRST for a startup boost
-			var newTrackers []string
-			newTrackers = append(newTrackers, globalCustomTrackers...)
-			newTrackers = append(newTrackers, mag.Trackers...)
-			
-			// Deduplicate to avoid redundant tracker announcements
-			seen := make(map[string]bool)
-			var deduped []string
-			for _, tr := range newTrackers {
-				if !seen[tr] {
-					seen[tr] = true
-					deduped = append(deduped, tr)
-				}
-			}
-			mag.Trackers = deduped
-			uri = mag.String()
-		}
 	}
 
 	t, err := client.AddMagnet(uri)
@@ -396,15 +361,17 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 	// to http.ServeContent.  Without this, ffmpeg/MPV gets a valid HTTP
 	// response header (with Content-Length) but zero body bytes, causing
 	// "[ffmpeg] http: stream ends prematurely at 0".
-	waitDeadline := time.After(60 * time.Second)
-	for targetFile.BytesCompleted() == 0 {
-		select {
-		case <-time.After(200 * time.Millisecond):
-		case <-waitDeadline:
-			http.Error(w, "Timeout waiting for initial data", 504)
-			return
-		case <-r.Context().Done():
-			return
+	if r.Method != http.MethodHead {
+		waitDeadline := time.After(60 * time.Second)
+		for targetFile.BytesCompleted() == 0 {
+			select {
+			case <-time.After(200 * time.Millisecond):
+			case <-waitDeadline:
+				http.Error(w, "Timeout waiting for initial data", 504)
+				return
+			case <-r.Context().Done():
+				return
+			}
 		}
 	}
 

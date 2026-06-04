@@ -52,10 +52,7 @@ object TorrentStreamResolver {
             if (!NativeTorrentEngine.isRunning()) {
                 NativeTorrentEngine.start(settings)
             }
-            val effectiveMagnet = appendTrackersToMagnet(
-                baseMagnet = magnetUri ?: "magnet:?xt=urn:btih:${infoHash!!}",
-                trackers = settings.parsedCustomTrackers()
-            )
+            val effectiveMagnet = magnetUri ?: "magnet:?xt=urn:btih:${infoHash!!}"
             val session = NativeTorrentEngine.addTorrent(effectiveMagnet, infoHash, fileIdx)
                 ?: return TorrentResolveResult.Error("Failed to start torrent session")
             Logger.d(TAG) { "Native torrent session started: streamUrl=${session.streamUrl}" }
@@ -66,34 +63,6 @@ object TorrentStreamResolver {
         }
     }
 
-    private fun appendTrackersToMagnet(baseMagnet: String, trackers: List<String>): String {
-        val defaultTrackers = listOf(
-            "udp://tracker.opentrackr.org:1337/announce",
-            "udp://open.tracker.cl:1337/announce",
-            "udp://9.rarbg.com:2810/announce",
-            "udp://tracker.torrent.eu.org:451/announce",
-            "udp://exodus.desync.com:6969/announce",
-            "udp://tracker.openbittorrent.com:6969/announce",
-            "http://tracker.openbittorrent.com:80/announce",
-            "udp://open.demonii.com:1337/announce"
-        )
-        val allTrackers = (defaultTrackers + trackers).distinct()
-        
-        val existingTrackers = baseMagnet.split("&tr=").drop(1).map { it.substringBefore("&") }
-        val newTrackers = allTrackers.filter { tracker ->
-            existingTrackers.none { it == tracker || it.contains(tracker) }
-        }
-        
-        if (newTrackers.isEmpty()) return baseMagnet
-        
-        return buildString {
-            append(baseMagnet)
-            newTrackers.forEach { tracker ->
-                append("&tr=")
-                append(tracker.encodeURLParameter())
-            }
-        }
-    }
 
     private fun buildMagnetUri(infoHash: String, stream: StreamItem): String {
         return buildString {

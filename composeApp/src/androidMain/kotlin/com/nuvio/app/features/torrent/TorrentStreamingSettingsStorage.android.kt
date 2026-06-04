@@ -17,8 +17,6 @@ actual object TorrentStreamingSettingsStorage {
     actual fun saveEnableUpnp(enable: Boolean) {}
     actual fun loadForceTcp(): Boolean? = null
     actual fun saveForceTcp(force: Boolean) {}
-    actual fun loadCustomTrackers(): String? = null
-    actual fun saveCustomTrackers(trackers: String) {}
     actual fun loadPreferredPort(): Int? = null
     actual fun savePreferredPort(port: Int) {}
     actual fun loadBatterySaver(): Boolean? = null
