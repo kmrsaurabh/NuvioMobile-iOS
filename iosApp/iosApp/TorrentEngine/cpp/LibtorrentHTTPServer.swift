@@ -108,30 +108,12 @@ import Network
             return
         }
         
-        // Parse hash and fileIdx (simplified parsing for now)
         let hashAndQuery = path.dropFirst(8).components(separatedBy: "?")
         let hash = String(hashAndQuery[0])
         
-        // Get status from bridge to find file name and size
-        let statusJson = LibtorrentBridge.shared().getStatusForHash(hash, magnetUri: "", fileIndex: Int32(-1))
-        guard let statusData = statusJson.data(using: .utf8),
-              let statusObj = try? JSONSerialization.jsonObject(with: statusData) as? [String: Any],
-              let fileName = statusObj["fileName"] as? String,
-              let fileSize = statusObj["totalSizeBytes"] as? Int64 else {
-            send404(on: connection)
-            return
-        }
-        
-        let filePath = (self.downloadPath as NSString).appendingPathComponent(fileName)
-        let pieceLength = LibtorrentBridge.shared().pieceLength(forHash: hash)
-        guard pieceLength > 0 else {
-            send500(on: connection)
-            return
-        }
-        
         // Parse Range header
         var rangeStart: Int64 = 0
-        var rangeEnd: Int64 = fileSize - 1
+        var rangeEnd: Int64 = -1
         var isPartial = false
         
         for line in lines {
@@ -148,13 +130,49 @@ import Network
             }
         }
         
-        let contentLength = rangeEnd - rangeStart + 1
+        waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial, attempts: 0)
+    }
+    
+    private func waitForMetadataAndProcess(on connection: NWConnection, isHead: Bool, hash: String, rangeStart: Int64, rangeEnd: Int64, isPartial: Bool, attempts: Int) {
+        if attempts > 300 { // 30 seconds timeout
+            send500(on: connection)
+            return
+        }
+        
+        let statusJson = LibtorrentBridge.shared().getStatusForHash(hash, magnetUri: "", fileIndex: Int32(-1))
+        guard let statusData = statusJson.data(using: .utf8),
+              let statusObj = try? JSONSerialization.jsonObject(with: statusData) as? [String: Any],
+              let fileName = statusObj["fileName"] as? String,
+              let fileSize = statusObj["totalSizeBytes"] as? Int64,
+              fileSize > 0 else {
+            
+            queue.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial, attempts: attempts + 1)
+            }
+            return
+        }
+        
+        let filePath = (self.downloadPath as NSString).appendingPathComponent(fileName)
+        let pieceLength = LibtorrentBridge.shared().pieceLength(forHash: hash)
+        guard pieceLength > 0 else {
+            queue.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial, attempts: attempts + 1)
+            }
+            return
+        }
+        
+        var finalRangeEnd = rangeEnd
+        if finalRangeEnd == -1 || finalRangeEnd >= fileSize {
+            finalRangeEnd = fileSize - 1
+        }
+        
+        let contentLength = finalRangeEnd - rangeStart + 1
         
         // Send Headers
         var response = ""
         if isPartial {
             response += "HTTP/1.1 206 Partial Content\r\n"
-            response += "Content-Range: bytes \(rangeStart)-\(rangeEnd)/\(fileSize)\r\n"
+            response += "Content-Range: bytes \(rangeStart)-\(finalRangeEnd)/\(fileSize)\r\n"
         } else {
             response += "HTTP/1.1 200 OK\r\n"
         }
