@@ -165,9 +165,21 @@ func AddMagnet(uri string, fileIdx int) string {
 
 	if len(globalCustomTrackers) > 0 {
 		if mag, err := metainfo.ParseMagnetUri(uri); err == nil {
-			for _, tr := range globalCustomTrackers {
-				mag.Trackers = append(mag.Trackers, tr)
+			// Prepend custom trackers so they are contacted FIRST for a startup boost
+			var newTrackers []string
+			newTrackers = append(newTrackers, globalCustomTrackers...)
+			newTrackers = append(newTrackers, mag.Trackers...)
+			
+			// Deduplicate to avoid redundant tracker announcements
+			seen := make(map[string]bool)
+			var deduped []string
+			for _, tr := range newTrackers {
+				if !seen[tr] {
+					seen[tr] = true
+					deduped = append(deduped, tr)
+				}
 			}
+			mag.Trackers = deduped
 			uri = mag.String()
 		}
 	}
