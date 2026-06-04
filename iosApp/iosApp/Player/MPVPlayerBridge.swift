@@ -332,6 +332,11 @@ final class MPVPlayerViewController: UIViewController {
         checkError(mpv_set_option_string(mpv, "target-colorspace-hint", "yes"))
         checkError(mpv_set_option_string(mpv, "tone-mapping", "auto"))
         checkError(mpv_set_option_string(mpv, "hdr-compute-peak", "yes"))
+        
+        // Caching: Enable massive RAM cache for instantaneous +-10s seeking
+        checkError(mpv_set_option_string(mpv, "cache", "yes"))
+        checkError(mpv_set_option_string(mpv, "demuxer-max-bytes", "150000000")) // 150MB forward buffer
+        checkError(mpv_set_option_string(mpv, "demuxer-max-back-bytes", "50000000")) // 50MB backward buffer
 
         checkError(mpv_initialize(mpv))
 
