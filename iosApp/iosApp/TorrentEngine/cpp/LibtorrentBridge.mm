@@ -18,8 +18,9 @@
 #include "libtorrent/torrent_info.hpp"
 #include "libtorrent/magnet_uri.hpp"
 #include "libtorrent/alert_types.hpp"
-
-
+#include "libtorrent/extensions/ut_metadata.hpp"
+#include "libtorrent/extensions/ut_pex.hpp"
+#include "libtorrent/extensions/smart_ban.hpp"
 
 #include <string>
 #include <mutex>
@@ -146,7 +147,10 @@ static NSString *gDataDir = nil;
         lt::session_params params(pack);
         gSession = new lt::session(std::move(params));
 
-        // ── 3. Extensions are native in libtorrent 2.x (enabled via settings_pack) ──
+        // ── 3. Install plugins ───────────────────────────────────────────────
+        gSession->add_extension(&lt::create_ut_metadata_plugin);  // magnet metadata
+        gSession->add_extension(&lt::create_ut_pex_plugin);       // peer exchange
+        gSession->add_extension(&lt::create_smart_ban_plugin);    // ban malicious peers
         
         // ── 4. Start alert pump thread ───────────────────────────────────────
         gRunning = true;
@@ -217,7 +221,7 @@ static NSString *gDataDir = nil;
     }
 
     std::stringstream ss;
-    ss << h.info_hash().v1;
+    ss << h.info_hash();
     std::string hash = ss.str();
     gTorrents[hash] = h;
 
@@ -313,16 +317,17 @@ static NSString *gDataDir = nil;
         } else {
             // Pick the largest file
             int64_t largest = 0;
-            for (auto i = tf->begin_files(); i != tf->end_files(); ++i) {
-                if (tf->file_size(i) > largest) {
-                    largest = tf->file_size(i);
-                    targetIdx = i;
+            for (int i = 0; i < tf->num_files(); ++i) {
+                lt::file_index_t idx(i);
+                if (tf->files().file_size(idx) > largest) {
+                    largest = tf->files().file_size(idx);
+                    targetIdx = idx;
                 }
             }
         }
 
-        fileSize = tf->file_size(targetIdx);
-        std::string fileName = tf->file_path(targetIdx);
+        fileSize = tf->files().file_size(targetIdx);
+        std::string fileName = tf->files().file_path(targetIdx);
 
         int64_t downloaded = (int64_t)(s.progress_ppm / 1000000.0 * fileSize);
         double progress = s.progress;
