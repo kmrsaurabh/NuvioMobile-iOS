@@ -122,7 +122,7 @@ import Network
         }
         
         let filePath = (self.downloadPath as NSString).appendingPathComponent(fileName)
-        let pieceLength = LibtorrentBridge.shared().pieceLengthForHash(hash)
+        let pieceLength = LibtorrentBridge.shared().pieceLength(forHash: hash)
         guard pieceLength > 0 else {
             send500(on: connection)
             return
