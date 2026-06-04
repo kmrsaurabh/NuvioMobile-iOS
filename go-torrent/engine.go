@@ -92,8 +92,8 @@ func StartEngine(dataDir string, configJson string) string {
 		cfg.EstablishedConnsPerTorrent = parsedCfg.MaxPeerConnections
 		cfg.HalfOpenConnsPerTorrent = parsedCfg.MaxPeerConnections / 2
 	} else {
-		cfg.EstablishedConnsPerTorrent = 100
-		cfg.HalfOpenConnsPerTorrent = 50
+		cfg.EstablishedConnsPerTorrent = 250
+		cfg.HalfOpenConnsPerTorrent = 100
 	}
 	
 	if parsedCfg.BatterySaver {
@@ -112,6 +112,8 @@ func StartEngine(dataDir string, configJson string) string {
 
 	if parsedCfg.MaxUploadRate > 0 {
 		cfg.UploadRateLimiter = rate.NewLimiter(rate.Limit(parsedCfg.MaxUploadRate), int(parsedCfg.MaxUploadRate))
+	} else {
+		cfg.UploadRateLimiter = rate.NewLimiter(rate.Limit(1), 1)
 	}
 
 	c, err := torrent.NewClient(cfg)
@@ -347,8 +349,15 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 	defer reader.Close()
 
 	reader.SetResponsive()
-	// Aggressively buffer the next 100MB sequentially for smooth playback of large files
-	reader.SetReadahead(100 * 1024 * 1024)
+	
+	// Adaptive readahead: 10% of file size, between 50MB and 300MB
+	readahead := targetFile.Length() / 10
+	if readahead < 50*1024*1024 {
+		readahead = 50 * 1024 * 1024
+	} else if readahead > 300*1024*1024 {
+		readahead = 300 * 1024 * 1024
+	}
+	reader.SetReadahead(readahead)
 
 	w.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(targetFile.DisplayPath())+"\"")
 	http.ServeContent(w, r, filepath.Base(targetFile.DisplayPath()), time.Time{}, reader)
