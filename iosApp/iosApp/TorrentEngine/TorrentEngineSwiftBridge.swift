@@ -1,12 +1,11 @@
 import Foundation
-import GoTorrent
+import Foundation
 
 @objc public class TorrentEngineSwiftBridge: NSObject {
     @objc public static let shared = TorrentEngineSwiftBridge()
 
     private var isStarted = false
-    private let engineQueue = DispatchQueue(label: "com.nuvio.torrent.goengine", qos: .userInitiated)
-    private var sessionCounter = 0
+    private let engineQueue = DispatchQueue(label: "com.nuvio.torrent.cppengine", qos: .userInitiated)
 
     private override init() {
         super.init()
@@ -21,26 +20,48 @@ import GoTorrent
             do {
                 try FileManager.default.createDirectory(atPath: downloadPath, withIntermediateDirectories: true)
             } catch {
-                print("[GoTorrent] Failed to create cache dir: \(error)")
+                print("[LibtorrentBridge] Failed to create cache dir: \(error)")
             }
 
-            let errStr = GotorrentStartEngine(downloadPath, configJson)
-            if !errStr.isEmpty {
-                print("[GoTorrent] Failed to start engine: \(errStr)")
+            // Start HTTP Server
+            let port = LibtorrentHTTPServer.shared.start(downloadPath: downloadPath)
+            if port == 0 {
+                print("[LibtorrentBridge] Failed to start HTTP server.")
+                return
+            }
+            
+            // Setup C++ Engine Config
+            let config = LTEngineConfig()
+            if let data = configJson.data(using: .utf8),
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                config.batterySaver = json["batterySaver"] as? Bool ?? false
+                config.enableDHT = json["enableDHT"] as? Bool ?? true
+                config.forceTcp = json["forceTcp"] as? Bool ?? false
+                config.maxPeerConnections = Int32(json["maxPeerConnections"] as? Int ?? 250)
+                config.maxUploadRateBps = Int64(json["maxUploadRateBps"] as? Int ?? 0)
+                config.maxCacheSizeBytes = Int64(json["maxCacheSizeBytes"] as? Int ?? (2 * 1024 * 1024 * 1024))
+            }
+
+            // Start C++ Engine
+            let errStr = LibtorrentBridge.shared().startEngine(withDataDir: downloadPath, config: config)
+            if let err = errStr, !err.isEmpty {
+                print("[LibtorrentBridge] Failed to start engine: \(err)")
+                LibtorrentHTTPServer.shared.stop()
                 return
             }
             
             isStarted = true
-            print("[GoTorrent] Engine started successfully at \(downloadPath)")
+            print("[LibtorrentBridge] Engine started successfully at \(downloadPath)")
         }
     }
 
     @objc public func stopEngine() {
         engineQueue.sync {
             guard isStarted else { return }
-            GotorrentStopEngine()
+            LibtorrentBridge.shared().stopEngine()
+            LibtorrentHTTPServer.shared.stop()
             isStarted = false
-            print("[GoTorrent] Engine stopped")
+            print("[LibtorrentBridge] Engine stopped")
         }
     }
 
@@ -55,8 +76,18 @@ import GoTorrent
                 resultJson = "{\"errorMessage\": \"Engine not started\"}"
                 return
             }
-            let res = GotorrentAddMagnet(magnetUri, Int(fileIdx))
-            resultJson = res ?? "{}"
+            resultJson = LibtorrentBridge.shared().addMagnet(magnetUri, fileIndex: fileIdx)
+            
+            // Override the port in the result JSON to point to our Swift HTTP Server
+            if var obj = try? JSONSerialization.jsonObject(with: resultJson.data(using: .utf8)!) as? [String: Any],
+               let oldStreamUrl = obj["streamUrl"] as? String {
+                let httpPort = LibtorrentHTTPServer.shared.port
+                obj["streamUrl"] = "http://127.0.0.1:\(httpPort)/stream/\(infoHash)?fileIdx=\(fileIdx)"
+                if let newData = try? JSONSerialization.data(withJSONObject: obj),
+                   let newStr = String(data: newData, encoding: .utf8) {
+                    resultJson = newStr
+                }
+            }
         }
         return resultJson
     }
@@ -64,7 +95,7 @@ import GoTorrent
     @objc public func removeTorrentSession(sessionId: String) {
         engineQueue.async {
             guard self.isStarted else { return }
-            GotorrentRemoveTorrent(sessionId)
+            LibtorrentBridge.shared().removeTorrent(withHash: sessionId)
         }
     }
 
@@ -72,19 +103,25 @@ import GoTorrent
         var resultJson = "{}"
         engineQueue.sync {
             guard isStarted else { return }
-            let res = GotorrentGetSessionStatus(sessionId, "", -1)
-            resultJson = res ?? "{}"
+            resultJson = LibtorrentBridge.shared().getStatusForHash(sessionId, magnetUri: "", fileIndex: -1)
+            
+            // Override the port in the result JSON to point to our Swift HTTP Server
+            if var obj = try? JSONSerialization.jsonObject(with: resultJson.data(using: .utf8)!) as? [String: Any],
+               let oldStreamUrl = obj["streamUrl"] as? String {
+                let httpPort = LibtorrentHTTPServer.shared.port
+                obj["streamUrl"] = "http://127.0.0.1:\(httpPort)/stream/\(sessionId)?fileIdx=-1" // fileIdx is ignored on GET
+                if let newData = try? JSONSerialization.data(withJSONObject: obj),
+                   let newStr = String(data: newData, encoding: .utf8) {
+                    resultJson = newStr
+                }
+            }
         }
         return resultJson
     }
 
     @objc public func getEngineStatsJson() -> String {
-        var resultJson = "{}"
-        engineQueue.sync {
-            guard isStarted else { return }
-            resultJson = GotorrentGetEngineStatsJson() ?? "{}"
-        }
-        return resultJson
+        // We can wire this up to get global libtorrent stats later if needed
+        return "{}" 
     }
     
     @objc public func destroyEngine() {

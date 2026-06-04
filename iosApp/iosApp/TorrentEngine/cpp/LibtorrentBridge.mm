@@ -235,6 +235,33 @@ static nw_listener_t gListener = nullptr;
     return [self _statusJsonForHandle:h hash:hash uri:magnetUri fileIndex:fileIdx];
 }
 
+- (void)setPieceDeadline:(int)pieceIndex forHash:(NSString *)hash deadlineMs:(int)ms {
+    std::lock_guard<std::mutex> lock(gMutex);
+    auto it = gTorrents.find(hash.UTF8String);
+    if (it != gTorrents.end() && it->second.is_valid()) {
+        it->second.set_piece_deadline(lt::piece_index_t(pieceIndex), ms, lt::torrent_handle::alert_when_available);
+    }
+}
+
+- (BOOL)hasPiece:(int)pieceIndex forHash:(NSString *)hash {
+    std::lock_guard<std::mutex> lock(gMutex);
+    auto it = gTorrents.find(hash.UTF8String);
+    if (it != gTorrents.end() && it->second.is_valid()) {
+        return it->second.have_piece(lt::piece_index_t(pieceIndex));
+    }
+    return NO;
+}
+
+- (int)pieceLengthForHash:(NSString *)hash {
+    std::lock_guard<std::mutex> lock(gMutex);
+    auto it = gTorrents.find(hash.UTF8String);
+    if (it != gTorrents.end() && it->second.is_valid()) {
+        auto tf = it->second.torrent_file();
+        if (tf) return tf->piece_length();
+    }
+    return 0; // Default or error
+}
+
 - (NSString *)getStatusForHash:(NSString *)hash
                       magnetUri:(NSString *)uri
                       fileIndex:(int)fileIdx {

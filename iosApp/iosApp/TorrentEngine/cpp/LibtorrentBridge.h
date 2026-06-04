@@ -56,6 +56,15 @@ NS_ASSUME_NONNULL_BEGIN
 /// Add a magnet link. Returns JSON-encoded LTSessionStatus.
 - (NSString *)addMagnet:(NSString *)magnetUri fileIndex:(int)fileIdx;
 
+/// Streaming primitive: Tell C++ engine that MPV urgently needs this piece index within deadlineMs.
+- (void)setPieceDeadline:(int)pieceIndex forHash:(NSString *)hash deadlineMs:(int)ms;
+
+/// Streaming primitive: Check if a piece is fully downloaded.
+- (BOOL)hasPiece:(int)pieceIndex forHash:(NSString *)hash;
+
+/// Streaming primitive: Get piece size for a given torrent.
+- (int)pieceLengthForHash:(NSString *)hash;
+
 /// Poll status for a known info-hash. Returns JSON-encoded LTSessionStatus.
 - (NSString *)getStatusForHash:(NSString *)hash
                        magnetUri:(NSString *)uri
