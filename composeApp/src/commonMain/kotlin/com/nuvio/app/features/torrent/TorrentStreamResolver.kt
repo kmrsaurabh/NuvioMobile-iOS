@@ -2,6 +2,7 @@ package com.nuvio.app.features.torrent
 
 import co.touchlab.kermit.Logger
 import com.nuvio.app.features.streams.StreamItem
+import io.ktor.http.encodeURLParameter
 
 sealed class TorrentResolveResult {
     data class Success(
@@ -77,7 +78,7 @@ object TorrentStreamResolver {
             append(baseMagnet)
             newTrackers.forEach { tracker ->
                 append("&tr=")
-                append(tracker) // Assume the tracker might not be URL encoded, though magnet spec says it should be. The engine handles standard ones.
+                append(tracker.encodeURLParameter())
             }
         }
     }
