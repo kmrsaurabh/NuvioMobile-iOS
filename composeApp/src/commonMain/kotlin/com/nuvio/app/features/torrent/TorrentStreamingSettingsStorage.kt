@@ -3,8 +3,6 @@ package com.nuvio.app.features.torrent
 expect object TorrentStreamingSettingsStorage {
     fun loadEnabled(): Boolean?
     fun saveEnabled(enabled: Boolean)
-    fun loadCacheSizeMb(): Int?
-    fun saveCacheSizeMb(sizeMb: Int)
     fun loadMaxConnections(): Int?
     fun saveMaxConnections(max: Int)
     fun loadDownloadSpeedLimit(): Int?

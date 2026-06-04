@@ -37,9 +37,11 @@ import Foundation
                 config.batterySaver = json["batterySaver"] as? Bool ?? false
                 config.enableDHT = json["enableDHT"] as? Bool ?? true
                 config.forceTcp = json["forceTcp"] as? Bool ?? false
+                config.enableUpnp = json["enableUpnp"] as? Bool ?? false
+                config.listenPort = Int32(json["listenPort"] as? Int ?? 0)
                 config.maxPeerConnections = Int32(json["maxPeerConnections"] as? Int ?? 250)
-                config.maxUploadRateBps = Int64(json["maxUploadRateBps"] as? Int ?? 0)
-                config.maxCacheSizeBytes = Int64(json["maxCacheSizeBytes"] as? Int ?? (2 * 1024 * 1024 * 1024))
+                config.maxDownloadRateBps = Int64(json["maxDownloadRate"] as? Int ?? 0)
+                config.maxUploadRateBps = Int64(json["maxUploadRate"] as? Int ?? 0)
             }
 
             // Start C++ Engine

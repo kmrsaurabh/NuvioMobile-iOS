@@ -5,14 +5,12 @@ import platform.Foundation.NSUserDefaults
 
 actual object TorrentStreamingSettingsStorage {
     private const val enabledKey = "torrent_enabled"
-    private const val cacheSizeMbKey = "torrent_cache_size_mb"
     private const val maxConnectionsKey = "torrent_max_connections"
     private const val downloadSpeedLimitKey = "torrent_download_speed_limit"
     private const val uploadSpeedLimitKey = "torrent_upload_speed_limit"
     private const val enableUploadKey = "torrent_enable_upload"
     private const val enableUpnpKey = "torrent_enable_upnp"
     private const val forceTcpKey = "torrent_force_tcp"
-    private const val customTrackersKey = "torrent_custom_trackers"
     private const val preferredPortKey = "torrent_preferred_port"
     private const val batterySaverKey = "torrent_battery_saver"
 
@@ -20,12 +18,6 @@ actual object TorrentStreamingSettingsStorage {
 
     actual fun saveEnabled(enabled: Boolean) {
         saveBoolean(enabledKey, enabled)
-    }
-
-    actual fun loadCacheSizeMb(): Int? = loadInt(cacheSizeMbKey)
-
-    actual fun saveCacheSizeMb(sizeMb: Int) {
-        saveInt(cacheSizeMbKey, sizeMb)
     }
 
     actual fun loadMaxConnections(): Int? = loadInt(maxConnectionsKey)
@@ -62,12 +54,6 @@ actual object TorrentStreamingSettingsStorage {
 
     actual fun saveForceTcp(force: Boolean) {
         saveBoolean(forceTcpKey, force)
-    }
-
-    actual fun loadCustomTrackers(): String? = loadString(customTrackersKey)
-
-    actual fun saveCustomTrackers(trackers: String) {
-        saveString(customTrackersKey, trackers)
     }
 
     actual fun loadPreferredPort(): Int? = loadInt(preferredPortKey)

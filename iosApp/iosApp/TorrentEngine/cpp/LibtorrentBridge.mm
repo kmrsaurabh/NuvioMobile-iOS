@@ -108,6 +108,11 @@ static NSString *gDataDir = nil;
             pack.set_bool(lt::settings_pack::enable_dht, false);
         } else {
             pack.set_bool(lt::settings_pack::enable_dht, true);
+            pack.set_str(lt::settings_pack::dht_bootstrap_nodes,
+                         "router.bittorrent.com:6881,"
+                         "router.utorrent.com:6881,"
+                         "dht.transmissionbt.com:6881,"
+                         "dht.aelitis.com:6881");
         }
 
         // PEX and LSD
@@ -128,6 +133,30 @@ static NSString *gDataDir = nil;
             pack.set_int(lt::settings_pack::upload_rate_limit, (int)config.maxUploadRateBps);
         } else {
             pack.set_int(lt::settings_pack::upload_rate_limit, 1); // 1 byte/s = effectively blocked
+        }
+
+        // Download limiting
+        if (config.maxDownloadRateBps > 0) {
+            pack.set_int(lt::settings_pack::download_rate_limit, (int)config.maxDownloadRateBps);
+        } else {
+            pack.set_int(lt::settings_pack::download_rate_limit, 0);
+        }
+
+        // UPnP and NAT-PMP
+        if (config.enableUpnp) {
+            pack.set_bool(lt::settings_pack::enable_upnp, true);
+            pack.set_bool(lt::settings_pack::enable_natpmp, true);
+        } else {
+            pack.set_bool(lt::settings_pack::enable_upnp, false);
+            pack.set_bool(lt::settings_pack::enable_natpmp, false);
+        }
+
+        // Listen interfaces
+        if (config.listenPort > 0) {
+            NSString *interfaces = [NSString stringWithFormat:@"0.0.0.0:%d,[::]:%d", config.listenPort, config.listenPort];
+            pack.set_str(lt::settings_pack::listen_interfaces, interfaces.UTF8String);
+        } else {
+            pack.set_str(lt::settings_pack::listen_interfaces, "0.0.0.0:6881,[::]:6881");
         }
 
         // Battery saver: drastically reduce connections

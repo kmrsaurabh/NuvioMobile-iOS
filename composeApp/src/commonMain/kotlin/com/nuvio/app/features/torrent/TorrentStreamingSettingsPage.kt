@@ -32,7 +32,7 @@ internal fun TorrentStreamingSettingsContent(
     val settings by TorrentStreamingRepository.uiState.collectAsStateWithLifecycle()
     val sectionSpacing = if (isTablet) 18.dp else 12.dp
     var showUploadLimitDialog by remember { mutableStateOf(false) }
-    var showCacheSizeDialog by remember { mutableStateOf(false) }
+
     var showBatterySaverInfoDialog by remember { mutableStateOf(false) }
     var showTcpInfoDialog by remember { mutableStateOf(false) }
     
@@ -96,12 +96,7 @@ internal fun TorrentStreamingSettingsContent(
                         )
                     }
                     SettingsGroupDivider(isTablet = isTablet)
-                    SettingsNavigationRow(
-                        title = "Disk Cache Size Limit",
-                        description = if (settings.cacheSizeMb == 0) "Unlimited" else "${settings.cacheSizeMb} MB",
-                        isTablet = isTablet,
-                        onClick = { showCacheSizeDialog = true },
-                    )
+
                     SettingsGroupDivider(isTablet = isTablet)
                     val cacheMb = currentCacheSizeBytes / (1024 * 1024)
                     SettingsNavigationRow(
@@ -236,55 +231,7 @@ internal fun TorrentStreamingSettingsContent(
         }
     }
 
-    if (showCacheSizeDialog) {
-        var draft by remember { mutableStateOf(if (settings.cacheSizeMb == 0) "" else settings.cacheSizeMb.toString()) }
-        androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showCacheSizeDialog = false }) {
-            androidx.compose.material3.Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    androidx.compose.material3.Text(
-                        text = "Disk Cache Size Limit (MB)",
-                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                    )
-                    androidx.compose.material3.Text(
-                        text = "Leave empty or 0 for unlimited (not recommended). Default is 2048 MB.",
-                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    androidx.compose.material3.OutlinedTextField(
-                        value = draft,
-                        onValueChange = { draft = it.filter { char -> char.isDigit() } },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        placeholder = { androidx.compose.material3.Text("e.g. 2048") }
-                    )
-                    androidx.compose.foundation.layout.Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, androidx.compose.ui.Alignment.End),
-                    ) {
-                        androidx.compose.material3.TextButton(onClick = { showCacheSizeDialog = false }) {
-                            androidx.compose.material3.Text("Cancel")
-                        }
-                        androidx.compose.material3.Button(
-                            onClick = {
-                                TorrentStreamingRepository.setCacheSizeMb(draft.toIntOrNull() ?: 0)
-                                showCacheSizeDialog = false
-                            },
-                        ) {
-                            androidx.compose.material3.Text("Save")
-                        }
-                    }
-                }
-            }
-        }
-    }
+
 
     if (showTcpInfoDialog) {
         androidx.compose.material3.BasicAlertDialog(onDismissRequest = { showTcpInfoDialog = false }) {

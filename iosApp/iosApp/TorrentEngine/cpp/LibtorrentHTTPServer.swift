@@ -95,11 +95,12 @@ import Network
         }
         
         let parts = firstLine.components(separatedBy: " ")
-        guard parts.count >= 2, parts[0] == "GET" else {
+        guard parts.count >= 2, (parts[0] == "GET" || parts[0] == "HEAD") else {
             send400(on: connection)
             return
         }
         
+        let isHead = parts[0] == "HEAD"
         let path = parts[1]
         // path format: /stream/{hash}?fileIdx={idx}
         guard path.hasPrefix("/stream/") else {
@@ -163,13 +164,50 @@ import Network
         response += "Accept-Ranges: bytes\r\n"
         response += "Connection: keep-alive\r\n\r\n"
         
-        connection.send(content: response.data(using: .utf8), completion: .contentProcessed({ [weak self] error in
-            if error == nil {
-                self?.streamData(on: connection, filePath: filePath, hash: hash, pieceLength: Int64(pieceLength), currentOffset: rangeStart, remaining: contentLength)
-            } else {
+        if isHead {
+            connection.send(content: response.data(using: .utf8), completion: .contentProcessed({ error in
                 connection.cancel()
-            }
-        }))
+            }))
+            return
+        }
+        
+        // Before sending headers, block until piece is downloaded (Poll every 100ms)
+        // This prevents FFmpeg from timing out waiting for the body after receiving headers
+        waitForPieceAndSendResponse(on: connection, responseHeader: response, filePath: filePath, hash: hash, pieceLength: Int64(pieceLength), currentOffset: rangeStart, remaining: contentLength, attempts: 0)
+    }
+    
+    private func waitForPieceAndSendResponse(on connection: NWConnection, responseHeader: String, filePath: String, hash: String, pieceLength: Int64, currentOffset: Int64, remaining: Int64, attempts: Int) {
+        let pieceIndex = Int32(currentOffset / pieceLength)
+        
+        LibtorrentBridge.shared().setPieceDeadline(pieceIndex, forHash: hash, deadlineMs: Int32(500))
+        let maxLookahead = 3
+        for i in 1...maxLookahead {
+            LibtorrentBridge.shared().setPieceDeadline(pieceIndex + Int32(i), forHash: hash, deadlineMs: Int32(500 + i * 200))
+        }
+        
+        let hasPiece = LibtorrentBridge.shared().hasPiece(pieceIndex, forHash: hash)
+        
+        if hasPiece {
+            // Piece is ready, send HTTP headers, then start streaming
+            connection.send(content: responseHeader.data(using: .utf8), completion: .contentProcessed({ [weak self] error in
+                if error == nil {
+                    self?.streamData(on: connection, filePath: filePath, hash: hash, pieceLength: pieceLength, currentOffset: currentOffset, remaining: remaining)
+                } else {
+                    connection.cancel()
+                }
+            }))
+            return
+        }
+        
+        if attempts > 300 { // 30 seconds timeout
+            print("[LibtorrentHTTPServer] Timeout waiting for initial piece \(pieceIndex)")
+            connection.cancel()
+            return
+        }
+        
+        queue.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.waitForPieceAndSendResponse(on: connection, responseHeader: responseHeader, filePath: filePath, hash: hash, pieceLength: pieceLength, currentOffset: currentOffset, remaining: remaining, attempts: attempts + 1)
+        }
     }
     
     private func streamData(on connection: NWConnection, filePath: String, hash: String, pieceLength: Int64, currentOffset: Int64, remaining: Int64) {
@@ -190,9 +228,7 @@ import Network
             LibtorrentBridge.shared().setPieceDeadline(aheadIndex, forHash: hash, deadlineMs: Int32(500 + i * 200))
         }
         
-        // Block until piece is downloaded (Poll every 100ms)
-        // Warning: Polling in NWConnection callback queue is okay here since we use QoS .userInteractive and multiple threads,
-        // but typically should use an async sleep.
+        // Check if piece is ready and send
         checkPieceReadyAndSend(on: connection, filePath: filePath, hash: hash, pieceIndex: pieceIndex, pieceLength: pieceLength, currentOffset: currentOffset, remaining: remaining, attempts: 0)
     }
     

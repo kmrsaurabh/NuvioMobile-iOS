@@ -24,14 +24,6 @@ object TorrentStreamingRepository {
         publish(_uiState.value.copy(enabled = value))
     }
 
-    fun setCacheSizeMb(value: Int) {
-        ensureLoaded()
-        val clamped = value.coerceIn(256, 16384)
-        if (_uiState.value.cacheSizeMb == clamped) return
-        TorrentStreamingSettingsStorage.saveCacheSizeMb(clamped)
-        publish(_uiState.value.copy(cacheSizeMb = clamped))
-    }
-
     fun setMaxConnections(value: Int) {
         ensureLoaded()
         val clamped = value.coerceIn(1, 500)
@@ -77,13 +69,6 @@ object TorrentStreamingRepository {
         publish(_uiState.value.copy(forceTcp = value))
     }
 
-    fun setCustomTrackers(value: String) {
-        ensureLoaded()
-        if (_uiState.value.customTrackers == value) return
-        TorrentStreamingSettingsStorage.saveCustomTrackers(value)
-        publish(_uiState.value.copy(customTrackers = value))
-    }
-
     fun setPreferredPort(value: Int) {
         ensureLoaded()
         val clamped = value.coerceIn(0, 65535)
@@ -109,14 +94,12 @@ object TorrentStreamingRepository {
         publish(
             TorrentStreamingSettings(
                 enabled = TorrentStreamingSettingsStorage.loadEnabled() ?: true,
-                cacheSizeMb = TorrentStreamingSettingsStorage.loadCacheSizeMb() ?: 2048,
                 maxConnectionsPerTorrent = TorrentStreamingSettingsStorage.loadMaxConnections() ?: 100,
                 downloadSpeedLimitKbps = TorrentStreamingSettingsStorage.loadDownloadSpeedLimit() ?: 0,
                 uploadSpeedLimitKbps = TorrentStreamingSettingsStorage.loadUploadSpeedLimit() ?: 0,
                 enableUpload = TorrentStreamingSettingsStorage.loadEnableUpload() ?: false,
                 enableUpnp = TorrentStreamingSettingsStorage.loadEnableUpnp() ?: false,
                 forceTcp = TorrentStreamingSettingsStorage.loadForceTcp() ?: false,
-                customTrackers = TorrentStreamingSettingsStorage.loadCustomTrackers() ?: "",
                 preferredPort = TorrentStreamingSettingsStorage.loadPreferredPort() ?: 0,
                 batterySaver = TorrentStreamingSettingsStorage.loadBatterySaver() ?: true,
             ),

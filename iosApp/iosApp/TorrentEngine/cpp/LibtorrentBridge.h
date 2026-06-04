@@ -37,7 +37,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) BOOL enableUpload;
 @property (nonatomic, assign) int  maxPeerConnections;   // 0 = use default (250)
 @property (nonatomic, assign) long long maxUploadRateBps; // 0 = block upload (1 byte/s)
-@property (nonatomic, assign) long long maxCacheSizeBytes;
+@property (nonatomic, assign) BOOL enableUpnp;
+@property (nonatomic, assign) int  listenPort;
+@property (nonatomic, assign) long long maxDownloadRateBps;
 @end
 
 /// The main singleton engine bridge. All Swift code talks through this.
