@@ -221,7 +221,9 @@ static NSString *gDataDir = nil;
         return [NSString stringWithFormat:@"{\"errorMessage\": \"Add torrent failed: %s\"}", ec.message().c_str()];
     }
 
-    std::string hash = lt::to_hex(h.info_hash().v1);
+    std::stringstream ss;
+    ss << h.info_hash().v1;
+    std::string hash = ss.str();
     gTorrents[hash] = h;
 
     return [self _statusJsonForHandle:h hash:hash uri:magnetUri fileIndex:fileIdx];
