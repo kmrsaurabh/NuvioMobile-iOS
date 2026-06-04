@@ -17,6 +17,15 @@
       "versions": [
         {
           "version": "0.2.2",
+          "buildVersion": "2606040116",
+          "date": "2026-06-04T02:06:40Z",
+          "localizedDescription": "Automated build from CI.",
+          "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/v0.2.2-2606040116/Nuvio-v0.2.2-2606040116-Full.ipa",
+          "size": 45597998,
+          "sha256": "62c1f11f838429f158ada79605fa7de0ba3bbf69116e778297229d442cfa25f4"
+        },
+        {
+          "version": "0.2.2",
           "buildVersion": "2606032039",
           "date": "2026-06-03T20:39:00Z",
           "localizedDescription": "Automated build from CI.",
