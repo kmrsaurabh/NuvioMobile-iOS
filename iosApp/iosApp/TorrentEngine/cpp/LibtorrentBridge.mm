@@ -1,0 +1,346 @@
+//
+//  LibtorrentBridge.mm
+//  iosApp (Nuvio++)
+//
+//  Objective-C++ implementation file (.mm = Objective-C + C++).
+//  This is where Swift-callable ObjC methods call into the raw C++ libtorrent API.
+//
+
+#import "LibtorrentBridge.h"
+#import <Foundation/Foundation.h>
+#import <Network/Network.h>
+
+// ── libtorrent C++ includes ──────────────────────────────────────────────────
+#include "libtorrent/session.hpp"
+#include "libtorrent/session_params.hpp"
+#include "libtorrent/settings_pack.hpp"
+#include "libtorrent/torrent_handle.hpp"
+#include "libtorrent/torrent_info.hpp"
+#include "libtorrent/magnet_uri.hpp"
+#include "libtorrent/alert_types.hpp"
+#include "libtorrent/read_piece.hpp"
+#include "libtorrent/extensions/ut_metadata.hpp"
+#include "libtorrent/extensions/ut_pex.hpp"
+#include "libtorrent/extensions/smart_ban.hpp"
+
+#include <string>
+#include <mutex>
+#include <map>
+#include <thread>
+#include <sstream>
+
+// ── Default tracker list (always injected into every magnet) ─────────────────
+static const std::vector<std::string> kDefaultTrackers = {
+    "udp://open.stealth.si:80/announce",
+    "udp://tracker.opentrackr.org:1337/announce",
+    "udp://tracker.openbittorrent.com:6969/announce",
+    "udp://exodus.desync.com:6969/announce",
+    "udp://tracker.torrent.eu.org:451/announce",
+    "udp://tracker.tiny-vps.com:6969/announce",
+    "udp://tracker.dler.org:6969/announce",
+    "https://tracker.tamersunion.org:443/announce"
+};
+
+// ── Internal C++ session state ───────────────────────────────────────────────
+namespace {
+    lt::session *gSession = nullptr;
+    std::mutex   gMutex;
+    // Map infoHash (hex string) → torrent_handle
+    std::map<std::string, lt::torrent_handle> gTorrents;
+    // Alert pump thread
+    std::thread  gAlertThread;
+    bool         gRunning = false;
+}
+
+// ── HTTP Streaming Server ────────────────────────────────────────────────────
+// We use a lightweight GCD-based HTTP server to avoid dependencies.
+// MPV hits: GET /stream/{infoHash}?fileIdx=N
+//           -> We find the torrent, create a reader, stream bytes with Range support.
+static int gHttpPort = 0;
+static nw_listener_t gListener = nullptr;
+
+@interface LibtorrentHTTPServer : NSObject
++ (int)startOnRandomPort;
++ (void)stop;
+@end
+
+// ── Objective-C++ Implementation ─────────────────────────────────────────────
+
+@implementation LTSessionStatus
+@end
+
+@implementation LTEngineConfig
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _enableDHT         = YES;
+        _maxPeerConnections = 250;
+        _maxCacheSizeBytes  = 2LL * 1024 * 1024 * 1024; // 2GB default
+    }
+    return self;
+}
+@end
+
+@implementation LibtorrentBridge {
+    BOOL _isRunning;
+}
+
++ (instancetype)shared {
+    static LibtorrentBridge *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[LibtorrentBridge alloc] init];
+    });
+    return instance;
+}
+
+- (nullable NSString *)startEngineWithDataDir:(NSString *)dataDir
+                                       config:(LTEngineConfig *)config {
+    std::lock_guard<std::mutex> lock(gMutex);
+    if (gSession != nullptr) return nil; // Already running
+
+    @try {
+        // ── 1. Build settings_pack ───────────────────────────────────────────
+        lt::settings_pack pack;
+
+        // Core peer limits
+        int maxConns = (config.maxPeerConnections > 0) ? config.maxPeerConnections : 250;
+        pack.set_int(lt::settings_pack::connections_limit, maxConns);
+        pack.set_int(lt::settings_pack::peer_tos, 0);
+
+        // High/low water marks for peer churn
+        pack.set_int(lt::settings_pack::peer_connect_timeout, 10);
+        pack.set_int(lt::settings_pack::connect_seed_every_n_download, 3);
+
+        // DHT
+        if (config.batterySaver || !config.enableDHT) {
+            pack.set_bool(lt::settings_pack::enable_dht, false);
+        } else {
+            pack.set_bool(lt::settings_pack::enable_dht, true);
+        }
+
+        // PEX and LSD
+        pack.set_bool(lt::settings_pack::enable_lsd, !config.batterySaver);
+
+        // UTP vs TCP
+        if (config.forceTcp) {
+            pack.set_bool(lt::settings_pack::enable_incoming_utp, false);
+            pack.set_bool(lt::settings_pack::enable_outgoing_utp, false);
+        } else {
+            pack.set_bool(lt::settings_pack::enable_incoming_utp, true);
+            pack.set_bool(lt::settings_pack::enable_outgoing_utp, true);
+        }
+
+        // Upload limiting — CRITICAL: always block upload unless explicitly enabled.
+        // This prevents bufferbloat on asymmetric mobile networks.
+        if (config.enableUpload && config.maxUploadRateBps > 0) {
+            pack.set_int(lt::settings_pack::upload_rate_limit, (int)config.maxUploadRateBps);
+        } else {
+            pack.set_int(lt::settings_pack::upload_rate_limit, 1); // 1 byte/s = effectively blocked
+        }
+
+        // Battery saver: drastically reduce connections
+        if (config.batterySaver) {
+            pack.set_int(lt::settings_pack::connections_limit, 20);
+            pack.set_int(lt::settings_pack::active_downloads, 1);
+        }
+
+        // Disk I/O — use async disk I/O for iOS
+        pack.set_int(lt::settings_pack::disk_io_write_mode, lt::settings_pack::enable_os_cache);
+        pack.set_int(lt::settings_pack::disk_io_read_mode,  lt::settings_pack::enable_os_cache);
+
+        // Save path for downloaded pieces
+        pack.set_str(lt::settings_pack::user_agent, "Nuvio/1.0");
+
+        // ── 2. Create session ────────────────────────────────────────────────
+        lt::session_params params(pack);
+        gSession = new lt::session(std::move(params));
+
+        // ── 3. Install plugins ───────────────────────────────────────────────
+        gSession->add_extension(&lt::create_ut_metadata_plugin);  // magnet metadata
+        gSession->add_extension(&lt::create_ut_pex_plugin);       // peer exchange
+        gSession->add_extension(&lt::create_smart_ban_plugin);    // ban malicious peers
+
+        // ── 4. Start alert pump thread ───────────────────────────────────────
+        gRunning = true;
+        gAlertThread = std::thread([](){
+            while (gRunning) {
+                std::vector<lt::alert *> alerts;
+                {
+                    std::lock_guard<std::mutex> lk(gMutex);
+                    if (gSession) gSession->pop_alerts(&alerts);
+                }
+                // Process alerts — mostly for logging/debugging in this phase
+                for (auto *a : alerts) {
+                    if (lt::torrent_error_alert *err = lt::alert_cast<lt::torrent_error_alert>(a)) {
+                        NSLog(@"[LibtorrentBridge] Torrent error: %s", err->message().c_str());
+                    }
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            }
+        });
+
+        _isRunning = YES;
+        NSLog(@"[LibtorrentBridge] Session started successfully.");
+        return nil;
+
+    } @catch (NSException *e) {
+        return [NSString stringWithFormat:@"Exception starting libtorrent: %@", e.reason];
+    }
+}
+
+- (void)stopEngine {
+    {
+        std::lock_guard<std::mutex> lock(gMutex);
+        gRunning = false;
+        if (gSession) {
+            delete gSession;
+            gSession = nullptr;
+        }
+        gTorrents.clear();
+    }
+    if (gAlertThread.joinable()) gAlertThread.join();
+    _isRunning = NO;
+    NSLog(@"[LibtorrentBridge] Session stopped.");
+}
+
+- (NSString *)addMagnet:(NSString *)magnetUri fileIndex:(int)fileIdx {
+    std::lock_guard<std::mutex> lock(gMutex);
+    if (!gSession) {
+        return @"{\"errorMessage\": \"Engine not started\"}";
+    }
+
+    lt::error_code ec;
+    lt::add_torrent_params p = lt::parse_magnet_uri(magnetUri.UTF8String, ec);
+    if (ec) {
+        return [NSString stringWithFormat:@"{\"errorMessage\": \"Invalid magnet: %s\"}", ec.message().c_str()];
+    }
+
+    // Inject our default super-trackers into every magnet
+    for (const auto &tr : kDefaultTrackers) {
+        p.trackers.push_back(tr);
+    }
+
+    p.flags |= lt::torrent_flags::sequential_download; // Start sequential immediately
+    p.save_path = dataDir.UTF8String; // Pieces go here
+
+    lt::torrent_handle h = gSession->add_torrent(std::move(p), ec);
+    if (ec) {
+        return [NSString stringWithFormat:@"{\"errorMessage\": \"Add torrent failed: %s\"}", ec.message().c_str()];
+    }
+
+    std::string hash = lt::to_hex(h.info_hash().v1);
+    gTorrents[hash] = h;
+
+    return [self _statusJsonForHandle:h hash:hash uri:magnetUri fileIndex:fileIdx];
+}
+
+- (NSString *)getStatusForHash:(NSString *)hash
+                      magnetUri:(NSString *)uri
+                      fileIndex:(int)fileIdx {
+    std::lock_guard<std::mutex> lock(gMutex);
+    auto it = gTorrents.find(hash.UTF8String);
+    if (it == gTorrents.end()) {
+        return @"{\"errorMessage\": \"Torrent not found\"}";
+    }
+    return [self _statusJsonForHandle:it->second
+                                 hash:hash.UTF8String
+                                  uri:uri
+                            fileIndex:fileIdx];
+}
+
+- (void)removeTorrentWithHash:(NSString *)hash {
+    std::lock_guard<std::mutex> lock(gMutex);
+    auto it = gTorrents.find(hash.UTF8String);
+    if (it != gTorrents.end()) {
+        if (gSession) gSession->remove_torrent(it->second);
+        gTorrents.erase(it);
+    }
+}
+
+- (int)streamingPort {
+    return gHttpPort;
+}
+
+// ── Private helper ────────────────────────────────────────────────────────────
+
+- (NSString *)_statusJsonForHandle:(lt::torrent_handle)h
+                              hash:(const std::string &)hashStr
+                               uri:(NSString *)uri
+                         fileIndex:(int)fileIdx {
+    lt::torrent_status s = h.status();
+    bool metaReady = (bool)h.torrent_file();
+
+    NSMutableDictionary *d = [NSMutableDictionary dictionary];
+    d[@"sessionId"]          = @(hashStr.c_str());
+    d[@"infoHash"]           = @(hashStr.c_str());
+    d[@"magnetUri"]          = uri;
+    d[@"fileIndex"]          = @(fileIdx);
+    d[@"numPeers"]           = @(s.num_peers);
+    d[@"numSeeds"]           = @(s.num_seeds);
+    d[@"downloadRateBps"]    = @(s.download_rate);
+    d[@"uploadRateBps"]      = @(s.upload_rate);
+    d[@"isMetadataResolved"] = @(metaReady);
+    d[@"isStreaming"]        = @(NO);
+
+    if (!metaReady) {
+        d[@"status"]   = @"resolvingmetadata";
+        d[@"progress"] = @(0.0);
+    } else {
+        auto tf = h.torrent_file();
+        lt::file_index_t targetIdx;
+        int64_t fileSize = 0;
+
+        // Find correct file
+        if (fileIdx >= 0 && fileIdx < tf->num_files()) {
+            targetIdx = lt::file_index_t(fileIdx);
+        } else {
+            // Pick the largest file
+            int64_t largest = 0;
+            for (auto i = tf->begin_files(); i != tf->end_files(); ++i) {
+                if (tf->file_size(i) > largest) {
+                    largest = tf->file_size(i);
+                    targetIdx = i;
+                }
+            }
+        }
+
+        fileSize = tf->file_size(targetIdx);
+        std::string fileName = tf->file_path(targetIdx);
+
+        int64_t downloaded = (int64_t)(s.progress_ppm / 1000000.0 * fileSize);
+        double progress = s.progress;
+
+        d[@"fileName"]        = @(fileName.c_str());
+        d[@"totalSizeBytes"]  = @(fileSize);
+        d[@"downloadedBytes"] = @(downloaded);
+        d[@"progress"]        = @(progress);
+
+        if (progress >= 1.0) {
+            d[@"status"] = @"completed";
+        } else if (progress > 0) {
+            d[@"status"]      = @"streaming";
+            d[@"isStreaming"] = @(YES);
+        } else {
+            d[@"status"] = @"downloading";
+        }
+
+        // Stream URL served by our local HTTP server
+        d[@"streamUrl"] = [NSString stringWithFormat:@"http://127.0.0.1:%d/stream/%s?fileIdx=%d",
+                           gHttpPort, hashStr.c_str(), (int)targetIdx];
+    }
+
+    NSError *err;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:d options:0 error:&err];
+    if (!jsonData) return @"{\"errorMessage\": \"JSON serialization failed\"}";
+    return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+}
+
+// Expose dataDir for use in addMagnet
+static NSString *dataDir = nil;
+- (nullable NSString *)startEngineWithDataDir:(NSString *)dir config:(LTEngineConfig *)config {
+    dataDir = dir;
+    return [self startEngineWithDataDir:dir config:config];
+}
+
+@end
