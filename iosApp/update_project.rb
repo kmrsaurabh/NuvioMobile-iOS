@@ -76,14 +76,11 @@ target.build_configurations.each do |config|
   config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
   config.build_settings['OTHER_LDFLAGS'] = ['$(inherited)', '-ObjC']
   
-  # Crucial for ABI compatibility with vcpkg libtorrent 1.2
+  # Crucial for ABI compatibility with vcpkg libtorrent 2.0.11 compilation
   config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = [
     '$(inherited)',
-    'BOOST_ASIO_HAS_STD_SYSTEM_ERROR=1',
-    'TORRENT_USE_SYSTEM_ERROR_CODE=1',
-    'BOOST_SYSTEM_NO_DEPRECATED=1',
-    'BOOST_ERROR_CODE_HEADER_ONLY=1',
-    'BOOST_SYSTEM_NO_LIB=1',
+    'TORRENT_ABI_VERSION=3',
+    'TORRENT_NO_DEPRECATE=1',
     'TORRENT_USE_LIBCRYPTO=1'
   ]
 end
