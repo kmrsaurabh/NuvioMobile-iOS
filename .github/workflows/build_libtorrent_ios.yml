@@ -1,0 +1,31 @@
+name: Build Libtorrent for iOS
+
+on:
+  push:
+    branches: [ "feature/libtorrent-build-experiment" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup vcpkg and Build Libtorrent for iOS (arm64)
+      run: |
+        echo "Fetching vcpkg to handle C++ dependencies..."
+        git clone https://github.com/microsoft/vcpkg.git
+        cd vcpkg
+        ./bootstrap-vcpkg.sh
+        
+        echo "Building Boost, OpenSSL, and libtorrent-rasterbar for iOS arm64..."
+        # The arm64-ios triplet automatically cross-compiles everything for physical iPhones
+        ./vcpkg install libtorrent:arm64-ios
+        
+    - name: Archive compiled libraries
+      uses: actions/upload-artifact@v4
+      with:
+        name: libtorrent-ios-compiled-libs
+        path: vcpkg/packages/libtorrent_arm64-ios/
