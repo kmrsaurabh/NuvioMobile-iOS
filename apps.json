@@ -16,13 +16,13 @@
       "tintColor": "#2196F3",
       "versions": [
         {
-          "version": "0.2.1",
-          "buildVersion": "2606031903",
-          "date": "2026-06-03T19:03:00Z",
-          "localizedDescription": "Manual injection for v0.2.1-2606031903",
-          "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/v0.2.1-2606031903/Nuvio-v0.2.1-2606031903-Full.ipa",
-          "size": 45590251,
-          "sha256": "d09ebba86403d75eb23bdd84a0625d5c6527fc8c5121aad9d1f83220f5587f49"
+          "version": "0.2.2",
+          "buildVersion": "2606032039",
+          "date": "2026-06-03T20:39:00Z",
+          "localizedDescription": "Automated build from CI.",
+          "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/v0.2.2-2606032039/Nuvio-v0.2.2-2606032039-Full.ipa",
+          "size": 45594511,
+          "sha256": "ad799e6f3348c1269042c21327dcfe78f7cd1c688c5cd36f57cfa126e110cc79"
         }
       ]
     }
