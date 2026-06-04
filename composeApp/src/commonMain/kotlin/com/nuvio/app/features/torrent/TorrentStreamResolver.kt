@@ -67,11 +67,23 @@ object TorrentStreamResolver {
     }
 
     private fun appendTrackersToMagnet(baseMagnet: String, trackers: List<String>): String {
-        if (trackers.isEmpty()) return baseMagnet
+        val defaultTrackers = listOf(
+            "udp://tracker.opentrackr.org:1337/announce",
+            "udp://open.tracker.cl:1337/announce",
+            "udp://9.rarbg.com:2810/announce",
+            "udp://tracker.torrent.eu.org:451/announce",
+            "udp://exodus.desync.com:6969/announce",
+            "udp://tracker.openbittorrent.com:6969/announce",
+            "http://tracker.openbittorrent.com:80/announce",
+            "udp://open.demonii.com:1337/announce"
+        )
+        val allTrackers = (defaultTrackers + trackers).distinct()
+        
         val existingTrackers = baseMagnet.split("&tr=").drop(1).map { it.substringBefore("&") }
-        val newTrackers = trackers.filter { tracker ->
+        val newTrackers = allTrackers.filter { tracker ->
             existingTrackers.none { it == tracker || it.contains(tracker) }
         }
+        
         if (newTrackers.isEmpty()) return baseMagnet
         
         return buildString {
