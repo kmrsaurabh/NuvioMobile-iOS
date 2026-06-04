@@ -112,7 +112,7 @@ import Network
         let hash = String(hashAndQuery[0])
         
         // Get status from bridge to find file name and size
-        let statusJson = LibtorrentBridge.shared().getStatusForHash(hash, magnetUri: "", fileIndex: -1)
+        let statusJson = LibtorrentBridge.shared().getStatusForHash(hash, magnetUri: "", fileIndex: Int32(-1))
         guard let statusData = statusJson.data(using: .utf8),
               let statusObj = try? JSONSerialization.jsonObject(with: statusData) as? [String: Any],
               let fileName = statusObj["fileName"] as? String,
@@ -181,7 +181,7 @@ import Network
         let pieceIndex = Int32(currentOffset / pieceLength)
         
         // Prioritize this piece with a 500ms deadline
-        LibtorrentBridge.shared().setPieceDeadline(pieceIndex, forHash: hash, deadlineMs: 500)
+        LibtorrentBridge.shared().setPieceDeadline(pieceIndex, forHash: hash, deadlineMs: Int32(500))
         
         // Also prioritize the next few pieces to keep a buffer ahead
         let maxLookahead = 3

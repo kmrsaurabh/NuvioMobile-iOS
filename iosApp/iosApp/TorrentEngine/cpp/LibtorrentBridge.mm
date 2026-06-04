@@ -52,18 +52,6 @@ namespace {
     bool         gRunning = false;
 }
 
-// ── HTTP Streaming Server ────────────────────────────────────────────────────
-// We use a lightweight GCD-based HTTP server to avoid dependencies.
-// MPV hits: GET /stream/{infoHash}?fileIdx=N
-//           -> We find the torrent, create a reader, stream bytes with Range support.
-static int gHttpPort = 0;
-static nw_listener_t gListener = nullptr;
-
-@interface LibtorrentHTTPServer : NSObject
-+ (int)startOnRandomPort;
-+ (void)stop;
-@end
-
 // ── Objective-C++ Implementation ─────────────────────────────────────────────
 
 @implementation LTSessionStatus
@@ -94,10 +82,14 @@ static nw_listener_t gListener = nullptr;
     return instance;
 }
 
+static NSString *gDataDir = nil;
+
 - (nullable NSString *)startEngineWithDataDir:(NSString *)dataDir
                                        config:(LTEngineConfig *)config {
     std::lock_guard<std::mutex> lock(gMutex);
     if (gSession != nullptr) return nil; // Already running
+    
+    gDataDir = dataDir;
 
     @try {
         // ── 1. Build settings_pack ───────────────────────────────────────────
@@ -222,7 +214,7 @@ static nw_listener_t gListener = nullptr;
     }
 
     p.flags |= lt::torrent_flags::sequential_download; // Start sequential immediately
-    p.save_path = dataDir.UTF8String; // Pieces go here
+    p.save_path = gDataDir ? gDataDir.UTF8String : ""; // Pieces go here
 
     lt::torrent_handle h = gSession->add_torrent(std::move(p), ec);
     if (ec) {
@@ -286,7 +278,7 @@ static nw_listener_t gListener = nullptr;
 }
 
 - (int)streamingPort {
-    return gHttpPort;
+    return 0; // Handled by Swift LibtorrentHTTPServer
 }
 
 // ── Private helper ────────────────────────────────────────────────────────────
@@ -354,20 +346,13 @@ static nw_listener_t gListener = nullptr;
 
         // Stream URL served by our local HTTP server
         d[@"streamUrl"] = [NSString stringWithFormat:@"http://127.0.0.1:%d/stream/%s?fileIdx=%d",
-                           gHttpPort, hashStr.c_str(), (int)targetIdx];
+                           0, hashStr.c_str(), (int)targetIdx];
     }
 
     NSError *err;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:d options:0 error:&err];
     if (!jsonData) return @"{\"errorMessage\": \"JSON serialization failed\"}";
     return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-}
-
-// Expose dataDir for use in addMagnet
-static NSString *dataDir = nil;
-- (nullable NSString *)startEngineWithDataDir:(NSString *)dir config:(LTEngineConfig *)config {
-    dataDir = dir;
-    return [self startEngineWithDataDir:dir config:config];
 }
 
 @end

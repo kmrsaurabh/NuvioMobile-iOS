@@ -103,7 +103,7 @@ import Foundation
         var resultJson = "{}"
         engineQueue.sync {
             guard isStarted else { return }
-            resultJson = LibtorrentBridge.shared().getStatusForHash(sessionId, magnetUri: "", fileIndex: -1)
+            resultJson = LibtorrentBridge.shared().getStatusForHash(sessionId, magnetUri: "", fileIndex: Int32(-1))
             
             // Override the port in the result JSON to point to our Swift HTTP Server
             if var obj = try? JSONSerialization.jsonObject(with: resultJson.data(using: .utf8)!) as? [String: Any],
