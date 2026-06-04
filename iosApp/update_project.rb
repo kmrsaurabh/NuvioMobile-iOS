@@ -30,9 +30,14 @@ end
 
 # 3. Link LibTorrent static libs (.a) and libc++.tbd
 Dir.glob('Frameworks/LibTorrent/lib/*.a').each do |lib_path|
+  # Skip vcpkg's iconv/charset because they shadow Apple's system libiconv.tbd,
+  # causing missing _iconv symbols for MPVKit/Libass.
+  next if lib_path.end_with?('libiconv.a') || lib_path.end_with?('libcharset.a')
+
   lib_ref = project.new_file(lib_path)
   target.frameworks_build_phase.add_file_reference(lib_ref)
 end
+
 
 # Add libc++.tbd for C++ standard library
 libcxx = project.new_file('usr/lib/libc++.tbd')

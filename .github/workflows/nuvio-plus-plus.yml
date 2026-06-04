@@ -149,9 +149,13 @@ jobs:
           mkdir -p iosApp/Frameworks/LibTorrent/include
           cp libtorrent-built/lib/libtorrent-rasterbar.a iosApp/Frameworks/LibTorrent/lib/
           cp -R libtorrent-built/include/* iosApp/Frameworks/LibTorrent/include/
-          # Also copy Boost and OpenSSL static libs needed for linking
-          find libtorrent-built/lib -name "*.a" ! -name "libtorrent-rasterbar.a" \
+          # Also copy Boost and OpenSSL static libs needed for linking, but exclude iconv/charset
+          find libtorrent-built/lib -name "*.a" \
+            ! -name "libtorrent-rasterbar.a" \
+            ! -name "libiconv.a" \
+            ! -name "libcharset.a" \
             -exec cp {} iosApp/Frameworks/LibTorrent/lib/ \;
+
           echo "Staged libraries:"
           ls -lh iosApp/Frameworks/LibTorrent/lib/
 
