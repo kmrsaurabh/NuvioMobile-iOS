@@ -47,6 +47,17 @@ libcxx = project.new_file('usr/lib/libc++.tbd')
 libcxx.source_tree = 'SDKROOT'
 target.frameworks_build_phase.add_file_reference(libcxx)
 
+# Add System frameworks required by libtorrent on iOS
+%w[
+  System/Library/Frameworks/SystemConfiguration.framework
+  System/Library/Frameworks/Security.framework
+  System/Library/Frameworks/CoreFoundation.framework
+].each do |fw|
+  fw_ref = project.new_file(fw)
+  fw_ref.source_tree = 'SDKROOT'
+  target.frameworks_build_phase.add_file_reference(fw_ref)
+end
+
 # 4. Update Build Settings
 target.build_configurations.each do |config|
   config.build_settings['SWIFT_OBJC_BRIDGING_HEADER'] = 'iosApp-Bridging-Header.h'
@@ -64,6 +75,17 @@ target.build_configurations.each do |config|
   config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
   config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
   config.build_settings['OTHER_LDFLAGS'] = ['$(inherited)', '-ObjC']
+  
+  # Crucial for ABI compatibility with vcpkg libtorrent 1.2
+  config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = [
+    '$(inherited)',
+    'BOOST_ASIO_HAS_STD_SYSTEM_ERROR=1',
+    'TORRENT_USE_SYSTEM_ERROR_CODE=1',
+    'BOOST_SYSTEM_NO_DEPRECATED=1',
+    'BOOST_ERROR_CODE_HEADER_ONLY=1',
+    'BOOST_SYSTEM_NO_LIB=1',
+    'TORRENT_USE_LIBCRYPTO=1'
+  ]
 end
 
 project.save
