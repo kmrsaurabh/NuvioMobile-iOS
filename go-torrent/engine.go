@@ -263,7 +263,8 @@ func getSessionStatusJson(hash, uri string, fileIdx int, t *torrent.Torrent) str
 				s.IsStreaming = true
 			}
 
-			targetFile.Download()
+			// Do not call targetFile.Download() here — the streaming reader
+			// handles piece requests via SetResponsive().
 		}
 
 		s.StreamUrl = fmt.Sprintf("http://127.0.0.1:%d/stream/%s?fileIdx=%d", port, hash, fileIdx)
@@ -303,7 +304,15 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	<-t.GotInfo()
+	// Wait for metadata with a timeout
+	select {
+	case <-t.GotInfo():
+	case <-time.After(120 * time.Second):
+		http.Error(w, "Metadata timeout", 504)
+		return
+	case <-r.Context().Done():
+		return
+	}
 
 	fileIdx := -1
 	fmt.Sscanf(r.URL.Query().Get("fileIdx"), "%d", &fileIdx)
@@ -344,21 +353,74 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	targetFile.Download()
+	// Do NOT call targetFile.Download() here — it queues the ENTIRE file for
+	// download using the default piece picker, which competes with the reader's
+	// sequential requests and slows streaming significantly.
+
 	reader := targetFile.NewReader()
 	defer reader.Close()
 
+	// SetResponsive makes the piece picker prioritise pieces the reader needs
+	// NOW over any queued ahead-of-time requests.
 	reader.SetResponsive()
 	
-	// Adaptive readahead: 10% of file size, between 50MB and 300MB
-	readahead := targetFile.Length() / 10
-	if readahead < 50*1024*1024 {
+	// Conservative readahead: 5% of file size, clamped between 5MB and 50MB.
+	// Large readahead on mobile saturates the connection and increases memory
+	// pressure without benefit for real-time streaming.
+	readahead := targetFile.Length() / 20
+	if readahead < 5*1024*1024 {
+		readahead = 5 * 1024 * 1024
+	} else if readahead > 50*1024*1024 {
 		readahead = 50 * 1024 * 1024
-	} else if readahead > 300*1024*1024 {
-		readahead = 300 * 1024 * 1024
 	}
 	reader.SetReadahead(readahead)
 
-	w.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(targetFile.DisplayPath())+"\"")
-	http.ServeContent(w, r, filepath.Base(targetFile.DisplayPath()), time.Time{}, reader)
+	// Wait until at least some initial data is available before handing off
+	// to http.ServeContent.  Without this, ffmpeg/MPV gets a valid HTTP
+	// response header (with Content-Length) but zero body bytes, causing
+	// "[ffmpeg] http: stream ends prematurely at 0".
+	waitDeadline := time.After(60 * time.Second)
+	for targetFile.BytesCompleted() == 0 {
+		select {
+		case <-time.After(200 * time.Millisecond):
+		case <-waitDeadline:
+			http.Error(w, "Timeout waiting for initial data", 504)
+			return
+		case <-r.Context().Done():
+			return
+		}
+	}
+
+	// Set Content-Type based on file extension so MPV/ffmpeg recognises the
+	// container format immediately instead of guessing.
+	fileName := filepath.Base(targetFile.DisplayPath())
+	contentType := inferContentType(fileName)
+	w.Header().Set("Content-Type", contentType)
+
+	http.ServeContent(w, r, fileName, time.Time{}, reader)
 }
+
+func inferContentType(filename string) string {
+	ext := strings.ToLower(filepath.Ext(filename))
+	switch ext {
+	case ".mp4", ".m4v":
+		return "video/mp4"
+	case ".mkv":
+		return "video/x-matroska"
+	case ".avi":
+		return "video/x-msvideo"
+	case ".webm":
+		return "video/webm"
+	case ".ts":
+		return "video/mp2t"
+	case ".mov":
+		return "video/quicktime"
+	case ".flv":
+		return "video/x-flv"
+	case ".wmv":
+		return "video/x-ms-wmv"
+	default:
+		return "application/octet-stream"
+	}
+}
+
