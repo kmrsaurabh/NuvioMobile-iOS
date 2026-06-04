@@ -39,6 +39,12 @@ libcxx = project.new_file('usr/lib/libc++.tbd')
 libcxx.source_tree = 'SDKROOT'
 target.frameworks_build_phase.add_file_reference(libcxx)
 
+# Add libiconv.tbd (required by MPVKit/Libass since GoTorrent was removed)
+libiconv = project.new_file('usr/lib/libiconv.tbd')
+libiconv.source_tree = 'SDKROOT'
+target.frameworks_build_phase.add_file_reference(libiconv)
+
+
 # Add System frameworks required by libtorrent on iOS
 %w[
   System/Library/Frameworks/SystemConfiguration.framework
