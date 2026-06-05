@@ -270,6 +270,14 @@ func getSessionStatusJson(hash, uri string, fileIdx int, t *torrent.Torrent) str
 				}
 				reader.SetReadahead(readahead)
 				persistentReaders[hash] = reader
+
+				// Kickstart the reader so the piece picker actually starts fetching
+				// the initial pieces immediately, rather than waiting for the HTTP
+				// handler to send headers and block on Read().
+				go func(r torrent.Reader) {
+					b := make([]byte, 1)
+					r.Read(b)
+				}(reader)
 			}
 			mu.Unlock()
 		}
