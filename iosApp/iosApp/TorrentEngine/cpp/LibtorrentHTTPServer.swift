@@ -144,6 +144,7 @@ import Network
               let statusObj = try? JSONSerialization.jsonObject(with: statusData) as? [String: Any],
               let fileName = statusObj["fileName"] as? String,
               let fileSize = statusObj["totalSizeBytes"] as? Int64,
+              let fileOffset = statusObj["fileOffset"] as? Int64,
               fileSize > 0 else {
             
             queue.asyncAfter(deadline: .now() + 0.1) { [weak self] in
@@ -191,11 +192,11 @@ import Network
         
         // Before sending headers, block until piece is downloaded (Poll every 100ms)
         // This prevents FFmpeg from timing out waiting for the body after receiving headers
-        waitForPieceAndSendResponse(on: connection, responseHeader: response, filePath: filePath, hash: hash, pieceLength: Int64(pieceLength), currentOffset: rangeStart, remaining: contentLength, attempts: 0)
+        waitForPieceAndSendResponse(on: connection, responseHeader: response, filePath: filePath, hash: hash, pieceLength: Int64(pieceLength), currentOffset: rangeStart, fileOffset: fileOffset, remaining: contentLength, attempts: 0)
     }
     
-    private func waitForPieceAndSendResponse(on connection: NWConnection, responseHeader: String, filePath: String, hash: String, pieceLength: Int64, currentOffset: Int64, remaining: Int64, attempts: Int) {
-        let pieceIndex = Int32(currentOffset / pieceLength)
+    private func waitForPieceAndSendResponse(on connection: NWConnection, responseHeader: String, filePath: String, hash: String, pieceLength: Int64, currentOffset: Int64, fileOffset: Int64, remaining: Int64, attempts: Int) {
+        let pieceIndex = Int32((fileOffset + currentOffset) / pieceLength)
         
         LibtorrentBridge.shared().setPieceDeadline(pieceIndex, forHash: hash, deadlineMs: Int32(500))
         let maxLookahead = 3
@@ -209,7 +210,7 @@ import Network
             // Piece is ready, send HTTP headers, then start streaming
             connection.send(content: responseHeader.data(using: .utf8), completion: .contentProcessed({ [weak self] error in
                 if error == nil {
-                    self?.streamData(on: connection, filePath: filePath, hash: hash, pieceLength: pieceLength, currentOffset: currentOffset, remaining: remaining)
+                    self?.streamData(on: connection, filePath: filePath, hash: hash, pieceLength: pieceLength, currentOffset: currentOffset, fileOffset: fileOffset, remaining: remaining)
                 } else {
                     connection.cancel()
                 }
@@ -224,17 +225,17 @@ import Network
         }
         
         queue.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            self?.waitForPieceAndSendResponse(on: connection, responseHeader: responseHeader, filePath: filePath, hash: hash, pieceLength: pieceLength, currentOffset: currentOffset, remaining: remaining, attempts: attempts + 1)
+            self?.waitForPieceAndSendResponse(on: connection, responseHeader: responseHeader, filePath: filePath, hash: hash, pieceLength: pieceLength, currentOffset: currentOffset, fileOffset: fileOffset, remaining: remaining, attempts: attempts + 1)
         }
     }
     
-    private func streamData(on connection: NWConnection, filePath: String, hash: String, pieceLength: Int64, currentOffset: Int64, remaining: Int64) {
+    private func streamData(on connection: NWConnection, filePath: String, hash: String, pieceLength: Int64, currentOffset: Int64, fileOffset: Int64, remaining: Int64) {
         if remaining <= 0 {
             connection.cancel()
             return
         }
         
-        let pieceIndex = Int32(currentOffset / pieceLength)
+        let pieceIndex = Int32((fileOffset + currentOffset) / pieceLength)
         
         // Prioritize this piece with a 500ms deadline
         LibtorrentBridge.shared().setPieceDeadline(pieceIndex, forHash: hash, deadlineMs: Int32(500))
@@ -247,10 +248,10 @@ import Network
         }
         
         // Check if piece is ready and send
-        checkPieceReadyAndSend(on: connection, filePath: filePath, hash: hash, pieceIndex: pieceIndex, pieceLength: pieceLength, currentOffset: currentOffset, remaining: remaining, attempts: 0)
+        checkPieceReadyAndSend(on: connection, filePath: filePath, hash: hash, pieceIndex: pieceIndex, pieceLength: pieceLength, currentOffset: currentOffset, fileOffset: fileOffset, remaining: remaining, attempts: 0)
     }
     
-    private func checkPieceReadyAndSend(on connection: NWConnection, filePath: String, hash: String, pieceIndex: Int32, pieceLength: Int64, currentOffset: Int64, remaining: Int64, attempts: Int) {
+    private func checkPieceReadyAndSend(on connection: NWConnection, filePath: String, hash: String, pieceIndex: Int32, pieceLength: Int64, currentOffset: Int64, fileOffset: Int64, remaining: Int64, attempts: Int) {
         
         let hasPiece = LibtorrentBridge.shared().hasPiece(pieceIndex, forHash: hash)
         
@@ -262,7 +263,7 @@ import Network
                 do {
                     try fileHandle.seek(toOffset: UInt64(currentOffset))
                     
-                    let pieceOffset = currentOffset % pieceLength
+                    let pieceOffset = (fileOffset + currentOffset) % pieceLength
                     let bytesToRead = min(remaining, pieceLength - pieceOffset)
                     let maxChunk = Int64(1024 * 1024) // 1MB chunks
                     let chunkToRead = min(bytesToRead, maxChunk)
@@ -276,7 +277,7 @@ import Network
                     
                     connection.send(content: data, completion: .contentProcessed({ [weak self] error in
                         if error == nil {
-                            self?.streamData(on: connection, filePath: filePath, hash: hash, pieceLength: pieceLength, currentOffset: currentOffset + chunkToRead, remaining: remaining - chunkToRead)
+                            self?.streamData(on: connection, filePath: filePath, hash: hash, pieceLength: pieceLength, currentOffset: currentOffset + chunkToRead, fileOffset: fileOffset, remaining: remaining - chunkToRead)
                         } else {
                             connection.cancel()
                         }
@@ -298,7 +299,7 @@ import Network
         
         // Wait and check again
         queue.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            self?.checkPieceReadyAndSend(on: connection, filePath: filePath, hash: hash, pieceIndex: pieceIndex, pieceLength: pieceLength, currentOffset: currentOffset, remaining: remaining, attempts: attempts + 1)
+            self?.checkPieceReadyAndSend(on: connection, filePath: filePath, hash: hash, pieceIndex: pieceIndex, pieceLength: pieceLength, currentOffset: currentOffset, fileOffset: fileOffset, remaining: remaining, attempts: attempts + 1)
         }
     }
     

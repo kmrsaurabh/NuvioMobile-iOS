@@ -103,7 +103,7 @@ static NSString *gDataDir = nil;
         pack.set_int(lt::settings_pack::connect_seed_every_n_download, 3);
 
         // DHT
-        if (config.batterySaver || !config.enableDHT) {
+        if (!config.enableDHT) {
             pack.set_bool(lt::settings_pack::enable_dht, false);
         } else {
             pack.set_bool(lt::settings_pack::enable_dht, true);
@@ -235,10 +235,7 @@ static NSString *gDataDir = nil;
         return [NSString stringWithFormat:@"{\"errorMessage\": \"Invalid magnet: %s\"}", ec.message().c_str()];
     }
 
-    // Inject our default super-trackers into every magnet
-    for (const auto &tr : kDefaultTrackers) {
-        p.trackers.push_back(tr);
-    }
+    // (Custom trackers removed per user request)
 
     p.flags |= lt::torrent_flags::sequential_download; // Start sequential immediately
     p.save_path = gDataDir ? gDataDir.UTF8String : ""; // Pieces go here
@@ -361,6 +358,7 @@ static NSString *gDataDir = nil;
         double progress = s.progress;
 
         d[@"fileName"]        = @(fileName.c_str());
+        d[@"fileOffset"]      = @(tf->files().file_offset(targetIdx));
         d[@"totalSizeBytes"]  = @(fileSize);
         d[@"downloadedBytes"] = @(downloaded);
         d[@"progress"]        = @(progress);

@@ -101,7 +101,7 @@ object TorrentStreamingRepository {
                 enableUpnp = TorrentStreamingSettingsStorage.loadEnableUpnp() ?: false,
                 forceTcp = TorrentStreamingSettingsStorage.loadForceTcp() ?: false,
                 preferredPort = TorrentStreamingSettingsStorage.loadPreferredPort() ?: 0,
-                batterySaver = TorrentStreamingSettingsStorage.loadBatterySaver() ?: true,
+                batterySaver = TorrentStreamingSettingsStorage.loadBatterySaver() ?: false,
             ),
         )
     }
