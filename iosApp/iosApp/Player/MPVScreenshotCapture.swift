@@ -80,12 +80,24 @@ enum MPVScreenshotCapture {
         guard width > 0, height > 0, stride > 0,
               let data = dataPtr, dataSize > 0 else { return nil }
 
+        // Validate that the data size matches expected dimensions
+        let expectedBytesPerPixel = 4 // BGRA/RGBA are both 4 bytes per pixel
+        let expectedDataSize = stride * height
+        guard dataSize >= expectedDataSize else {
+            print("[MPVScreenshot] Data size mismatch: got \(dataSize), expected \(expectedDataSize)")
+            return nil
+        }
+
         let cvFormat: OSType
         switch pixelFormat {
         case "bgr0", "bgra":
             cvFormat = kCVPixelFormatType_32BGRA
         case "rgb0", "rgba":
             cvFormat = kCVPixelFormatType_32RGBA
+        case "rgb24", "bgr24":
+            // 3 bytes per pixel - can't use directly with 32-bit CVPixelBuffer
+            print("[MPVScreenshot] Unsupported 3-byte pixel format: \(pixelFormat ?? "unknown")")
+            return nil
         default:
             cvFormat = kCVPixelFormatType_32BGRA
         }

@@ -88,6 +88,12 @@ extension MPVPlayerViewController: MPVPictureInPicturePlaybackController {
 extension MPVPlayerViewController: MPVPictureInPictureFrameSource {
     func capturePictureInPictureFrame() -> CVPixelBuffer? {
         guard let mpv = self.mpv else { return nil }
-        return MPVScreenshotCapture.capture(mpv: mpv)
+        let buffer = MPVScreenshotCapture.capture(mpv: mpv)
+        if let buffer = buffer {
+            let width = CVPixelBufferGetWidth(buffer)
+            let height = CVPixelBufferGetHeight(buffer)
+            pipCoordinator?.updateVideoSize(width: width, height: height)
+        }
+        return buffer
     }
 }

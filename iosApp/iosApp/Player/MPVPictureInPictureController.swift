@@ -51,6 +51,11 @@ final class MPVPictureInPictureController: NSObject {
     private var lastEnqueuedPresentationSeconds: Double = 0
     private var hasInstalledTimebase: Bool = false
     private let framePumpIntervalSeconds: Double = 1.0 / 10.0
+    private var lastKnownVideoSize: CGSize = CGSize(width: 640, height: 360)
+    private var placeholderSkipCounter: Int = 0
+    private let placeholderSkipInterval: Int = 20 // Only enqueue 1 out of every 20 frames when inactive (= every 2 seconds at 10fps)
+    private var _blackPlaceholderBuffer: CVPixelBuffer?
+    private var _blackPlaceholderSize: CGSize = .zero
 
     override init() {
         let layer = AVSampleBufferDisplayLayer()
@@ -100,6 +105,14 @@ final class MPVPictureInPictureController: NSObject {
         placeholderColor = color
     }
 
+    func updateVideoSize(width: Int, height: Int) {
+        guard width > 0, height > 0 else { return }
+        let newSize = CGSize(width: width, height: height)
+        guard newSize != lastKnownVideoSize else { return }
+        lastKnownVideoSize = newSize
+        _blackPlaceholderBuffer = nil // Force regeneration
+    }
+
     func startPictureInPicture() {
         guard let controller = pictureInPictureController else { return }
         guard !controller.isPictureInPictureActive else { return }
@@ -134,9 +147,13 @@ final class MPVPictureInPictureController: NSObject {
         framePumpTimer = nil
     }
 
-    private lazy var blackPlaceholderBuffer: CVPixelBuffer? = {
-        makePlaceholderPixelBuffer(size: CGSize(width: 640, height: 360), color: .black)
-    }()
+    private var blackPlaceholderBuffer: CVPixelBuffer? {
+        if _blackPlaceholderSize != lastKnownVideoSize || _blackPlaceholderBuffer == nil {
+            _blackPlaceholderBuffer = makePlaceholderPixelBuffer(size: lastKnownVideoSize, color: .black)
+            _blackPlaceholderSize = lastKnownVideoSize
+        }
+        return _blackPlaceholderBuffer
+    }
 
     private func enqueueNextFrame() {
         syncControlTimebaseToPlayback()
@@ -144,9 +161,17 @@ final class MPVPictureInPictureController: NSObject {
         let pixelBuffer: CVPixelBuffer?
         if isActive {
             pixelBuffer = frameSource?.capturePictureInPictureFrame()
-                ?? makePlaceholderPixelBuffer(size: CGSize(width: 640, height: 360), color: placeholderColor)
+                ?? makePlaceholderPixelBuffer(size: lastKnownVideoSize, color: placeholderColor)
         } else {
-            pixelBuffer = blackPlaceholderBuffer
+            // When PIP is not active, only generate a placeholder every ~2 seconds
+            // to keep the timebase alive without wasting CPU.
+            placeholderSkipCounter += 1
+            if placeholderSkipCounter >= placeholderSkipInterval {
+                placeholderSkipCounter = 0
+                pixelBuffer = blackPlaceholderBuffer
+            } else {
+                return
+            }
         }
 
         guard let pb = pixelBuffer else { return }
