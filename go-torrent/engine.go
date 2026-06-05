@@ -85,15 +85,15 @@ func StartEngine(dataDir string, configJson string) string {
 	}
 	
 	if parsedCfg.BatterySaver {
-		cfg.NoDHT = true
-		cfg.DisablePEX = true
 		if parsedCfg.MaxPeerConnections <= 0 || parsedCfg.MaxPeerConnections > 20 {
 			cfg.EstablishedConnsPerTorrent = 20
 			cfg.HalfOpenConnsPerTorrent = 10
 		}
-	} else {
-		cfg.NoDHT = !parsedCfg.EnableDHT
 	}
+	
+	// Always enable DHT and PEX since custom trackers are gone
+	cfg.NoDHT = false
+	cfg.DisablePEX = false
 
 	// Peer discovery water marks — controls how many peer addresses are kept
 	// in memory for potential connection. Lower values save RAM.
@@ -395,7 +395,10 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 	// to http.ServeContent.  Without this, ffmpeg/MPV gets a valid HTTP
 	// response header (with Content-Length) but zero body bytes, causing
 	// "[ffmpeg] http: stream ends prematurely at 0".
-	if r.Method != http.MethodHead {
+	userAgent := r.Header.Get("User-Agent")
+	isMPV := strings.Contains(userAgent, "mpv") || strings.Contains(userAgent, "Lavf") || strings.Contains(userAgent, "AppleCoreMedia")
+
+	if r.Method != http.MethodHead && isMPV {
 		waitDeadline := time.After(120 * time.Second)
 		for targetFile.BytesCompleted() == 0 {
 			select {
