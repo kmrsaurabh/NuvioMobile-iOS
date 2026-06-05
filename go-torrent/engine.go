@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/anacrolix/torrent"
-	"github.com/anacrolix/torrent/metainfo"
 	"golang.org/x/time/rate"
 )
 
