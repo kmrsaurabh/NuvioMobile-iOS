@@ -62,7 +62,6 @@ namespace {
     if (self) {
         _enableDHT         = YES;
         _maxPeerConnections = 250;
-        _maxCacheSizeBytes  = 2LL * 1024 * 1024 * 1024; // 2GB default
     }
     return self;
 }
