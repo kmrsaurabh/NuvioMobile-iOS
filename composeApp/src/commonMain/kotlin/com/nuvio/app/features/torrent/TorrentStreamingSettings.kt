@@ -9,6 +9,7 @@ data class TorrentStreamingSettings(
     val enableUpload: Boolean = false,
     val enableUpnp: Boolean = false,
     val forceTcp: Boolean = false,
+    val customTrackers: String = "",
     val preferredPort: Int = 0,
     val batterySaver: Boolean = true,
 ) {
@@ -17,4 +18,12 @@ data class TorrentStreamingSettings(
 
     val canStream: Boolean
         get() = enabled && isNativeModeAvailable
+
+    fun parsedCustomTrackers(): List<String> {
+        return customTrackers.split(Regex("[\\n,;\\r]+"))
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .filter { it.startsWith("udp://") || it.startsWith("http://") || it.startsWith("https://") || it.startsWith("wss://") }
+            .distinct()
+    }
 }

@@ -24,6 +24,8 @@ class TorrentEngineBridgeAdapter(
             append("\"maxPeerConnections\":${settings.maxConnectionsPerTorrent},")
             append("\"enableUpnp\":${settings.enableUpnp},")
             append("\"forceTcp\":${settings.forceTcp},")
+            val escapedTrackers = settings.customTrackers.replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "")
+            append("\"customTrackers\":\"${escapedTrackers}\",")
             append("\"enableDHT\":true,")
             append("\"batterySaver\":${settings.batterySaver}")
             append("}")
