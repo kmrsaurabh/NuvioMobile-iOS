@@ -20,6 +20,7 @@ var (
 	server               *http.Server
 	port                 int
 	mu                   sync.RWMutex
+	persistentReaders    = make(map[string]torrent.Reader)
 )
 
 type SessionStatus struct {
@@ -131,6 +132,12 @@ func StartEngine(dataDir string, configJson string) string {
 func StopEngine() {
 	mu.Lock()
 	defer mu.Unlock()
+	
+	for _, r := range persistentReaders {
+		r.Close()
+	}
+	persistentReaders = make(map[string]torrent.Reader)
+
 	if server != nil {
 		server.Close()
 		server = nil
@@ -182,8 +189,14 @@ func GetSessionStatus(hash string, uri string, fileIdx int) string {
 }
 
 func RemoveTorrent(hash string) {
-	mu.RLock()
-	defer mu.RUnlock()
+	mu.Lock()
+	defer mu.Unlock()
+	
+	if r, ok := persistentReaders[hash]; ok {
+		r.Close()
+		delete(persistentReaders, hash)
+	}
+	
 	if client != nil {
 		for _, t := range client.Torrents() {
 			if t.InfoHash().HexString() == hash {
@@ -245,8 +258,20 @@ func getSessionStatusJson(hash, uri string, fileIdx int, t *torrent.Torrent) str
 				s.IsStreaming = true
 			}
 
-			// Do not call targetFile.Download() here — the streaming reader
-			// handles piece requests via SetResponsive().
+			mu.Lock()
+			if _, exists := persistentReaders[hash]; !exists {
+				reader := targetFile.NewReader()
+				reader.SetResponsive()
+				readahead := targetFile.Length() / 20
+				if readahead < 5*1024*1024 {
+					readahead = 5 * 1024 * 1024
+				} else if readahead > 50*1024*1024 {
+					readahead = 50 * 1024 * 1024
+				}
+				reader.SetReadahead(readahead)
+				persistentReaders[hash] = reader
+			}
+			mu.Unlock()
 		}
 
 		s.StreamUrl = fmt.Sprintf("http://127.0.0.1:%d/stream/%s?fileIdx=%d", port, hash, fileIdx)
@@ -286,17 +311,19 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Wait for metadata with a timeout
-	select {
-	case <-t.GotInfo():
-	case <-time.After(120 * time.Second):
-		http.Error(w, "Metadata timeout", 504)
-		return
-	case <-r.Context().Done():
-		return
+	metadataWaitDeadline := time.After(300 * time.Second)
+	for t.Info() == nil {
+		select {
+		case <-time.After(200 * time.Millisecond):
+		case <-metadataWaitDeadline:
+			http.Error(w, "Timeout waiting for metadata", 504)
+			return
+		case <-r.Context().Done():
+			return
+		}
 	}
 
-	fileIdx := -1
+	var fileIdx int = -1
 	fmt.Sscanf(r.URL.Query().Get("fileIdx"), "%d", &fileIdx)
 
 	info := t.Info()
@@ -362,7 +389,7 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 	// response header (with Content-Length) but zero body bytes, causing
 	// "[ffmpeg] http: stream ends prematurely at 0".
 	if r.Method != http.MethodHead {
-		waitDeadline := time.After(60 * time.Second)
+		waitDeadline := time.After(120 * time.Second)
 		for targetFile.BytesCompleted() == 0 {
 			select {
 			case <-time.After(200 * time.Millisecond):
