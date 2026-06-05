@@ -350,15 +350,65 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 
 	reader.SetResponsive()
 	
-	// Adaptive readahead: 10% of file size, between 50MB and 300MB
+	// Adaptive readahead: 10% of file size, between 5MB and 50MB
 	readahead := targetFile.Length() / 10
-	if readahead < 50*1024*1024 {
+	if readahead < 5*1024*1024 {
+		readahead = 5 * 1024 * 1024
+	} else if readahead > 50*1024*1024 {
 		readahead = 50 * 1024 * 1024
-	} else if readahead > 300*1024*1024 {
-		readahead = 300 * 1024 * 1024
 	}
 	reader.SetReadahead(readahead)
 
-	w.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(targetFile.DisplayPath())+"\"")
-	http.ServeContent(w, r, filepath.Base(targetFile.DisplayPath()), time.Time{}, reader)
+	// Wait for at least some data to be downloaded before returning HTTP 200 OK.
+	// If we return 200 OK with 0 bytes available, ffmpeg/mpv might throw
+	// "stream ends prematurely at 0" and fail to probe the container format.
+	if r.Method == "GET" {
+		waitDeadline := time.After(30 * time.Second)
+		for {
+			if targetFile.FileInfo().Length() > 0 && targetFile.BytesCompleted() > 0 {
+				break
+			}
+			select {
+			case <-time.After(500 * time.Millisecond):
+				continue
+			case <-waitDeadline:
+				http.Error(w, "Timeout waiting for initial data", 504)
+				return
+			case <-r.Context().Done():
+				return
+			}
+		}
+	}
+
+	// Set Content-Type based on file extension so MPV/ffmpeg recognises the
+	// container format immediately instead of guessing.
+	fileName := filepath.Base(targetFile.DisplayPath())
+	contentType := inferContentType(fileName)
+	w.Header().Set("Content-Type", contentType)
+
+	http.ServeContent(w, r, fileName, time.Time{}, reader)
+}
+
+func inferContentType(filename string) string {
+	ext := strings.ToLower(filepath.Ext(filename))
+	switch ext {
+	case ".mp4", ".m4v":
+		return "video/mp4"
+	case ".mkv":
+		return "video/x-matroska"
+	case ".avi":
+		return "video/x-msvideo"
+	case ".webm":
+		return "video/webm"
+	case ".ts":
+		return "video/mp2t"
+	case ".mov":
+		return "video/quicktime"
+	case ".flv":
+		return "video/x-flv"
+	case ".wmv":
+		return "video/x-ms-wmv"
+	default:
+		return "application/octet-stream"
+	}
 }
