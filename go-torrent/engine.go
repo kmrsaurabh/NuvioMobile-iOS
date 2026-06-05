@@ -365,7 +365,7 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		waitDeadline := time.After(30 * time.Second)
 		for {
-			if targetFile.FileInfo().Length() > 0 && targetFile.BytesCompleted() > 0 {
+			if targetFile.Length() > 0 && targetFile.BytesCompleted() > 0 {
 				break
 			}
 			select {
