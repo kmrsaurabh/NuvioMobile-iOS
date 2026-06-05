@@ -333,10 +333,11 @@ final class MPVPlayerViewController: UIViewController {
         checkError(mpv_set_option_string(mpv, "tone-mapping", "auto"))
         checkError(mpv_set_option_string(mpv, "hdr-compute-peak", "yes"))
         
-        // Caching: Enable massive RAM cache for instantaneous +-10s seeking
+        // Caching: RAM cache sized for mobile (iOS devices typically have 3-6GB).
+        // Keep it moderate to avoid memory pressure + OOM kills in background.
         checkError(mpv_set_option_string(mpv, "cache", "yes"))
-        checkError(mpv_set_option_string(mpv, "demuxer-max-bytes", "150000000")) // 150MB forward buffer
-        checkError(mpv_set_option_string(mpv, "demuxer-max-back-bytes", "50000000")) // 50MB backward buffer
+        checkError(mpv_set_option_string(mpv, "demuxer-max-bytes", "50000000"))      // 50MB forward buffer
+        checkError(mpv_set_option_string(mpv, "demuxer-max-back-bytes", "30000000")) // 30MB backward buffer
 
         checkError(mpv_initialize(mpv))
 
