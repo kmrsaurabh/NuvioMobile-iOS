@@ -19,7 +19,8 @@ var (
 	server               *http.Server
 	port                 int
 	mu                   sync.RWMutex
-	persistentReaders    = make(map[string]torrent.Reader)
+	persistentReaders    map[string]torrent.Reader = make(map[string]torrent.Reader)
+	globalCustomTrackers []string
 )
 
 type SessionStatus struct {
@@ -52,6 +53,7 @@ type EngineConfig struct {
 	EnableDHT          bool   `json:"enableDHT"`
 	ForceTcp           bool   `json:"forceTcp"`
 	BatterySaver       bool   `json:"batterySaver"`
+	CustomTrackers     string `json:"customTrackers"`
 }
 
 func StartEngine(dataDir string, configJson string) string {
@@ -65,6 +67,17 @@ func StartEngine(dataDir string, configJson string) string {
 	var parsedCfg EngineConfig
 	if configJson != "" {
 		_ = json.Unmarshal([]byte(configJson), &parsedCfg)
+	}
+
+	globalCustomTrackers = nil
+	if parsedCfg.CustomTrackers != "" {
+		trackers := strings.Split(parsedCfg.CustomTrackers, ",")
+		for _, tr := range trackers {
+			tr = strings.TrimSpace(tr)
+			if tr != "" {
+				globalCustomTrackers = append(globalCustomTrackers, tr)
+			}
+		}
 	}
 
 	cfg := torrent.NewDefaultClientConfig()
