@@ -180,6 +180,7 @@ fun PlayerScreen(
     torrentInfoHash: String? = null,
     torrentFileIdx: Int? = null,
     torrentFilename: String? = null,
+    torrentMagnetUri: String? = null,
     torrentTrackers: List<String> = emptyList(),
     initialPositionMs: Long = 0L,
     initialProgressFraction: Float? = null,
@@ -255,6 +256,7 @@ fun PlayerScreen(
         var activeTorrentInfoHash by rememberSaveable { mutableStateOf(torrentInfoHash) }
         var activeTorrentFileIdx by rememberSaveable { mutableStateOf(torrentFileIdx) }
         var activeTorrentFilename by rememberSaveable { mutableStateOf(torrentFilename) }
+        var activeTorrentMagnetUri by rememberSaveable { mutableStateOf(torrentMagnetUri) }
         var activeTorrentTrackers by remember { mutableStateOf(torrentTrackers) }
         var p2pResolvedSourceUrl by remember { mutableStateOf<String?>(null) }
         val activePlaybackIdentity = activeTorrentInfoHash
@@ -1211,6 +1213,7 @@ fun PlayerScreen(
             activeTorrentInfoHash = null
             activeTorrentFileIdx = null
             activeTorrentFilename = null
+            activeTorrentMagnetUri = null
             activeTorrentTrackers = emptyList()
             p2pResolvedSourceUrl = null
         }
@@ -1238,11 +1241,12 @@ fun PlayerScreen(
                 addonId = stream.addonId,
                 requestHeaders = emptyMap(),
                 responseHeaders = emptyMap(),
-                filename = stream.behaviorHints.filename,
+                filename = stream.p2pFilename,
                 videoSize = stream.behaviorHints.videoSize,
                 infoHash = infoHash,
-                fileIdx = stream.fileIdx,
-                sources = stream.sources,
+                fileIdx = stream.p2pFileIdx,
+                magnetUri = stream.torrentMagnetUri,
+                sources = stream.p2pSourceHints,
                 bingeGroup = stream.behaviorHints.bingeGroup,
             )
         }
@@ -1263,13 +1267,14 @@ fun PlayerScreen(
                 season = activeSeasonNumber,
                 episode = activeEpisodeNumber,
             )
-            activeSourceUrl = p2pSentinelUrl(infoHash, stream.fileIdx)
+            activeSourceUrl = p2pSentinelUrl(infoHash, stream.p2pFileIdx)
             activeSourceAudioUrl = null
             activeSourceHeaders = emptyMap()
             activeSourceResponseHeaders = emptyMap()
             activeTorrentInfoHash = infoHash
-            activeTorrentFileIdx = stream.fileIdx
-            activeTorrentFilename = stream.behaviorHints.filename
+            activeTorrentFileIdx = stream.p2pFileIdx
+            activeTorrentFilename = stream.p2pFilename
+            activeTorrentMagnetUri = stream.torrentMagnetUri
             activeTorrentTrackers = stream.p2pTrackers
             activeStreamTitle = stream.streamLabel
             activeStreamSubtitle = stream.streamSubtitle
@@ -1321,13 +1326,14 @@ fun PlayerScreen(
                 season = episode.season,
                 episode = episode.episode,
             )
-            activeSourceUrl = p2pSentinelUrl(infoHash, stream.fileIdx)
+            activeSourceUrl = p2pSentinelUrl(infoHash, stream.p2pFileIdx)
             activeSourceAudioUrl = null
             activeSourceHeaders = emptyMap()
             activeSourceResponseHeaders = emptyMap()
             activeTorrentInfoHash = infoHash
-            activeTorrentFileIdx = stream.fileIdx
-            activeTorrentFilename = stream.behaviorHints.filename
+            activeTorrentFileIdx = stream.p2pFileIdx
+            activeTorrentFilename = stream.p2pFilename
+            activeTorrentMagnetUri = stream.torrentMagnetUri
             activeTorrentTrackers = stream.p2pTrackers
             activeStreamTitle = stream.streamLabel
             activeStreamSubtitle = stream.streamSubtitle
@@ -1973,6 +1979,7 @@ fun PlayerScreen(
             activeTorrentInfoHash,
             activeTorrentFileIdx,
             activeTorrentFilename,
+            activeTorrentMagnetUri,
             activeTorrentTrackers,
             p2pSettingsUiState.p2pEnabled,
         ) {
@@ -1989,6 +1996,7 @@ fun PlayerScreen(
             p2pResolvedSourceUrl = null
             val requestedFileIdx = activeTorrentFileIdx
             val requestedFilename = activeTorrentFilename
+            val requestedMagnetUri = activeTorrentMagnetUri
             val requestedTrackers = activeTorrentTrackers
             errorMessage = null
             playerController = null
@@ -2002,6 +2010,7 @@ fun PlayerScreen(
                         infoHash = infoHash,
                         fileIdx = requestedFileIdx,
                         filename = requestedFilename,
+                        magnetUri = requestedMagnetUri,
                         trackers = requestedTrackers,
                     ),
                 )
