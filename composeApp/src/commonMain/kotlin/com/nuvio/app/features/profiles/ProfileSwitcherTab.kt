@@ -70,6 +70,7 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.nuvio.app.isIos
+import com.nuvio.app.features.home.components.CollectionCardRemoteImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nuvio.composeapp.generated.resources.*
@@ -504,11 +505,12 @@ private fun PopupProfileBubble(
                 contentAlignment = Alignment.Center,
             ) {
                 if (avatarImageUrl != null) {
-                    AsyncImage(
-                        model = avatarImageUrl,
+                    CollectionCardRemoteImage(
+                        imageUrl = avatarImageUrl,
                         contentDescription = profile.name,
-                        modifier = Modifier.size(48.dp).clip(CircleShape),
+                        modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
+                        animateIfPossible = true,
                     )
                 } else if (profile.name.isNotBlank()) {
                     Text(
@@ -818,11 +820,12 @@ fun ActiveProfileMiniAvatar(
         contentAlignment = Alignment.Center,
     ) {
         if (avatarImageUrl != null) {
-            AsyncImage(
-                model = avatarImageUrl,
+            CollectionCardRemoteImage(
+                imageUrl = avatarImageUrl,
                 contentDescription = profile.name,
-                modifier = Modifier.size(size.dp).clip(CircleShape),
+                modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
+                animateIfPossible = true,
             )
         } else if (profile.name.isNotBlank()) {
             Text(
