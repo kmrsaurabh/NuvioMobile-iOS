@@ -131,7 +131,8 @@ static NSString *gDataDir = nil;
         if (config.enableUpload && config.maxUploadRateBps > 0) {
             pack.set_int(lt::settings_pack::upload_rate_limit, (int)config.maxUploadRateBps);
         } else {
-            pack.set_int(lt::settings_pack::upload_rate_limit, 1); // 1 byte/s = effectively blocked
+            // 0 means unlimited in libtorrent. Do NOT set to 1 byte/s as it breaks DHT/PEX.
+            pack.set_int(lt::settings_pack::upload_rate_limit, 0); 
         }
 
         // Download limiting

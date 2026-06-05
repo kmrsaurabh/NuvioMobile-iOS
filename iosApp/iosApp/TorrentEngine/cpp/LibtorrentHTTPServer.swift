@@ -179,7 +179,7 @@ import Network
         }
         
         response += "Content-Length: \(contentLength)\r\n"
-        response += "Content-Type: video/mp4\r\n" // simplified
+        response += "Content-Type: \(inferContentType(from: fileName))\r\n"
         response += "Accept-Ranges: bytes\r\n"
         response += "Connection: keep-alive\r\n\r\n"
         
@@ -316,5 +316,20 @@ import Network
     private func send500(on connection: NWConnection) {
         let response = "HTTP/1.1 500 Internal Error\r\n\r\n"
         connection.send(content: response.data(using: .utf8), completion: .contentProcessed({ _ in connection.cancel() }))
+    }
+
+    private func inferContentType(from fileName: String) -> String {
+        let ext = (fileName as NSString).pathExtension.lowercased()
+        switch ext {
+        case "mp4", "m4v": return "video/mp4"
+        case "mkv": return "video/x-matroska"
+        case "avi": return "video/x-msvideo"
+        case "webm": return "video/webm"
+        case "ts": return "video/mp2t"
+        case "mov": return "video/quicktime"
+        case "flv": return "video/x-flv"
+        case "wmv": return "video/x-ms-wmv"
+        default: return "application/octet-stream"
+        }
     }
 }
