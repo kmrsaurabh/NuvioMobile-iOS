@@ -106,7 +106,7 @@ static NSString *gDataDir = nil;
         pack.set_int(lt::settings_pack::connection_speed, 500);
 
         // 128MB "Shock Absorber" Cache
-        pack.set_int(lt::settings_pack::cache_size, 8192);
+        // Modern libtorrent uses mmap or internal pools automatically, cache_size is removed.
 
         // Advanced "Unbeatable" Settings
         pack.set_int(lt::settings_pack::max_out_request_queue, 10000);
