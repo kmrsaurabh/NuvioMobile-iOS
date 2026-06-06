@@ -116,8 +116,8 @@ static NSString *gDataDir = nil;
         pack.set_int(lt::settings_pack::request_timeout, 2);
         pack.set_int(lt::settings_pack::min_reconnect_time, 1);
         pack.set_bool(lt::settings_pack::strict_end_game_mode, false);
-        pack.set_int(lt::settings_pack::disk_io_write_mode, lt::settings_pack::disable_os_cache);
-        pack.set_int(lt::settings_pack::disk_io_read_mode, lt::settings_pack::disable_os_cache);
+        pack.set_int(lt::settings_pack::disk_io_write_mode, lt::settings_pack::enable_os_cache);
+        pack.set_int(lt::settings_pack::disk_io_read_mode, lt::settings_pack::enable_os_cache);
 
         // DHT
         if (!config.enableDHT) {
@@ -222,9 +222,9 @@ static NSString *gDataDir = nil;
         return nil;
 
     } @catch (NSException *e) {
-        return [NSString stringWithFormat:@"Exception starting libtorrent: %@", e.reason];
+        return [NSString stringWithFormat:@"{\"errorMessage\": \"CRASH: NSException starting libtorrent: %@\"}", e.reason];
     } catch (const std::exception& e) {
-        return [NSString stringWithFormat:@"C++ Exception starting libtorrent: %s", e.what()];
+        return [NSString stringWithFormat:@"{\"errorMessage\": \"CRASH: C++ Exception starting libtorrent: %s\"}", e.what()];
     }
 }
 
