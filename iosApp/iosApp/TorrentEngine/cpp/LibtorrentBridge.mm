@@ -131,14 +131,19 @@ static NSString *gDataDir = nil;
             pack.set_bool(lt::settings_pack::enable_outgoing_utp, true);
         }
 
-        // Upload limiting — CRITICAL: always block upload unless explicitly enabled.
-        // This prevents bufferbloat on asymmetric mobile networks.
+        // Upload limiting — CRITICAL: 0 means unlimited in libtorrent!
+        // To prevent bufferbloat and choked downloads on asymmetric mobile networks,
+        // we must enforce a strict upload limit. 10KB/s allows DHT/PEX to function.
         if (config.enableUpload && config.maxUploadRateBps > 0) {
             pack.set_int(lt::settings_pack::upload_rate_limit, (int)config.maxUploadRateBps);
         } else {
-            // 0 means unlimited in libtorrent. Do NOT set to 1 byte/s as it breaks DHT/PEX.
-            pack.set_int(lt::settings_pack::upload_rate_limit, 0); 
+            pack.set_int(lt::settings_pack::upload_rate_limit, 10 * 1024); // 10 KB/s
         }
+        
+        // Advanced Engine Optimizations
+        pack.set_int(lt::settings_pack::tick_interval, 100); // 100ms reactor tick for faster response
+        pack.set_bool(lt::settings_pack::no_atime_storage, true); // Save disk I/O by not updating access times
+        pack.set_bool(lt::settings_pack::strict_end_game_mode, true); // Aggressively fetch last blocks of pieces
 
         // Download limiting
         if (config.maxDownloadRateBps > 0) {
