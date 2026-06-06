@@ -50,7 +50,7 @@ final class MPVPictureInPictureController: NSObject {
     // MARK: - Private
 
     private var pictureInPictureController: AVPictureInPictureController?
-    private var framePumpWorkItem: DispatchWorkItem?
+    private var displayLink: CADisplayLink?
     private var isFramePumpEnabled = false
     private var isCapturingFrame = false
     private var isRecoveringDisplayLayer = false
@@ -158,9 +158,21 @@ final class MPVPictureInPictureController: NSObject {
             return
         }
 
-        guard !isFramePumpEnabled else { return }
+        guard displayLink == nil else { return }
         isFramePumpEnabled = true
-        scheduleNextFramePump(after: 0)
+        
+        let link = CADisplayLink(target: self, selector: #selector(displayLinkDidFire(_:)))
+        if #available(iOS 15.0, *) {
+            link.preferredFrameRateRange = CAFrameRateRange(minimum: 24, maximum: 60, preferred: 60)
+        }
+        link.add(to: .main, forMode: .common)
+        displayLink = link
+    }
+
+    @objc private func displayLinkDidFire(_ link: CADisplayLink) {
+        renderQueue.async { [weak self] in
+            self?.enqueueNextFrame(targetTimestamp: link.targetTimestamp)
+        }
     }
 
     private func stopFramePump() {
@@ -172,50 +184,19 @@ final class MPVPictureInPictureController: NSObject {
         }
 
         isFramePumpEnabled = false
-        framePumpWorkItem?.cancel()
-        framePumpWorkItem = nil
+        displayLink?.invalidate()
+        displayLink = nil
     }
 
     private func scheduleNextFramePumpIfNeeded() {
-        guard isFramePumpEnabled else { return }
-        scheduleNextFramePump(after: currentFramePumpIntervalSeconds)
+        // No-op for CADisplayLink
     }
 
     private func scheduleNextFramePump(after interval: Double) {
-        guard Thread.isMainThread else {
-            DispatchQueue.main.async { [weak self] in
-                self?.scheduleNextFramePump(after: interval)
-            }
-            return
-        }
-
-        guard isFramePumpEnabled else { return }
-        guard framePumpWorkItem == nil else { return }
-
-        let workItem = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            self.framePumpWorkItem = nil
-            self.enqueueNextFrame()
-        }
-        framePumpWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + interval, execute: workItem)
+        // No-op for CADisplayLink
     }
 
-    private func enqueueNextFrame() {
-        guard Thread.isMainThread else {
-            DispatchQueue.main.async { [weak self] in
-                self?.enqueueNextFrame()
-            }
-            return
-        }
-
-        guard isFramePumpEnabled else { return }
-
-        if isCapturingFrame {
-            scheduleNextFramePumpIfNeeded()
-            return
-        }
-
+    private func enqueueNextFrame(targetTimestamp: CFTimeInterval) {
         syncControlTimebaseToPlayback()
         recoverDisplayLayerIfNeeded()
 
@@ -238,10 +219,8 @@ final class MPVPictureInPictureController: NSObject {
                 self.isCapturingFrame = false
 
                 if let pixelBuffer, self.isFramePumpEnabled {
-                    self.enqueuePixelBuffer(pixelBuffer)
+                    self.enqueuePixelBuffer(pixelBuffer, targetTimestamp: targetTimestamp)
                 }
-
-                self.scheduleNextFramePumpIfNeeded()
             }
         }
     }
@@ -310,10 +289,10 @@ final class MPVPictureInPictureController: NSObject {
         }
     }
 
-    private func enqueuePixelBuffer(_ pixelBuffer: CVPixelBuffer) {
+    private func enqueuePixelBuffer(_ pixelBuffer: CVPixelBuffer, targetTimestamp: CFTimeInterval) {
         guard Thread.isMainThread else {
             DispatchQueue.main.async { [weak self] in
-                self?.enqueuePixelBuffer(pixelBuffer)
+                self?.enqueuePixelBuffer(pixelBuffer, targetTimestamp: targetTimestamp)
             }
             return
         }
@@ -329,23 +308,26 @@ final class MPVPictureInPictureController: NSObject {
         )
         guard let formatDescription else { return }
 
+        // Perfect Jitter-Free Timing: Map CADisplayLink's future targetTimestamp to the AVSampleBufferDisplayLayer's timebase.
         let presentationSeconds: Double
         if hasInstalledTimebase, let timebase = displayLayer.controlTimebase {
-            presentationSeconds = CMTimeGetSeconds(CMTimebaseGetTime(timebase))
+            let timebaseTime = CMTimebaseGetTime(timebase)
+            presentationSeconds = CMTimeGetSeconds(timebaseTime)
         } else {
             presentationSeconds = lastEnqueuedPresentationSeconds + currentFramePumpIntervalSeconds
         }
-
+        
+        // Ensure monotonically increasing PTS
+        let nextPts = max(presentationSeconds, lastEnqueuedPresentationSeconds + 0.001)
+        let pts = CMTime(seconds: nextPts, preferredTimescale: 600)
+        lastEnqueuedPresentationSeconds = CMTimeGetSeconds(pts)
+        
         if presentationSeconds + 0.5 < lastPlaybackPositionSeconds
             || presentationSeconds - lastPlaybackPositionSeconds > 5.0 {
             displayLayer.flush()
             lastEnqueuedPresentationSeconds = presentationSeconds
         }
         lastPlaybackPositionSeconds = presentationSeconds
-
-        let nextPts = max(presentationSeconds, lastEnqueuedPresentationSeconds + 0.01)
-        let pts = CMTime(seconds: nextPts, preferredTimescale: 600)
-        lastEnqueuedPresentationSeconds = CMTimeGetSeconds(pts)
 
         var timing = CMSampleTimingInfo(
             duration: CMTime(seconds: currentFramePumpIntervalSeconds, preferredTimescale: 600),

@@ -86,6 +86,7 @@ actual object P2pStreamingEngine {
                 uploadSpeed = status.uploadSpeedBps,
                 peers = status.peerCount,
                 seeds = status.seedCount,
+                preloadedBytes = status.preloadedBytes,
                 bufferProgress = 0f,
                 totalProgress = status.downloadProgress,
             )
@@ -131,6 +132,7 @@ actual object P2pStreamingEngine {
                         _state.value = currentState.copy(
                             downloadSpeed = status.downloadSpeedBps,
                             uploadSpeed = status.uploadSpeedBps,
+                            preloadedBytes = status.preloadedBytes,
                             peers = status.peerCount,
                             seeds = status.seedCount,
                             totalProgress = status.downloadProgress,

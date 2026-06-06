@@ -6,6 +6,7 @@ data class TorrentSessionStatus(
     val downloadProgress: Float = 0f,
     val downloadSpeedBps: Long = 0L,
     val uploadSpeedBps: Long = 0L,
+    val preloadedBytes: Long = 0L,
     val seedCount: Int = 0,
     val peerCount: Int = 0,
     val state: TorrentSessionState = TorrentSessionState.STARTING,

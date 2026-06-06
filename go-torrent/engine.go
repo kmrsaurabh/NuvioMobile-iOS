@@ -35,6 +35,7 @@ type SessionStatus struct {
 	DownloadedBytes    int64   `json:"downloadedBytes"`
 	DownloadRate       int64   `json:"downloadRate"`
 	UploadRate         int64   `json:"uploadRate"`
+	PreloadedBytes     int64   `json:"preloadedBytes"`
 	NumPeers           int     `json:"numPeers"`
 	NumSeeds           int     `json:"numSeeds"`
 	Progress           float64 `json:"progress"`
@@ -42,6 +43,14 @@ type SessionStatus struct {
 	IsStreaming        bool    `json:"isStreaming"`
 	ErrorMessage       string  `json:"errorMessage,omitempty"`
 }
+
+type TorrentSpeedState struct {
+	LastBytesRead int64
+	LastTime      time.Time
+	DownloadRate  int64
+}
+
+var speedTracker = make(map[string]*TorrentSpeedState)
 
 type EngineConfig struct {
 	HttpPort           int   `json:"httpPort"`
@@ -90,10 +99,10 @@ func StartEngine(dataDir string, configJson string) string {
 	
 	if parsedCfg.MaxPeerConnections > 0 {
 		cfg.EstablishedConnsPerTorrent = parsedCfg.MaxPeerConnections
-		cfg.HalfOpenConnsPerTorrent = 250 // Aggressive handshaking
+		cfg.HalfOpenConnsPerTorrent = 500 // Aggressive handshaking
 	} else {
-		cfg.EstablishedConnsPerTorrent = 250
-		cfg.HalfOpenConnsPerTorrent = 250 // Aggressive handshaking
+		cfg.EstablishedConnsPerTorrent = 900 // The Brute Force Swarm
+		cfg.HalfOpenConnsPerTorrent = 500 // Aggressive handshaking
 	}
 	
 	if parsedCfg.BatterySaver {
@@ -107,13 +116,18 @@ func StartEngine(dataDir string, configJson string) string {
 		cfg.NoDHT = !parsedCfg.EnableDHT
 	}
 
-	cfg.TorrentPeersHighWater = 500
-	cfg.TorrentPeersLowWater = 150
+	cfg.TorrentPeersHighWater = 900
+	cfg.TorrentPeersLowWater = 500
 
+	// Ruthless Timeouts
+	cfg.HeaderTimeout = 2 * time.Second
+	cfg.PieceReadTimeout = 2 * time.Second
+
+	// Zero Throttling
 	if parsedCfg.MaxUploadRate > 0 {
 		cfg.UploadRateLimiter = rate.NewLimiter(rate.Limit(parsedCfg.MaxUploadRate), int(parsedCfg.MaxUploadRate))
 	} else {
-		cfg.UploadRateLimiter = rate.NewLimiter(rate.Limit(10*1024), 10*1024)
+		cfg.UploadRateLimiter = nil // Unlimited upload
 	}
 
 	c, err := torrent.NewClient(cfg)
@@ -253,6 +267,7 @@ func getSessionStatusJson(hash, uri string, fileIdx int, t *torrent.Torrent) str
 			s.FileName = targetFile.DisplayPath()
 			s.TotalSizeBytes = targetFile.Length()
 			s.DownloadedBytes = targetFile.BytesCompleted()
+			s.PreloadedBytes = targetFile.BytesCompleted()
 			if targetFile.Length() > 0 {
 				s.Progress = float64(targetFile.BytesCompleted()) / float64(targetFile.Length())
 			}
@@ -268,6 +283,24 @@ func getSessionStatusJson(hash, uri string, fileIdx int, t *torrent.Torrent) str
 
 		s.StreamUrl = fmt.Sprintf("http://127.0.0.1:%d/stream/%s?fileIdx=%d", port, hash, fileIdx)
 	}
+
+	// Calculate True Download Rate
+	tracker, ok := speedTracker[hash]
+	if !ok {
+		tracker = &TorrentSpeedState{}
+		speedTracker[hash] = tracker
+	}
+	now := time.Now()
+	bytesRead := t.Stats().BytesReadData.Int64()
+	if !tracker.LastTime.IsZero() {
+		dur := now.Sub(tracker.LastTime).Seconds()
+		if dur > 0 {
+			tracker.DownloadRate = int64(float64(bytesRead-tracker.LastBytesRead) / dur)
+		}
+	}
+	tracker.LastBytesRead = bytesRead
+	tracker.LastTime = now
+	s.DownloadRate = tracker.DownloadRate
 
 	b, _ := json.Marshal(s)
 	return string(b)
