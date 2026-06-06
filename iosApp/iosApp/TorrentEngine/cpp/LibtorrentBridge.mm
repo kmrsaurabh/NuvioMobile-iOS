@@ -223,6 +223,7 @@ static NSString *gDataDir = nil;
 
     } @catch (NSException *e) {
         return [NSString stringWithFormat:@"{\"errorMessage\": \"CRASH: NSException starting libtorrent: %@\"}", e.reason];
+    }
     } catch (const std::exception& e) {
         return [NSString stringWithFormat:@"{\"errorMessage\": \"CRASH: C++ Exception starting libtorrent: %s\"}", e.what()];
     }
@@ -285,7 +286,7 @@ static NSString *gDataDir = nil;
 
     return [self _statusJsonForHandle:h hash:hash uri:magnetUri fileIndex:fileIdx];
     } catch (const std::exception& e) {
-        return [NSString stringWithFormat:@"{\"errorMessage\": \"C++ Exception in addMagnet: %s\"}", e.what()];
+        return [NSString stringWithFormat:@"{\"errorMessage\": \"CRASH: C++ Exception in addMagnet: %s\"}", e.what()];
     }
 }
 
@@ -359,7 +360,7 @@ static NSString *gDataDir = nil;
                                   uri:uri
                             fileIndex:fileIdx];
     } catch (const std::exception& e) {
-        return [NSString stringWithFormat:@"{\"errorMessage\": \"C++ Exception in getStatus: %s\"}", e.what()];
+        return [NSString stringWithFormat:@"{\"errorMessage\": \"CRASH: C++ Exception in getStatus: %s\"}", e.what()];
     }
 }
 
