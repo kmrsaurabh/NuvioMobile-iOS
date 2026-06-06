@@ -9,6 +9,7 @@ import Network
     private var listener: NWListener?
     private let queue = DispatchQueue(label: "com.nuvio.torrent.httpserver", qos: .userInteractive)
     private var connections: [NWConnection] = []
+    private var fileHandles: [ObjectIdentifier: FileHandle] = [:]
     
     private var currentPort: Int = 0
     @objc public var port: Int { return currentPort }
@@ -64,12 +65,34 @@ import Network
             conn.cancel()
         }
         connections.removeAll()
+        
+        for (_, handle) in fileHandles {
+            try? handle.close()
+        }
+        fileHandles.removeAll()
     }
     
     private func handleNewConnection(_ connection: NWConnection) {
         connections.append(connection)
+        connection.stateUpdateHandler = { [weak self, weak connection] state in
+            guard let self = self, let connection = connection else { return }
+            switch state {
+            case .cancelled, .failed:
+                self.cleanup(connection: connection)
+            default: break
+            }
+        }
         connection.start(queue: queue)
         receiveRequest(on: connection)
+    }
+    
+    private func cleanup(connection: NWConnection) {
+        let id = ObjectIdentifier(connection)
+        if let fileHandle = fileHandles[id] {
+            try? fileHandle.close()
+            fileHandles.removeValue(forKey: id)
+        }
+        connections.removeAll(where: { $0 === connection })
     }
     
     private func receiveRequest(on connection: NWConnection) {
@@ -130,14 +153,10 @@ import Network
             }
         }
         
-        waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial, attempts: 0)
+        waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial)
     }
     
-    private func waitForMetadataAndProcess(on connection: NWConnection, isHead: Bool, hash: String, rangeStart: Int64, rangeEnd: Int64, isPartial: Bool, attempts: Int) {
-        if attempts > 300 { // 30 seconds timeout
-            send500(on: connection)
-            return
-        }
+    private func waitForMetadataAndProcess(on connection: NWConnection, isHead: Bool, hash: String, rangeStart: Int64, rangeEnd: Int64, isPartial: Bool) {
         
         let statusJson = LibtorrentBridge.shared().getStatusForHash(hash, magnetUri: "", fileIndex: Int32(-1))
         guard let statusData = statusJson.data(using: .utf8),
@@ -147,8 +166,8 @@ import Network
               let fileOffset = statusObj["fileOffset"] as? Int64,
               fileSize > 0 else {
             
-            queue.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                self?.waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial, attempts: attempts + 1)
+            queue.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+                self?.waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial)
             }
             return
         }
@@ -156,8 +175,8 @@ import Network
         let filePath = (self.downloadPath as NSString).appendingPathComponent(fileName)
         let pieceLength = LibtorrentBridge.shared().pieceLength(forHash: hash)
         guard pieceLength > 0 else {
-            queue.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                self?.waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial, attempts: attempts + 1)
+            queue.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+                self?.waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial)
             }
             return
         }
@@ -190,16 +209,18 @@ import Network
             return
         }
         
-        // Before sending headers, block until piece is downloaded (Poll every 100ms)
+        // Before sending headers, block until piece is downloaded (Poll every 250ms)
         // This prevents FFmpeg from timing out waiting for the body after receiving headers
-        waitForPieceAndSendResponse(on: connection, responseHeader: response, filePath: filePath, hash: hash, pieceLength: Int64(pieceLength), currentOffset: rangeStart, fileOffset: fileOffset, remaining: contentLength, attempts: 0)
+        waitForPieceAndSendResponse(on: connection, responseHeader: response, filePath: filePath, hash: hash, pieceLength: Int64(pieceLength), currentOffset: rangeStart, fileOffset: fileOffset, remaining: contentLength)
     }
     
-    private func waitForPieceAndSendResponse(on connection: NWConnection, responseHeader: String, filePath: String, hash: String, pieceLength: Int64, currentOffset: Int64, fileOffset: Int64, remaining: Int64, attempts: Int) {
+    private func waitForPieceAndSendResponse(on connection: NWConnection, responseHeader: String, filePath: String, hash: String, pieceLength: Int64, currentOffset: Int64, fileOffset: Int64, remaining: Int64) {
         let pieceIndex = Int32((fileOffset + currentOffset) / pieceLength)
         
         LibtorrentBridge.shared().setPieceDeadline(pieceIndex, forHash: hash, deadlineMs: Int32(500))
-        let maxLookahead = 3
+        let targetBuffer: Int64 = 15 * 1024 * 1024
+        let maxLookahead = max(3, Int(targetBuffer / max(1, pieceLength)))
+        
         for i in 1...maxLookahead {
             LibtorrentBridge.shared().setPieceDeadline(pieceIndex + Int32(i), forHash: hash, deadlineMs: Int32(500 + i * 200))
         }
@@ -218,14 +239,8 @@ import Network
             return
         }
         
-        if attempts > 300 { // 30 seconds timeout
-            print("[LibtorrentHTTPServer] Timeout waiting for initial piece \(pieceIndex)")
-            connection.cancel()
-            return
-        }
-        
-        queue.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            self?.waitForPieceAndSendResponse(on: connection, responseHeader: responseHeader, filePath: filePath, hash: hash, pieceLength: pieceLength, currentOffset: currentOffset, fileOffset: fileOffset, remaining: remaining, attempts: attempts + 1)
+        queue.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            self?.waitForPieceAndSendResponse(on: connection, responseHeader: responseHeader, filePath: filePath, hash: hash, pieceLength: pieceLength, currentOffset: currentOffset, fileOffset: fileOffset, remaining: remaining)
         }
     }
     
@@ -241,25 +256,31 @@ import Network
         LibtorrentBridge.shared().setPieceDeadline(pieceIndex, forHash: hash, deadlineMs: Int32(500))
         
         // Also prioritize the next few pieces to keep a buffer ahead
-        let maxLookahead = 3
+        let targetBuffer: Int64 = 15 * 1024 * 1024
+        let maxLookahead = max(3, Int(targetBuffer / max(1, pieceLength)))
         for i in 1...maxLookahead {
             let aheadIndex = pieceIndex + Int32(i)
             LibtorrentBridge.shared().setPieceDeadline(aheadIndex, forHash: hash, deadlineMs: Int32(500 + i * 200))
         }
         
         // Check if piece is ready and send
-        checkPieceReadyAndSend(on: connection, filePath: filePath, hash: hash, pieceIndex: pieceIndex, pieceLength: pieceLength, currentOffset: currentOffset, fileOffset: fileOffset, remaining: remaining, attempts: 0)
+        checkPieceReadyAndSend(on: connection, filePath: filePath, hash: hash, pieceIndex: pieceIndex, pieceLength: pieceLength, currentOffset: currentOffset, fileOffset: fileOffset, remaining: remaining)
     }
     
-    private func checkPieceReadyAndSend(on connection: NWConnection, filePath: String, hash: String, pieceIndex: Int32, pieceLength: Int64, currentOffset: Int64, fileOffset: Int64, remaining: Int64, attempts: Int) {
+    private func checkPieceReadyAndSend(on connection: NWConnection, filePath: String, hash: String, pieceIndex: Int32, pieceLength: Int64, currentOffset: Int64, fileOffset: Int64, remaining: Int64) {
         
         let hasPiece = LibtorrentBridge.shared().hasPiece(pieceIndex, forHash: hash)
         
         if hasPiece {
-            // Read piece from disk
-            if let fileHandle = FileHandle(forReadingAtPath: filePath) {
-                defer { try? fileHandle.close() }
-                
+            // Get cached file handle or open a new one
+            let id = ObjectIdentifier(connection)
+            var fileHandle = self.fileHandles[id]
+            if fileHandle == nil {
+                fileHandle = FileHandle(forReadingAtPath: filePath)
+                self.fileHandles[id] = fileHandle
+            }
+            
+            if let fileHandle = fileHandle {
                 do {
                     try fileHandle.seek(toOffset: UInt64(currentOffset))
                     
@@ -299,15 +320,9 @@ import Network
             }
         }
         
-        if attempts > 300 { // 30 seconds timeout
-            print("[LibtorrentHTTPServer] Timeout waiting for piece \(pieceIndex)")
-            connection.cancel()
-            return
-        }
-        
         // Wait and check again
-        queue.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            self?.checkPieceReadyAndSend(on: connection, filePath: filePath, hash: hash, pieceIndex: pieceIndex, pieceLength: pieceLength, currentOffset: currentOffset, fileOffset: fileOffset, remaining: remaining, attempts: attempts + 1)
+        queue.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            self?.checkPieceReadyAndSend(on: connection, filePath: filePath, hash: hash, pieceIndex: pieceIndex, pieceLength: pieceLength, currentOffset: currentOffset, fileOffset: fileOffset, remaining: remaining)
         }
     }
     
