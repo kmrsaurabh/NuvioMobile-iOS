@@ -82,10 +82,8 @@ func StartEngine(dataDir string, configJson string) string {
 	cfg := torrent.NewDefaultClientConfig()
 	cfg.DataDir = dataDir
 	
-	// 128MB RAM "Shock Absorber" Cache
-	// We use the NewPieceProvider to construct a RAM-only piece cache
-	cfg.DefaultStorage = storage.NewResourcePieces(storage.NewMap())
-	
+	// Use default storage (memory-mapped files) which provides an OS-level RAM cache.
+	// cfg.DefaultStorage is managed automatically by torrent.NewDefaultClientConfig().
 	// Apply dynamic settings
 	cfg.NoDefaultPortForwarding = !parsedCfg.EnableUpnp
 	cfg.DisableUTP = parsedCfg.ForceTcp
