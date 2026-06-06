@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) long long downloadedBytes;
 @property (nonatomic, assign) long long downloadRateBps;
 @property (nonatomic, assign) long long uploadRateBps;
+@property (nonatomic, assign) long long preloadedBytes;
 @property (nonatomic, assign) int numPeers;
 @property (nonatomic, assign) int numSeeds;
 @property (nonatomic, assign) double progress;

@@ -108,6 +108,16 @@ static NSString *gDataDir = nil;
         // 128MB "Shock Absorber" Cache
         pack.set_int(lt::settings_pack::cache_size, 8192);
 
+        // Advanced "Unbeatable" Settings
+        pack.set_int(lt::settings_pack::max_out_request_queue, 10000);
+        pack.set_int(lt::settings_pack::mixed_mode_algorithm, lt::settings_pack::prefer_tcp);
+        pack.set_int(lt::settings_pack::peer_timeout, 5);
+        pack.set_int(lt::settings_pack::request_timeout, 2);
+        pack.set_int(lt::settings_pack::min_reconnect_time, 1);
+        pack.set_bool(lt::settings_pack::strict_end_game_mode, false);
+        pack.set_int(lt::settings_pack::disk_io_write_mode, lt::settings_pack::disable_os_cache);
+        pack.set_int(lt::settings_pack::disk_io_read_mode, lt::settings_pack::disable_os_cache);
+
         // DHT
         if (!config.enableDHT) {
             pack.set_bool(lt::settings_pack::enable_dht, false);
@@ -338,8 +348,8 @@ static NSString *gDataDir = nil;
     d[@"fileIndex"]          = @(fileIdx);
     d[@"numPeers"]           = @(s.num_peers);
     d[@"numSeeds"]           = @(s.num_seeds);
-    d[@"downloadRate"]       = @(s.download_rate);
-    d[@"uploadRate"]         = @(s.upload_rate);
+    d[@"downloadRate"]       = @(s.download_payload_rate);
+    d[@"uploadRate"]         = @(s.upload_payload_rate);
     d[@"isMetadataResolved"] = @(metaReady);
     d[@"isStreaming"]        = @(NO);
 
@@ -376,6 +386,7 @@ static NSString *gDataDir = nil;
         d[@"fileOffset"]      = @(tf->files().file_offset(targetIdx));
         d[@"totalSizeBytes"]  = @(fileSize);
         d[@"downloadedBytes"] = @(downloaded);
+        d[@"preloadedBytes"]  = @(downloaded);
         d[@"progress"]        = @(progress);
 
         if (progress >= 1.0) {

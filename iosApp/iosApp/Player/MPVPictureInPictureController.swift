@@ -236,8 +236,7 @@ final class MPVPictureInPictureController: NSObject {
         // Perfect Jitter-Free Timing: Map CADisplayLink's future targetTimestamp to the AVSampleBufferDisplayLayer's timebase.
         let presentationSeconds: Double
         if hasInstalledTimebase, let timebase = displayLayer.controlTimebase {
-            let hostTime = CMClockGetTime(CMClockGetHostTimeClock())
-            let timebaseTime = CMTimebaseGetTimeWithTimeRatio(timebase, timebaseMultiplier: 1, timebaseDenominator: 1)
+            let timebaseTime = CMTimebaseGetTime(timebase)
             // Use targetTimestamp directly (mapped via host time)
             presentationSeconds = CMTimeGetSeconds(timebaseTime)
         } else {
@@ -437,7 +436,8 @@ extension MPVPictureInPictureController: AVPictureInPictureSampleBufferPlaybackD
 
         // Force an immediate frame refresh at the new position
         renderQueue.async { [weak self] in
-            self?.enqueueNextFrame()
+            let target = self?.displayLink?.targetTimestamp ?? 0
+            self?.enqueueNextFrame(targetTimestamp: target)
         }
 
         // Delay completion to give MPV time to settle its internal position
