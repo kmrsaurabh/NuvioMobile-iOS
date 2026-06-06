@@ -230,7 +230,7 @@ import Network
         let pieceIndex = Int32((fileOffset + currentOffset) / pieceLength)
         
         LibtorrentBridge.shared().setPieceDeadline(pieceIndex, forHash: hash, deadlineMs: Int32(500))
-        let targetBuffer: Int64 = 15 * 1024 * 1024
+        let targetBuffer: Int64 = 30 * 1024 * 1024
         let maxLookahead = max(3, Int(targetBuffer / max(1, pieceLength)))
         
         for i in 1...maxLookahead {
@@ -268,7 +268,7 @@ import Network
         LibtorrentBridge.shared().setPieceDeadline(pieceIndex, forHash: hash, deadlineMs: Int32(500))
         
         // Also prioritize the next few pieces to keep a buffer ahead
-        let targetBuffer: Int64 = 15 * 1024 * 1024
+        let targetBuffer: Int64 = 30 * 1024 * 1024
         let maxLookahead = max(3, Int(targetBuffer / max(1, pieceLength)))
         for i in 1...maxLookahead {
             let aheadIndex = pieceIndex + Int32(i)

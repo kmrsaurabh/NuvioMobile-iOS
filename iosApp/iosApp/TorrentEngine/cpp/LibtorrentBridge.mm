@@ -101,6 +101,11 @@ static NSString *gDataDir = nil;
         // High/low water marks for peer churn
         pack.set_int(lt::settings_pack::peer_connect_timeout, 10);
         pack.set_int(lt::settings_pack::connect_seed_every_n_download, 3);
+        
+        // Extreme streaming connection bursting
+        pack.set_bool(lt::settings_pack::smooth_connects, false); // Allow immediate blasting of connections
+        pack.set_int(lt::settings_pack::connection_speed, 50);    // 50 connection attempts per second
+        pack.set_int(lt::settings_pack::torrent_connect_boost, 100); // Instantly attempt 100 peers when added
 
         // DHT
         if (!config.enableDHT) {
