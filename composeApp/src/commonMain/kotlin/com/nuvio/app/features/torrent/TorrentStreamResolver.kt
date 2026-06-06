@@ -57,7 +57,12 @@ object TorrentStreamResolver {
                 trackers = settings.parsedCustomTrackers()
             )
             val session = NativeTorrentEngine.addTorrent(effectiveMagnet, infoHash, fileIdx)
-                ?: return TorrentResolveResult.Error("Failed to start torrent session")
+                ?: return TorrentResolveResult.Error("Failed to start torrent session: Engine returned null")
+            
+            if (session.state == TorrentSessionState.ERROR) {
+                return TorrentResolveResult.Error(session.errorMessage ?: "Failed to start torrent session: Unknown error")
+            }
+            
             Logger.d(TAG) { "Native torrent session started: streamUrl=${session.streamUrl}" }
             TorrentResolveResult.Success(playbackUrl = session.streamUrl, sessionId = session.sessionId)
         } catch (e: Exception) {
@@ -101,13 +106,13 @@ object TorrentStreamResolver {
             append(infoHash)
             stream.behaviorHints.filename?.takeIf { it.isNotBlank() }?.let { filename ->
                 append("&dn=")
-                append(filename)
+                append(filename.encodeURLParameter())
             }
             stream.sources.filter { !it.startsWith("dht:", ignoreCase = true) }.forEach { source ->
                 val tracker = source.removePrefix("tracker:").trim()
                 if (tracker.isNotBlank()) {
                     append("&tr=")
-                    append(tracker)
+                    append(tracker.encodeURLParameter())
                 }
             }
         }

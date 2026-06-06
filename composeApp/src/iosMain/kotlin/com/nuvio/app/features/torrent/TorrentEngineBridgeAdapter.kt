@@ -93,7 +93,12 @@ class TorrentEngineBridgeAdapter(
             }
             
             if (computedState == TorrentSessionState.ERROR && !isCrash && parsed.sessionId.isBlank()) {
-                return null
+                return TorrentSessionStatus(
+                    sessionId = "",
+                    streamUrl = "",
+                    state = TorrentSessionState.ERROR,
+                    errorMessage = parsed.errorMessage ?: "Unknown error"
+                )
             }
 
             TorrentSessionStatus(
