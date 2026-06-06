@@ -338,6 +338,7 @@ final class MPVPlayerViewController: UIViewController {
         checkError(mpv_set_option_string(mpv, "cache", "yes"))
         checkError(mpv_set_option_string(mpv, "demuxer-max-bytes", "50000000"))      // 50MB forward buffer
         checkError(mpv_set_option_string(mpv, "demuxer-max-back-bytes", "30000000")) // 30MB backward buffer
+        checkError(mpv_set_option_string(mpv, "network-timeout", "300"))             // Wait 5 minutes for metadata on rare torrents
 
         checkError(mpv_initialize(mpv))
 

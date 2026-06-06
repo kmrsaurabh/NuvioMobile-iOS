@@ -90,10 +90,10 @@ func StartEngine(dataDir string, configJson string) string {
 	
 	if parsedCfg.MaxPeerConnections > 0 {
 		cfg.EstablishedConnsPerTorrent = parsedCfg.MaxPeerConnections
-		cfg.HalfOpenConnsPerTorrent = parsedCfg.MaxPeerConnections / 2
+		cfg.HalfOpenConnsPerTorrent = 250 // Aggressive handshaking
 	} else {
 		cfg.EstablishedConnsPerTorrent = 250
-		cfg.HalfOpenConnsPerTorrent = 100
+		cfg.HalfOpenConnsPerTorrent = 250 // Aggressive handshaking
 	}
 	
 	if parsedCfg.BatterySaver {
@@ -303,7 +303,11 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	<-t.GotInfo()
+	select {
+	case <-t.GotInfo():
+	case <-r.Context().Done():
+		return
+	}
 
 	fileIdx := -1
 	fmt.Sscanf(r.URL.Query().Get("fileIdx"), "%d", &fileIdx)
@@ -368,7 +372,7 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			select {
-			case <-time.After(500 * time.Millisecond):
+			case <-time.After(10 * time.Millisecond):
 				continue
 			case <-r.Context().Done():
 				return
