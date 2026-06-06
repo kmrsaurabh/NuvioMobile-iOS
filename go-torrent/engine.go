@@ -99,6 +99,8 @@ func StartEngine(dataDir string, configJson string) string {
 			}
 		}
 	}
+
+	// DHT Bootstrapping is already natively handled by anacrolix/dht DefaultStartingNodes
 	
 	if parsedCfg.MaxPeerConnections > 0 {
 		cfg.EstablishedConnsPerTorrent = parsedCfg.MaxPeerConnections
@@ -173,13 +175,41 @@ func AddMagnet(uri string, fileIdx int) string {
 		return `{"errorMessage": "Engine not started"}`
 	}
 
-	if len(globalCustomTrackers) > 0 {
-		if mag, err := metainfo.ParseMagnetUri(uri); err == nil {
+	// Pre-emptive Multi-Tracker Injection (with Fallback)
+	// Inject god-tier high-uptime public trackers into the magnet URI
+	godTrackers := []string{
+		"udp://tracker.opentrackr.org:1337/announce",
+		"udp://9.rarbg.com:2810/announce",
+		"udp://tracker.internetwarriors.net:1337/announce",
+		"udp://tracker.leechers-paradise.org:6969/announce",
+		"udp://tracker.coppersurfer.tk:6969/announce",
+		"udp://tracker.zer0day.to:1337/announce",
+		"udp://tracker.openbittorrent.com:80/announce",
+		"http://tracker3.itzmx.com:6961/announce",
+		"udp://exodus.desync.com:6969/announce",
+		"udp://tracker.cyberia.is:6969/announce",
+	}
+
+	if mag, err := metainfo.ParseMagnetUri(uri); err == nil {
+		mag.Trackers = append(godTrackers, mag.Trackers...)
+
+		if len(globalCustomTrackers) > 0 {
 			for _, tr := range globalCustomTrackers {
 				mag.Trackers = append(mag.Trackers, tr)
 			}
-			uri = mag.String()
 		}
+
+		// Remove duplicates
+		seen := make(map[string]bool)
+		var uniqueTrackers []string
+		for _, tr := range mag.Trackers {
+			if !seen[tr] && tr != "" {
+				seen[tr] = true
+				uniqueTrackers = append(uniqueTrackers, tr)
+			}
+		}
+		mag.Trackers = uniqueTrackers
+		uri = mag.String()
 	}
 
 	t, err := client.AddMagnet(uri)
@@ -428,7 +458,11 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 	contentType := inferContentType(fileName)
 	w.Header().Set("Content-Type", contentType)
 
-	http.ServeContent(w, r, fileName, time.Time{}, reader)
+	http.ServeContent(w, r, fileName, time.Time{}, &PrioritizingReader{
+		reader:     reader,
+		targetFile: targetFile,
+		torrentObj: t,
+	})
 }
 
 func inferContentType(filename string) string {
@@ -454,3 +488,33 @@ func inferContentType(filename string) string {
 		return "application/octet-stream"
 	}
 }
+
+type PrioritizingReader struct {
+	reader     *torrent.Reader
+	targetFile *torrent.File
+	torrentObj *torrent.Torrent
+}
+
+func (pr *PrioritizingReader) Seek(offset int64, whence int) (int64, error) {
+	newOffset, err := pr.reader.Seek(offset, whence)
+	if err == nil {
+		info := pr.torrentObj.Info()
+		if info != nil {
+			pieceLen := info.PieceLength
+			if pieceLen > 0 {
+				globalOffset := pr.targetFile.Offset() + newOffset
+				pieceIdx := int(globalOffset / int64(pieceLen))
+
+				for i := pieceIdx; i < pieceIdx+20 && i < info.NumPieces(); i++ {
+					pr.torrentObj.Piece(i).SetPriority(torrent.PiecePriorityNow)
+				}
+			}
+		}
+	}
+	return newOffset, err
+}
+
+func (pr *PrioritizingReader) Read(p []byte) (int, error) {
+	return pr.reader.Read(p)
+}
+
