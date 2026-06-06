@@ -337,8 +337,8 @@ static NSString *gDataDir = nil;
     d[@"fileIndex"]          = @(fileIdx);
     d[@"numPeers"]           = @(s.num_peers);
     d[@"numSeeds"]           = @(s.num_seeds);
-    d[@"downloadRateBps"]    = @(s.download_rate);
-    d[@"uploadRateBps"]      = @(s.upload_rate);
+    d[@"downloadRate"]       = @(s.download_rate);
+    d[@"uploadRate"]         = @(s.upload_rate);
     d[@"isMetadataResolved"] = @(metaReady);
     d[@"isStreaming"]        = @(NO);
 

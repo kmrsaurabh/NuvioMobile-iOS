@@ -87,6 +87,7 @@ actual object P2pStreamingEngine {
                 seeds = status.seedCount,
                 bufferProgress = 0f,
                 totalProgress = status.downloadProgress,
+                preloadedBytes = status.downloadedBytes,
             )
             startStatsPolling(sessionId)
             return finalUrl
@@ -133,6 +134,7 @@ actual object P2pStreamingEngine {
                             peers = status.peerCount,
                             seeds = status.seedCount,
                             totalProgress = status.downloadProgress,
+                            preloadedBytes = status.downloadedBytes,
                         )
                     }
                 } catch (e: Exception) {

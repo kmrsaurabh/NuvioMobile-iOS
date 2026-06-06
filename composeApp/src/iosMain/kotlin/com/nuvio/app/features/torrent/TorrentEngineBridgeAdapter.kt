@@ -89,6 +89,7 @@ class TorrentEngineBridgeAdapter(
                 uploadSpeedBps = parsed.uploadRate,
                 seedCount = parsed.numSeeds,
                 peerCount = parsed.numPeers,
+                downloadedBytes = parsed.downloadedBytes,
                 state = mapStatus(parsed.status),
             )
         } catch (e: Exception) {
