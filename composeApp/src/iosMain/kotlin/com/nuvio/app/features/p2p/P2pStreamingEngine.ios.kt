@@ -58,8 +58,8 @@ actual object P2pStreamingEngine {
                 if (status != null) {
                     val progressPercent = (status.downloadProgress * 100).toInt()
                     val message = when (status.state) {
-                        com.nuvio.app.features.torrent.TorrentSessionState.DOWNLOADING_METADATA -> "Downloading metadata ($progressPercent%)"
-                        com.nuvio.app.features.torrent.TorrentSessionState.STARTING -> "Starting engine"
+                        com.nuvio.app.features.torrent.TorrentSessionState.DOWNLOADING_METADATA -> "Resolving Magnet Link"
+                        com.nuvio.app.features.torrent.TorrentSessionState.STARTING -> "Buffering Stream"
                         else -> "Connecting to peers"
                     }
                     _state.value = P2pStreamingState.Connecting(
