@@ -490,7 +490,7 @@ func inferContentType(filename string) string {
 }
 
 type PrioritizingReader struct {
-	reader     *torrent.Reader
+	reader     torrent.Reader
 	targetFile *torrent.File
 	torrentObj *torrent.Torrent
 }
