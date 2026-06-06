@@ -10,6 +10,7 @@ data class TorrentSessionStatus(
     val seedCount: Int = 0,
     val peerCount: Int = 0,
     val state: TorrentSessionState = TorrentSessionState.STARTING,
+    val errorMessage: String? = null,
 )
 
 enum class TorrentSessionState {

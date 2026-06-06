@@ -83,7 +83,19 @@ class TorrentEngineBridgeAdapter(
         if (jsonStr.isBlank() || jsonStr == "{}") return null
         return try {
             val parsed = json.decodeFromString<SwiftSessionState>(jsonStr)
-            if (parsed.errorMessage != null && parsed.sessionId.isBlank()) return null
+            
+            // If we have an errorMessage that starts with CRASH, force the ERROR state
+            val isCrash = parsed.errorMessage?.startsWith("CRASH:") == true
+            val computedState = if (isCrash || parsed.errorMessage != null && parsed.sessionId.isBlank()) {
+                TorrentSessionState.ERROR
+            } else {
+                mapStatus(parsed.status)
+            }
+            
+            if (computedState == TorrentSessionState.ERROR && !isCrash && parsed.sessionId.isBlank()) {
+                return null
+            }
+
             TorrentSessionStatus(
                 sessionId = parsed.sessionId,
                 streamUrl = parsed.streamUrl,
@@ -93,7 +105,8 @@ class TorrentEngineBridgeAdapter(
                 preloadedBytes = parsed.preloadedBytes,
                 seedCount = parsed.numSeeds,
                 peerCount = parsed.numPeers,
-                state = mapStatus(parsed.status),
+                state = computedState,
+                errorMessage = parsed.errorMessage,
             )
         } catch (e: Exception) {
             Logger.w("TorrentBridgeAdapter", e) { "Failed to parse session status: $jsonStr" }

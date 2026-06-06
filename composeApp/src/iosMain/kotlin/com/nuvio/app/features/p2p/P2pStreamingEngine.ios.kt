@@ -72,7 +72,8 @@ actual object P2pStreamingEngine {
             }
 
             if (status == null || status.state == com.nuvio.app.features.torrent.TorrentSessionState.ERROR) {
-                throw P2pStreamingException("Failed to start torrent session or engine error")
+                val errorMsg = status?.errorMessage ?: "Failed to start torrent session or engine error"
+                throw P2pStreamingException(errorMsg)
             }
 
             var finalUrl = status.streamUrl

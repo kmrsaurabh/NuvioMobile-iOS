@@ -66,7 +66,12 @@ type EngineConfig struct {
 	BatterySaver       bool   `json:"batterySaver"`
 }
 
-func StartEngine(dataDir string, configJson string) string {
+func StartEngine(dataDir string, configJson string) (res string) {
+	defer func() {
+		if r := recover(); r != nil {
+			res = fmt.Sprintf("CRASH: panic in StartEngine: %v", r)
+		}
+	}()
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -167,7 +172,12 @@ func StopEngine() {
 	}
 }
 
-func AddMagnet(uri string, fileIdx int) string {
+func AddMagnet(uri string, fileIdx int) (res string) {
+	defer func() {
+		if r := recover(); r != nil {
+			res = fmt.Sprintf(`{"errorMessage": "CRASH: panic in AddMagnet: %v"}`, r)
+		}
+	}()
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -234,7 +244,12 @@ func AddMagnet(uri string, fileIdx int) string {
 	return getSessionStatusJson(hash, uri, fileIdx, t)
 }
 
-func GetSessionStatus(hash string, uri string, fileIdx int) string {
+func GetSessionStatus(hash string, uri string, fileIdx int) (res string) {
+	defer func() {
+		if r := recover(); r != nil {
+			res = fmt.Sprintf(`{"errorMessage": "CRASH: panic in GetSessionStatus: %v"}`, r)
+		}
+	}()
 	mu.RLock()
 	defer mu.RUnlock()
 
@@ -258,6 +273,11 @@ func GetSessionStatus(hash string, uri string, fileIdx int) string {
 }
 
 func RemoveTorrent(hash string) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("CRASH: panic in RemoveTorrent: %v\n", r)
+		}
+	}()
 	mu.RLock()
 	defer mu.RUnlock()
 	if client != nil {
@@ -274,7 +294,12 @@ func GetEngineStatsJson() string {
 	return `{"activeSessions": 1, "totalDownloadRate": 0, "totalUploadRate": 0}`
 }
 
-func getSessionStatusJson(hash, uri string, fileIdx int, t *torrent.Torrent) string {
+func getSessionStatusJson(hash, uri string, fileIdx int, t *torrent.Torrent) (res string) {
+	defer func() {
+		if r := recover(); r != nil {
+			res = fmt.Sprintf(`{"errorMessage": "CRASH: panic in getSessionStatusJson: %v"}`, r)
+		}
+	}()
 	info := t.Info()
 
 	status := "resolvingmetadata"
