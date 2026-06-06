@@ -236,7 +236,10 @@ static NSString *gDataDir = nil;
         return [NSString stringWithFormat:@"{\"errorMessage\": \"Invalid magnet: %s\"}", ec.message().c_str()];
     }
 
-    // (Custom trackers removed per user request)
+    // Inject high-quality default trackers to ensure we find peers even if magnet trackers are dead
+    for (const auto &tr : kDefaultTrackers) {
+        p.trackers.push_back(tr);
+    }
 
     p.flags |= lt::torrent_flags::sequential_download; // Start sequential immediately
     p.save_path = gDataDir ? gDataDir.UTF8String : ""; // Pieces go here
