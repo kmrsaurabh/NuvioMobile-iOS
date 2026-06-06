@@ -134,6 +134,18 @@ import Network
         let hashAndQuery = path.dropFirst(8).components(separatedBy: "?")
         let hash = String(hashAndQuery[0])
         
+        var fileIdx: Int32 = -1
+        if hashAndQuery.count > 1 {
+            let queryStr = hashAndQuery[1]
+            let params = queryStr.components(separatedBy: "&")
+            for param in params {
+                let kv = param.components(separatedBy: "=")
+                if kv.count == 2, kv[0] == "fileIdx", let idx = Int32(kv[1]) {
+                    fileIdx = idx
+                }
+            }
+        }
+        
         // Parse Range header
         var rangeStart: Int64 = 0
         var rangeEnd: Int64 = -1
@@ -153,12 +165,12 @@ import Network
             }
         }
         
-        waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial)
+        waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, fileIdx: fileIdx, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial)
     }
     
-    private func waitForMetadataAndProcess(on connection: NWConnection, isHead: Bool, hash: String, rangeStart: Int64, rangeEnd: Int64, isPartial: Bool) {
+    private func waitForMetadataAndProcess(on connection: NWConnection, isHead: Bool, hash: String, fileIdx: Int32, rangeStart: Int64, rangeEnd: Int64, isPartial: Bool) {
         
-        let statusJson = LibtorrentBridge.shared().getStatusForHash(hash, magnetUri: "", fileIndex: Int32(-1))
+        let statusJson = LibtorrentBridge.shared().getStatusForHash(hash, magnetUri: "", fileIndex: fileIdx)
         guard let statusData = statusJson.data(using: .utf8),
               let statusObj = try? JSONSerialization.jsonObject(with: statusData) as? [String: Any],
               let fileName = statusObj["fileName"] as? String,
@@ -167,7 +179,7 @@ import Network
               fileSize > 0 else {
             
             queue.asyncAfter(deadline: .now() + 0.25) { [weak self] in
-                self?.waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial)
+                self?.waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, fileIdx: fileIdx, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial)
             }
             return
         }
@@ -176,7 +188,7 @@ import Network
         let pieceLength = LibtorrentBridge.shared().pieceLength(forHash: hash)
         guard pieceLength > 0 else {
             queue.asyncAfter(deadline: .now() + 0.25) { [weak self] in
-                self?.waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial)
+                self?.waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, fileIdx: fileIdx, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial)
             }
             return
         }
