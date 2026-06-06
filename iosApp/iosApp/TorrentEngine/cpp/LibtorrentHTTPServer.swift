@@ -9,7 +9,7 @@ import Network
     private var listener: NWListener?
     private let queue = DispatchQueue(label: "com.nuvio.torrent.httpserver", qos: .userInteractive)
     private var connections: [NWConnection] = []
-    private var fileHandles: [ObjectIdentifier: FileHandle] = [:]
+    private var mappedFiles: [ObjectIdentifier: Data] = [:]
     
     private var currentPort: Int = 0
     @objc public var port: Int { return currentPort }
@@ -66,10 +66,7 @@ import Network
         }
         connections.removeAll()
         
-        for (_, handle) in fileHandles {
-            try? handle.close()
-        }
-        fileHandles.removeAll()
+        mappedFiles.removeAll()
     }
     
     private func handleNewConnection(_ connection: NWConnection) {
@@ -88,10 +85,7 @@ import Network
     
     private func cleanup(connection: NWConnection) {
         let id = ObjectIdentifier(connection)
-        if let fileHandle = fileHandles[id] {
-            try? fileHandle.close()
-            fileHandles.removeValue(forKey: id)
-        }
+        mappedFiles.removeValue(forKey: id)
         connections.removeAll(where: { $0 === connection })
     }
     
@@ -295,39 +289,30 @@ import Network
         let hasPiece = LibtorrentBridge.shared().hasPiece(pieceIndex, forHash: hash)
         
         if hasPiece {
-            // Get cached file handle or open a new one
             let id = ObjectIdentifier(connection)
-            var fileHandle = self.fileHandles[id]
-            if fileHandle == nil {
-                fileHandle = FileHandle(forReadingAtPath: filePath)
-                self.fileHandles[id] = fileHandle
+            var mappedData = self.mappedFiles[id]
+            if mappedData == nil {
+                do {
+                    let url = URL(fileURLWithPath: filePath)
+                    mappedData = try Data(contentsOf: url, options: .alwaysMapped)
+                    self.mappedFiles[id] = mappedData
+                } catch {
+                    print("[LibtorrentHTTPServer] Failed to mmap file: \(error)")
+                }
             }
             
-            if let fileHandle = fileHandle {
-                do {
-                    try fileHandle.seek(toOffset: UInt64(currentOffset))
-                    
-                    let pieceOffset = (fileOffset + currentOffset) % pieceLength
-                    let bytesToRead = min(remaining, pieceLength - pieceOffset)
-                    let maxChunk = Int64(1024 * 1024) // 1MB chunks
-                    let chunkToRead = min(bytesToRead, maxChunk)
-                    
-                    var contentData: Data? = nil
-                    autoreleasepool {
-                        if #available(iOS 13.4, *) {
-                            contentData = try? fileHandle.read(upToCount: Int(chunkToRead))
-                        } else {
-                            contentData = fileHandle.readData(ofLength: Int(chunkToRead))
-                        }
-                    }
-                    
-                    guard let data = contentData, !data.isEmpty else {
-                        // EOF
-                        connection.cancel()
-                        return
-                    }
-                    
-                    connection.send(content: data, completion: .contentProcessed({ [weak self] error in
+            if let mappedData = mappedData {
+                let pieceOffset = (fileOffset + currentOffset) % pieceLength
+                let bytesToRead = min(remaining, pieceLength - pieceOffset)
+                let maxChunk = Int64(1024 * 1024) // 1MB chunks
+                let chunkToRead = min(bytesToRead, maxChunk)
+                
+                let start = Int(currentOffset)
+                let end = start + Int(chunkToRead)
+                
+                if end <= mappedData.count {
+                    let chunkData = mappedData[start..<end]
+                    connection.send(content: chunkData, completion: .contentProcessed({ [weak self] error in
                         if error == nil {
                             self?.streamData(on: connection, filePath: filePath, hash: hash, pieceLength: pieceLength, currentOffset: currentOffset + chunkToRead, fileOffset: fileOffset, remaining: remaining - chunkToRead)
                         } else {
@@ -335,8 +320,9 @@ import Network
                         }
                     }))
                     return
-                } catch {
-                    print("[LibtorrentHTTPServer] File seek/read error: \(error)")
+                } else {
+                    // File might have grown since we mapped it. Remove mapping to remap on next tick.
+                    self.mappedFiles.removeValue(forKey: id)
                 }
             } else {
                 // File might not be created on disk yet by libtorrent, keep waiting
