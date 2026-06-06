@@ -51,6 +51,7 @@ type TorrentSpeedState struct {
 }
 
 var speedTracker = make(map[string]*TorrentSpeedState)
+var speedTrackerMu sync.Mutex
 
 type EngineConfig struct {
 	HttpPort           int   `json:"httpPort"`
@@ -296,6 +297,7 @@ func getSessionStatusJson(hash, uri string, fileIdx int, t *torrent.Torrent) str
 	}
 
 	// Calculate True Download Rate
+	speedTrackerMu.Lock()
 	tracker, ok := speedTracker[hash]
 	if !ok {
 		tracker = &TorrentSpeedState{}
@@ -313,6 +315,7 @@ func getSessionStatusJson(hash, uri string, fileIdx int, t *torrent.Torrent) str
 	tracker.LastBytesRead = bytesRead
 	tracker.LastTime = now
 	s.DownloadRate = tracker.DownloadRate
+	speedTrackerMu.Unlock()
 
 	b, _ := json.Marshal(s)
 	return string(b)
