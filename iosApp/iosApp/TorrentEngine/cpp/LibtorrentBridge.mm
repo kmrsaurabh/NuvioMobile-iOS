@@ -102,10 +102,8 @@ static NSString *gDataDir = nil;
         pack.set_int(lt::settings_pack::peer_connect_timeout, 10);
         pack.set_int(lt::settings_pack::connect_seed_every_n_download, 3);
         
-        // Extreme streaming connection bursting
-        pack.set_bool(lt::settings_pack::smooth_connects, false); // Allow immediate blasting of connections
-        pack.set_int(lt::settings_pack::connection_speed, 50);    // 50 connection attempts per second
-        pack.set_int(lt::settings_pack::torrent_connect_boost, 100); // Instantly attempt 100 peers when added
+        // Fast streaming connection bursting (without overwhelming NAT/Router)
+        pack.set_int(lt::settings_pack::connection_speed, 20);
 
         // DHT
         if (!config.enableDHT) {
@@ -137,13 +135,11 @@ static NSString *gDataDir = nil;
         if (config.enableUpload && config.maxUploadRateBps > 0) {
             pack.set_int(lt::settings_pack::upload_rate_limit, (int)config.maxUploadRateBps);
         } else {
-            pack.set_int(lt::settings_pack::upload_rate_limit, 10 * 1024); // 10 KB/s
+            pack.set_int(lt::settings_pack::upload_rate_limit, 50 * 1024); // 50 KB/s
         }
         
         // Advanced Engine Optimizations
         pack.set_int(lt::settings_pack::tick_interval, 100); // 100ms reactor tick for faster response
-        pack.set_bool(lt::settings_pack::no_atime_storage, true); // Save disk I/O by not updating access times
-        pack.set_bool(lt::settings_pack::strict_end_game_mode, true); // Aggressively fetch last blocks of pieces
 
         // Download limiting
         if (config.maxDownloadRateBps > 0) {
