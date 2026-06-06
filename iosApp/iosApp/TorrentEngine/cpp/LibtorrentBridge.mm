@@ -89,6 +89,7 @@ static NSString *gDataDir = nil;
     
     gDataDir = dataDir;
 
+    try {
     @try {
         // ── 1. Build settings_pack ───────────────────────────────────────────
         lt::settings_pack pack;
@@ -222,10 +223,13 @@ static NSString *gDataDir = nil;
 
     } @catch (NSException *e) {
         return [NSString stringWithFormat:@"Exception starting libtorrent: %@", e.reason];
+    } catch (const std::exception& e) {
+        return [NSString stringWithFormat:@"C++ Exception starting libtorrent: %s", e.what()];
     }
 }
 
 - (void)stopEngine {
+    try {
     {
         std::lock_guard<std::mutex> lock(gMutex);
         gRunning = false;
@@ -235,12 +239,16 @@ static NSString *gDataDir = nil;
         }
         gTorrents.clear();
     }
+    } catch (const std::exception& e) {
+        NSLog(@"[LibtorrentBridge] C++ Exception in stopEngine: %s", e.what());
+    }
     if (gAlertThread.joinable()) gAlertThread.join();
     _isRunning = NO;
     NSLog(@"[LibtorrentBridge] Session stopped.");
 }
 
 - (NSString *)addMagnet:(NSString *)magnetUri fileIndex:(int)fileIdx {
+    try {
     std::lock_guard<std::mutex> lock(gMutex);
     if (!gSession) {
         return @"{\"errorMessage\": \"Engine not started\"}";
@@ -276,26 +284,54 @@ static NSString *gDataDir = nil;
     gTorrents[hash] = h;
 
     return [self _statusJsonForHandle:h hash:hash uri:magnetUri fileIndex:fileIdx];
+    } catch (const std::exception& e) {
+        return [NSString stringWithFormat:@"{\"errorMessage\": \"C++ Exception in addMagnet: %s\"}", e.what()];
+    }
 }
 
 - (void)setPieceDeadline:(int)pieceIndex forHash:(NSString *)hash deadlineMs:(int)ms {
+    try {
     std::lock_guard<std::mutex> lock(gMutex);
     auto it = gTorrents.find(hash.UTF8String);
     if (it != gTorrents.end() && it->second.is_valid()) {
         it->second.set_piece_deadline(lt::piece_index_t(pieceIndex), ms, lt::torrent_handle::alert_when_available);
     }
+    } catch (const std::exception& e) {
+        NSLog(@"[LibtorrentBridge] C++ Exception in setPieceDeadline: %s", e.what());
+    }
+}
+
+- (int)numPiecesForHash:(NSString *)hash {
+    try {
+        std::lock_guard<std::mutex> lock(gMutex);
+        auto it = gTorrents.find(hash.UTF8String);
+        if (it != gTorrents.end() && it->second.is_valid()) {
+            auto tf = it->second.torrent_file();
+            if (tf) return tf->num_pieces();
+        }
+        return 0; // Default or error
+    } catch (const std::exception& e) {
+        NSLog(@"[LibtorrentBridge] C++ Exception in numPieces: %s", e.what());
+        return 0;
+    }
 }
 
 - (BOOL)hasPiece:(int)pieceIndex forHash:(NSString *)hash {
+    try {
     std::lock_guard<std::mutex> lock(gMutex);
     auto it = gTorrents.find(hash.UTF8String);
     if (it != gTorrents.end() && it->second.is_valid()) {
         return it->second.have_piece(lt::piece_index_t(pieceIndex));
     }
     return NO;
+    } catch (const std::exception& e) {
+        NSLog(@"[LibtorrentBridge] C++ Exception in hasPiece: %s", e.what());
+        return NO;
+    }
 }
 
 - (int)pieceLengthForHash:(NSString *)hash {
+    try {
     std::lock_guard<std::mutex> lock(gMutex);
     auto it = gTorrents.find(hash.UTF8String);
     if (it != gTorrents.end() && it->second.is_valid()) {
@@ -303,11 +339,16 @@ static NSString *gDataDir = nil;
         if (tf) return tf->piece_length();
     }
     return 0; // Default or error
+    } catch (const std::exception& e) {
+        NSLog(@"[LibtorrentBridge] C++ Exception in pieceLength: %s", e.what());
+        return 0;
+    }
 }
 
 - (NSString *)getStatusForHash:(NSString *)hash
                       magnetUri:(NSString *)uri
                       fileIndex:(int)fileIdx {
+    try {
     std::lock_guard<std::mutex> lock(gMutex);
     auto it = gTorrents.find(hash.UTF8String);
     if (it == gTorrents.end()) {
@@ -317,14 +358,21 @@ static NSString *gDataDir = nil;
                                  hash:hash.UTF8String
                                   uri:uri
                             fileIndex:fileIdx];
+    } catch (const std::exception& e) {
+        return [NSString stringWithFormat:@"{\"errorMessage\": \"C++ Exception in getStatus: %s\"}", e.what()];
+    }
 }
 
 - (void)removeTorrentWithHash:(NSString *)hash {
+    try {
     std::lock_guard<std::mutex> lock(gMutex);
     auto it = gTorrents.find(hash.UTF8String);
     if (it != gTorrents.end()) {
         if (gSession) gSession->remove_torrent(it->second);
         gTorrents.erase(it);
+    }
+    } catch (const std::exception& e) {
+        NSLog(@"[LibtorrentBridge] C++ Exception in removeTorrent: %s", e.what());
     }
 }
 

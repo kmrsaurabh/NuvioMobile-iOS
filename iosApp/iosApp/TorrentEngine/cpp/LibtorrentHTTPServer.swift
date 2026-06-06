@@ -228,13 +228,19 @@ import Network
     
     private func waitForPieceAndSendResponse(on connection: NWConnection, responseHeader: String, filePath: String, hash: String, pieceLength: Int64, currentOffset: Int64, fileOffset: Int64, remaining: Int64) {
         let pieceIndex = Int32((fileOffset + currentOffset) / pieceLength)
+        let totalPieces = LibtorrentBridge.shared().numPieces(forHash: hash)
         
-        LibtorrentBridge.shared().setPieceDeadline(pieceIndex, forHash: hash, deadlineMs: Int32(500))
+        if pieceIndex < totalPieces {
+            LibtorrentBridge.shared().setPieceDeadline(pieceIndex, forHash: hash, deadlineMs: Int32(500))
+        }
         let targetBuffer: Int64 = 128 * 1024 * 1024
         let maxLookahead = max(3, Int(targetBuffer / max(1, pieceLength)))
         
         for i in 1...maxLookahead {
-            LibtorrentBridge.shared().setPieceDeadline(pieceIndex + Int32(i), forHash: hash, deadlineMs: Int32(500 + i * 200))
+            let aheadIndex = pieceIndex + Int32(i)
+            if aheadIndex < totalPieces {
+                LibtorrentBridge.shared().setPieceDeadline(aheadIndex, forHash: hash, deadlineMs: Int32(500 + i * 200))
+            }
         }
         
         let hasPiece = LibtorrentBridge.shared().hasPiece(pieceIndex, forHash: hash)
@@ -263,16 +269,21 @@ import Network
         }
         
         let pieceIndex = Int32((fileOffset + currentOffset) / pieceLength)
+        let totalPieces = LibtorrentBridge.shared().numPieces(forHash: hash)
         
         // Prioritize this piece with a 500ms deadline
-        LibtorrentBridge.shared().setPieceDeadline(pieceIndex, forHash: hash, deadlineMs: Int32(500))
+        if pieceIndex < totalPieces {
+            LibtorrentBridge.shared().setPieceDeadline(pieceIndex, forHash: hash, deadlineMs: Int32(500))
+        }
         
         // Also prioritize the next few pieces to keep a buffer ahead
         let targetBuffer: Int64 = 128 * 1024 * 1024
         let maxLookahead = max(3, Int(targetBuffer / max(1, pieceLength)))
         for i in 1...maxLookahead {
             let aheadIndex = pieceIndex + Int32(i)
-            LibtorrentBridge.shared().setPieceDeadline(aheadIndex, forHash: hash, deadlineMs: Int32(500 + i * 200))
+            if aheadIndex < totalPieces {
+                LibtorrentBridge.shared().setPieceDeadline(aheadIndex, forHash: hash, deadlineMs: Int32(500 + i * 200))
+            }
         }
         
         // Check if piece is ready and send

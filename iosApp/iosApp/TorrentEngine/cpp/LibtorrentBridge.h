@@ -68,6 +68,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// Streaming primitive: Get piece size for a given torrent.
 - (int)pieceLengthForHash:(NSString *)hash;
 
+/// Streaming primitive: Get total number of pieces for a given torrent.
+- (int)numPiecesForHash:(NSString *)hash;
+
 /// Poll status for a known info-hash. Returns JSON-encoded LTSessionStatus.
 - (NSString *)getStatusForHash:(NSString *)hash
                        magnetUri:(NSString *)uri
