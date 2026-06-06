@@ -12,6 +12,7 @@ import (
 
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/metainfo"
+	"github.com/anacrolix/torrent/storage"
 	"golang.org/x/time/rate"
 )
 
@@ -81,6 +82,10 @@ func StartEngine(dataDir string, configJson string) string {
 	cfg := torrent.NewDefaultClientConfig()
 	cfg.DataDir = dataDir
 	
+	// 128MB RAM "Shock Absorber" Cache
+	// We use the NewPieceProvider to construct a RAM-only piece cache
+	cfg.DefaultStorage = storage.NewResourcePieces(storage.NewMap())
+	
 	// Apply dynamic settings
 	cfg.NoDefaultPortForwarding = !parsedCfg.EnableUpnp
 	cfg.DisableUTP = parsedCfg.ForceTcp
@@ -119,9 +124,7 @@ func StartEngine(dataDir string, configJson string) string {
 	cfg.TorrentPeersHighWater = 900
 	cfg.TorrentPeersLowWater = 500
 
-	// Ruthless Timeouts
-	cfg.HeaderTimeout = 2 * time.Second
-	cfg.PieceReadTimeout = 2 * time.Second
+	// Ruthless Timeouts removed because anacrolix/torrent handles peer read timeouts internally
 
 	// Zero Throttling
 	if parsedCfg.MaxUploadRate > 0 {
@@ -187,6 +190,17 @@ func AddMagnet(uri string, fileIdx int) string {
 	}
 
 	hash := t.InfoHash().HexString()
+
+	// Instant Warmup & Preloading
+	go func(torrentObj *torrent.Torrent, uriStr string, fIdx int) {
+		<-torrentObj.GotInfo()
+		files := torrentObj.Files()
+		if fIdx >= 0 && fIdx < len(files) {
+			targetFile := files[fIdx]
+			targetFile.Download()
+		}
+	}(t, uri, fileIdx)
+
 	return getSessionStatusJson(hash, uri, fileIdx, t)
 }
 
@@ -291,7 +305,8 @@ func getSessionStatusJson(hash, uri string, fileIdx int, t *torrent.Torrent) str
 		speedTracker[hash] = tracker
 	}
 	now := time.Now()
-	bytesRead := t.Stats().BytesReadData.Int64()
+	stats := t.Stats()
+	bytesRead := stats.BytesReadData.Int64()
 	if !tracker.LastTime.IsZero() {
 		dur := now.Sub(tracker.LastTime).Seconds()
 		if dur > 0 {
@@ -387,14 +402,8 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 
 	reader.SetResponsive()
 	
-	// Adaptive readahead: 10% of file size, between 5MB and 50MB
-	readahead := targetFile.Length() / 10
-	if readahead < 5*1024*1024 {
-		readahead = 5 * 1024 * 1024
-	} else if readahead > 50*1024*1024 {
-		readahead = 50 * 1024 * 1024
-	}
-	reader.SetReadahead(readahead)
+	// Ruthless VOD Prioritization: 128MB Read-Ahead cache ahead of playhead
+	reader.SetReadahead(128 * 1024 * 1024)
 
 	// Wait for at least some data to be downloaded before returning HTTP 200 OK.
 	// If we return 200 OK with 0 bytes available, ffmpeg/mpv might throw
