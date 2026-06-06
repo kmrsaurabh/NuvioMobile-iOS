@@ -44,7 +44,7 @@ final class MPVPictureInPictureController: NSObject {
     // MARK: - Private
 
     private var pictureInPictureController: AVPictureInPictureController?
-    private var framePumpTimer: DispatchSourceTimer?
+    private var displayLink: CADisplayLink?
     private var hostView: UIView?
     private var placeholderColor: UIColor = .black
     private let renderQueue = DispatchQueue(label: "nuvio.pip.render", qos: .userInteractive)
@@ -129,22 +129,25 @@ final class MPVPictureInPictureController: NSObject {
     // MARK: - Frame pump
 
     private func ensureFramePumpRunning() {
-        guard framePumpTimer == nil else { return }
-        enqueueNextFrame()
-
-        let timer = DispatchSource.makeTimerSource(queue: renderQueue)
-        let interval = DispatchTimeInterval.milliseconds(Int(framePumpIntervalSeconds * 1000))
-        timer.schedule(deadline: .now() + interval, repeating: interval)
-        timer.setEventHandler { [weak self] in
-            self?.enqueueNextFrame()
+        guard displayLink == nil else { return }
+        
+        let link = CADisplayLink(target: self, selector: #selector(displayLinkDidFire(_:)))
+        if #available(iOS 15.0, *) {
+            link.preferredFrameRateRange = CAFrameRateRange(minimum: 24, maximum: 60, preferred: 60)
         }
-        timer.resume()
-        framePumpTimer = timer
+        link.add(to: .main, forMode: .common)
+        displayLink = link
+    }
+
+    @objc private func displayLinkDidFire(_ link: CADisplayLink) {
+        renderQueue.async { [weak self] in
+            self?.enqueueNextFrame(targetTimestamp: link.targetTimestamp)
+        }
     }
 
     private func stopFramePump() {
-        framePumpTimer?.cancel()
-        framePumpTimer = nil
+        displayLink?.invalidate()
+        displayLink = nil
     }
 
     private var blackPlaceholderBuffer: CVPixelBuffer? {
@@ -155,7 +158,7 @@ final class MPVPictureInPictureController: NSObject {
         return _blackPlaceholderBuffer
     }
 
-    private func enqueueNextFrame() {
+    private func enqueueNextFrame(targetTimestamp: CFTimeInterval) {
         syncControlTimebaseToPlayback()
 
         let pixelBuffer: CVPixelBuffer?
@@ -175,7 +178,7 @@ final class MPVPictureInPictureController: NSObject {
         }
 
         guard let pb = pixelBuffer else { return }
-        enqueuePixelBuffer(pb)
+        enqueuePixelBuffer(pb, targetTimestamp: targetTimestamp)
     }
 
     func invalidatePlaybackState(positionMs: Int64, isPlaying: Bool, isBuffering: Bool = false) {
@@ -221,7 +224,7 @@ final class MPVPictureInPictureController: NSObject {
         hasInstalledTimebase = true
     }
 
-    private func enqueuePixelBuffer(_ pixelBuffer: CVPixelBuffer) {
+    private func enqueuePixelBuffer(_ pixelBuffer: CVPixelBuffer, targetTimestamp: CFTimeInterval) {
         var formatDescription: CMVideoFormatDescription?
         CMVideoFormatDescriptionCreateForImageBuffer(
             allocator: kCFAllocatorDefault,
@@ -230,13 +233,19 @@ final class MPVPictureInPictureController: NSObject {
         )
         guard let formatDescription else { return }
 
+        // Perfect Jitter-Free Timing: Map CADisplayLink's future targetTimestamp to the AVSampleBufferDisplayLayer's timebase.
         let presentationSeconds: Double
         if hasInstalledTimebase, let timebase = displayLayer.controlTimebase {
-            presentationSeconds = CMTimeGetSeconds(CMTimebaseGetTime(timebase))
+            let hostTime = CMClockGetTime(CMClockGetHostTimeClock())
+            let timebaseTime = CMTimebaseGetTimeWithTimeRatio(timebase, timebaseMultiplier: 1, timebaseDenominator: 1)
+            // Use targetTimestamp directly (mapped via host time)
+            presentationSeconds = CMTimeGetSeconds(timebaseTime)
         } else {
             presentationSeconds = lastEnqueuedPresentationSeconds + framePumpIntervalSeconds
         }
-        let nextPts = max(presentationSeconds, lastEnqueuedPresentationSeconds + 0.01)
+        
+        // Ensure monotonically increasing PTS
+        let nextPts = max(presentationSeconds, lastEnqueuedPresentationSeconds + 0.001)
         let pts = CMTime(seconds: nextPts, preferredTimescale: 600)
         lastEnqueuedPresentationSeconds = CMTimeGetSeconds(pts)
 

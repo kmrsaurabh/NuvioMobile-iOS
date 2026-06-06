@@ -61,7 +61,7 @@ namespace {
     self = [super init];
     if (self) {
         _enableDHT         = YES;
-        _maxPeerConnections = 250;
+        _maxPeerConnections = 900;
     }
     return self;
 }
@@ -102,8 +102,11 @@ static NSString *gDataDir = nil;
         pack.set_int(lt::settings_pack::peer_connect_timeout, 10);
         pack.set_int(lt::settings_pack::connect_seed_every_n_download, 3);
         
-        // Fast streaming connection bursting (without overwhelming NAT/Router)
-        pack.set_int(lt::settings_pack::connection_speed, 20);
+        // Fast streaming connection bursting (Aggressive swarm)
+        pack.set_int(lt::settings_pack::connection_speed, 500);
+
+        // 128MB "Shock Absorber" Cache
+        pack.set_int(lt::settings_pack::cache_size, 8192);
 
         // DHT
         if (!config.enableDHT) {
@@ -129,13 +132,11 @@ static NSString *gDataDir = nil;
             pack.set_bool(lt::settings_pack::enable_outgoing_utp, true);
         }
 
-        // Upload limiting — CRITICAL: 0 means unlimited in libtorrent!
-        // To prevent bufferbloat and choked downloads on asymmetric mobile networks,
-        // we must enforce a strict upload limit. 10KB/s allows DHT/PEX to function.
+        // Upload limiting — Zero throttling for maximum performance
         if (config.enableUpload && config.maxUploadRateBps > 0) {
             pack.set_int(lt::settings_pack::upload_rate_limit, (int)config.maxUploadRateBps);
         } else {
-            pack.set_int(lt::settings_pack::upload_rate_limit, 50 * 1024); // 50 KB/s
+            pack.set_int(lt::settings_pack::upload_rate_limit, 0); // 0 means unlimited
         }
         
         // Advanced Engine Optimizations
@@ -165,10 +166,9 @@ static NSString *gDataDir = nil;
             pack.set_str(lt::settings_pack::listen_interfaces, "0.0.0.0:6881,[::]:6881");
         }
 
-        // Battery saver: drastically reduce connections
+        // Battery saver mode (disabled for maximum performance)
         if (config.batterySaver) {
-            pack.set_int(lt::settings_pack::connections_limit, 20);
-            pack.set_int(lt::settings_pack::active_downloads, 1);
+            // Disabled: we want aggressive peering at all times
         }
 
         // Disk I/O — use async disk I/O for iOS
@@ -253,6 +253,11 @@ static NSString *gDataDir = nil;
     lt::torrent_handle h = gSession->add_torrent(std::move(p), ec);
     if (ec) {
         return [NSString stringWithFormat:@"{\"errorMessage\": \"Add torrent failed: %s\"}", ec.message().c_str()];
+    }
+
+    // Instant Warmup & Preloading: Aggressively request first 50 pieces immediately
+    for (int i = 0; i < 50; ++i) {
+        h.set_piece_deadline(lt::piece_index_t(i), 500, lt::torrent_handle::alert_when_available);
     }
 
     std::stringstream ss;
