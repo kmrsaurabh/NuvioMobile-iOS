@@ -222,10 +222,12 @@ func AddMagnet(uri string, fileIdx int) string {
 	// Instant Warmup & Preloading
 	go func(torrentObj *torrent.Torrent, uriStr string, fIdx int) {
 		<-torrentObj.GotInfo()
-		files := torrentObj.Files()
-		if fIdx >= 0 && fIdx < len(files) {
-			targetFile := files[fIdx]
-			targetFile.Download()
+		if torrentObj.Info() != nil {
+			files := torrentObj.Files()
+			if fIdx >= 0 && fIdx < len(files) {
+				targetFile := files[fIdx]
+				targetFile.Download()
+			}
 		}
 	}(t, uri, fileIdx)
 
