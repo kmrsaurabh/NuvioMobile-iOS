@@ -363,7 +363,6 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 	// If we return 200 OK with 0 bytes available, ffmpeg/mpv might throw
 	// "stream ends prematurely at 0" and fail to probe the container format.
 	if r.Method == "GET" {
-		waitDeadline := time.After(30 * time.Second)
 		for {
 			if targetFile.Length() > 0 && targetFile.BytesCompleted() > 0 {
 				break
@@ -371,9 +370,6 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 			select {
 			case <-time.After(500 * time.Millisecond):
 				continue
-			case <-waitDeadline:
-				http.Error(w, "Timeout waiting for initial data", 504)
-				return
 			case <-r.Context().Done():
 				return
 			}
