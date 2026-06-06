@@ -10,6 +10,7 @@ data class TorrentSessionStatus(
     val peerCount: Int = 0,
     val downloadedBytes: Long = 0L,
     val state: TorrentSessionState = TorrentSessionState.STARTING,
+    val errorMessage: String? = null,
 )
 
 enum class TorrentSessionState {
