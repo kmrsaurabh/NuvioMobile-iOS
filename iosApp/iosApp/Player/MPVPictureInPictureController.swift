@@ -50,7 +50,7 @@ final class MPVPictureInPictureController: NSObject {
     private let renderQueue = DispatchQueue(label: "nuvio.pip.render", qos: .userInteractive)
     private var lastEnqueuedPresentationSeconds: Double = 0
     private var hasInstalledTimebase: Bool = false
-    private let framePumpIntervalSeconds: Double = 1.0 / 10.0
+    private let framePumpIntervalSeconds: Double = 1.0 / 24.0
     private var lastKnownVideoSize: CGSize = CGSize(width: 640, height: 360)
     private var placeholderSkipCounter: Int = 0
     private let placeholderSkipInterval: Int = 20 // Only enqueue 1 out of every 20 frames when inactive (= every 2 seconds at 10fps)
