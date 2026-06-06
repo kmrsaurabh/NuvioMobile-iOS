@@ -268,8 +268,16 @@ import Network
                     let maxChunk = Int64(1024 * 1024) // 1MB chunks
                     let chunkToRead = min(bytesToRead, maxChunk)
                     
-                    let data = fileHandle.readData(ofLength: Int(chunkToRead))
-                    if data.isEmpty {
+                    var contentData: Data? = nil
+                    autoreleasepool {
+                        if #available(iOS 13.4, *) {
+                            contentData = try? fileHandle.read(upToCount: Int(chunkToRead))
+                        } else {
+                            contentData = fileHandle.readData(ofLength: Int(chunkToRead))
+                        }
+                    }
+                    
+                    guard let data = contentData, !data.isEmpty else {
                         // EOF
                         connection.cancel()
                         return
