@@ -178,7 +178,7 @@ import Network
               let fileOffset = statusObj["fileOffset"] as? Int64,
               fileSize > 0 else {
             
-            queue.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            queue.asyncAfter(deadline: .now() + 0.01) { [weak self] in
                 self?.waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, fileIdx: fileIdx, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial)
             }
             return
@@ -187,7 +187,7 @@ import Network
         let filePath = (self.downloadPath as NSString).appendingPathComponent(fileName)
         let pieceLength = LibtorrentBridge.shared().pieceLength(forHash: hash)
         guard pieceLength > 0 else {
-            queue.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            queue.asyncAfter(deadline: .now() + 0.01) { [weak self] in
                 self?.waitForMetadataAndProcess(on: connection, isHead: isHead, hash: hash, fileIdx: fileIdx, rangeStart: rangeStart, rangeEnd: rangeEnd, isPartial: isPartial)
             }
             return
@@ -251,7 +251,7 @@ import Network
             return
         }
         
-        queue.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+        queue.asyncAfter(deadline: .now() + 0.01) { [weak self] in
             self?.waitForPieceAndSendResponse(on: connection, responseHeader: responseHeader, filePath: filePath, hash: hash, pieceLength: pieceLength, currentOffset: currentOffset, fileOffset: fileOffset, remaining: remaining)
         }
     }
@@ -333,7 +333,7 @@ import Network
         }
         
         // Wait and check again
-        queue.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+        queue.asyncAfter(deadline: .now() + 0.01) { [weak self] in
             self?.checkPieceReadyAndSend(on: connection, filePath: filePath, hash: hash, pieceIndex: pieceIndex, pieceLength: pieceLength, currentOffset: currentOffset, fileOffset: fileOffset, remaining: remaining)
         }
     }
