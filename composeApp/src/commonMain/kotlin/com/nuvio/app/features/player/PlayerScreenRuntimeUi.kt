@@ -228,8 +228,9 @@ private fun PlayerScreenRuntime.RenderPlayerControls(displayedPositionMs: Long, 
             } else {
                 null
             },
-            onSourcesClick = if (activeVideoId != null) { { openSourcesPanel() } } else null,
-            onEpisodesClick = if (isSeries) { { openEpisodesPanel() } } else null,
+            onSourcesClick = if (!isLiveTvPlayback && activeVideoId != null) { { openSourcesPanel() } } else null,
+            onEpisodesClick = if (!isLiveTvPlayback && isSeries) { { openEpisodesPanel() } } else null,
+            onLiveChannelsClick = if (isLiveTvPlayback) { { showLiveChannelsPanel = true } } else null,
             onOpenInExternalPlayer = args.onOpenInExternalPlayer?.let { openExternal ->
                 {
                     val loadedSubtitles = addonSubtitles
@@ -448,6 +449,14 @@ private fun PlayerScreenRuntime.RenderPlayerModals(displayedPositionMs: Long) {
         },
         onSourcesPanelDismissed = {
             showSourcesPanel = false
+            controlsVisible = true
+        },
+        showLiveChannelsPanel = showLiveChannelsPanel,
+        liveTvChannels = liveTvUiState.channels,
+        activeLiveChannelId = activeVideoId,
+        onLiveChannelSelected = { channel -> switchToLiveChannel(channel) },
+        onLiveChannelsPanelDismissed = {
+            showLiveChannelsPanel = false
             controlsVisible = true
         },
         isSeries = isSeries,

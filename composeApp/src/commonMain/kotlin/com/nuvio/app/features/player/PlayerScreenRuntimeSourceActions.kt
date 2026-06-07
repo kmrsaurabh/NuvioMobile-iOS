@@ -8,6 +8,7 @@ import com.nuvio.app.features.details.MetaDetailsRepository
 import com.nuvio.app.features.details.MetaVideo
 import com.nuvio.app.features.downloads.DownloadItem
 import com.nuvio.app.features.downloads.DownloadsRepository
+import com.nuvio.app.features.livetv.LiveTvChannel
 import com.nuvio.app.features.p2p.P2pSettingsRepository
 import com.nuvio.app.features.p2p.P2pStreamingEngine
 import com.nuvio.app.features.streams.StreamItem
@@ -162,6 +163,38 @@ internal fun PlayerScreenRuntime.switchToP2pEpisodeStream(
     activeTorrentMagnetUri = stream.torrentMagnetUri
     activeTorrentTrackers = stream.p2pTrackers
     applyEpisodeStreamMetadata(stream, episode, resume)
+}
+
+internal fun PlayerScreenRuntime.switchToLiveChannel(channel: LiveTvChannel) {
+    if (channel.streamUrl == activeSourceUrl) {
+        showLiveChannelsPanel = false
+        controlsVisible = true
+        return
+    }
+    flushWatchProgress()
+    stopActiveP2pStream()
+    activeSourceUrl = channel.streamUrl
+    activeSourceAudioUrl = null
+    activeSourceHeaders = emptyMap()
+    activeSourceResponseHeaders = emptyMap()
+    activeStreamTitle = channel.name
+    activeStreamSubtitle = channel.group
+    activeProviderName = "Live TV"
+    activeProviderAddonId = null
+    currentStreamBingeGroup = null
+    activeSeasonNumber = null
+    activeEpisodeNumber = null
+    activeEpisodeTitle = null
+    activeEpisodeThumbnail = null
+    activeVideoId = channel.id
+    activeInitialPositionMs = 0L
+    activeInitialProgressFraction = null
+    initialSeekApplied = true
+    showSourcesPanel = false
+    showEpisodesPanel = false
+    showLiveChannelsPanel = false
+    controlsVisible = true
+    shouldPlay = true
 }
 
 internal fun PlayerScreenRuntime.switchToSource(stream: StreamItem) {
@@ -330,6 +363,7 @@ internal fun PlayerScreenRuntime.openSourcesPanel() {
     )
     showSourcesPanel = true
     showEpisodesPanel = false
+    showLiveChannelsPanel = false
     controlsVisible = false
 }
 
@@ -341,6 +375,7 @@ internal fun PlayerScreenRuntime.openEpisodesPanel() {
     }
     showEpisodesPanel = true
     showSourcesPanel = false
+    showLiveChannelsPanel = false
     controlsVisible = false
 }
 
@@ -350,6 +385,7 @@ private fun PlayerScreenRuntime.resetEpisodePanelAndNextEpisodeState() {
     showNextEpisodeCard = false
     showSourcesPanel = false
     showEpisodesPanel = false
+    showLiveChannelsPanel = false
     episodeStreamsPanelState = EpisodeStreamsPanelState()
     nextEpisodeAutoPlayJob?.cancel()
     nextEpisodeAutoPlaySearching = false
