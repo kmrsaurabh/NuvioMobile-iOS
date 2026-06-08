@@ -109,10 +109,10 @@ func StartEngine(dataDir string, configJson string) (res string) {
 	
 	if parsedCfg.MaxPeerConnections > 0 {
 		cfg.EstablishedConnsPerTorrent = parsedCfg.MaxPeerConnections
-		cfg.HalfOpenConnsPerTorrent = 20
+		cfg.HalfOpenConnsPerTorrent = 100
 	} else {
-		cfg.EstablishedConnsPerTorrent = 50 // Safe mobile limit
-		cfg.HalfOpenConnsPerTorrent = 20
+		cfg.EstablishedConnsPerTorrent = 250 // Restored to previously working aggressive limit
+		cfg.HalfOpenConnsPerTorrent = 100
 	}
 	
 	if parsedCfg.BatterySaver {
@@ -126,8 +126,8 @@ func StartEngine(dataDir string, configJson string) (res string) {
 		cfg.NoDHT = !parsedCfg.EnableDHT
 	}
 
-	cfg.TorrentPeersHighWater = 100
-	cfg.TorrentPeersLowWater = 50
+	cfg.TorrentPeersHighWater = 250
+	cfg.TorrentPeersLowWater = 150
 
 	// Ruthless Timeouts removed because anacrolix/torrent handles peer read timeouts internally
 
