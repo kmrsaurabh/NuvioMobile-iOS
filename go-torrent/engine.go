@@ -458,9 +458,6 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 	defer reader.Close()
 
 	reader.SetResponsive()
-	
-	// Ruthless VOD Prioritization: 128MB Read-Ahead cache ahead of playhead
-	reader.SetReadahead(128 * 1024 * 1024)
 
 	// Wait for at least some data to be downloaded before returning HTTP 200 OK.
 	// If we return 200 OK with 0 bytes available, ffmpeg/mpv might throw
