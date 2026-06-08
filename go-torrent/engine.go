@@ -21,6 +21,7 @@ var (
 	port                 int
 	mu                   sync.RWMutex
 	globalCustomTrackers []string
+	lastInitError        string
 )
 
 type SessionStatus struct {
@@ -140,13 +141,15 @@ func StartEngine(dataDir string, configJson string) (res string) {
 
 	c, err := torrent.NewClient(cfg)
 	if err != nil {
-		return err.Error()
+		lastInitError = "NewClient failed: " + err.Error()
+		return lastInitError
 	}
 	client = c
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		return err.Error()
+		lastInitError = "Listen failed: " + err.Error()
+		return lastInitError
 	}
 	port = listener.Addr().(*net.TCPAddr).Port
 
@@ -182,6 +185,10 @@ func AddMagnet(uri string, fileIdx int) (res string) {
 	defer mu.Unlock()
 
 	if client == nil {
+		if lastInitError != "" {
+			errMsg := strings.ReplaceAll(lastInitError, "\"", "'")
+			return fmt.Sprintf(`{"errorMessage": "Engine init failed: %s"}`, errMsg)
+		}
 		return `{"errorMessage": "Engine not started"}`
 	}
 
@@ -262,6 +269,10 @@ func GetSessionStatus(hash string, uri string, fileIdx int) (res string) {
 	defer mu.RUnlock()
 
 	if client == nil {
+		if lastInitError != "" {
+			errMsg := strings.ReplaceAll(lastInitError, "\"", "'")
+			return fmt.Sprintf(`{"errorMessage": "Engine init failed: %s"}`, errMsg)
+		}
 		return `{"errorMessage": "Engine not started"}`
 	}
 
