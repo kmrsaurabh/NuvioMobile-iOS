@@ -266,7 +266,6 @@ static NSString *gDataDir = nil;
         p.trackers.push_back(tr);
     }
 
-    p.flags |= lt::torrent_flags::sequential_download; // Start sequential immediately
     p.save_path = gDataDir ? gDataDir.UTF8String : ""; // Pieces go here
 
     lt::torrent_handle h = gSession->add_torrent(std::move(p), ec);
