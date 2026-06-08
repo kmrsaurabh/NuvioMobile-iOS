@@ -236,7 +236,15 @@ func AddMagnet(uri string, fileIdx int) (res string) {
 			files := torrentObj.Files()
 			if fIdx >= 0 && fIdx < len(files) {
 				targetFile := files[fIdx]
-				targetFile.Download()
+				// Prioritize first 2 pieces for warmup so HTTP probe doesn't hang
+				pieceLen := torrentObj.Info().PieceLength
+				if pieceLen > 0 {
+					firstPiece := int(targetFile.Offset() / int64(pieceLen))
+					torrentObj.Piece(firstPiece).SetPriority(torrent.PiecePriorityNow)
+					if firstPiece+1 < torrentObj.Info().NumPieces() {
+						torrentObj.Piece(firstPiece + 1).SetPriority(torrent.PiecePriorityNow)
+					}
+				}
 			}
 		}
 	}(t, uri, fileIdx)
@@ -347,7 +355,6 @@ func getSessionStatusJson(hash, uri string, fileIdx int, t *torrent.Torrent) (re
 				s.IsStreaming = true
 			}
 
-			targetFile.Download()
 		}
 
 		s.StreamUrl = fmt.Sprintf("http://127.0.0.1:%d/stream/%s?fileIdx=%d", port, hash, fileIdx)
@@ -453,7 +460,18 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	targetFile.Download()
+	// Prioritize first 2 pieces for warmup so HTTP probe doesn't hang
+	if info != nil {
+		pieceLen := info.PieceLength
+		if pieceLen > 0 {
+			firstPiece := int(targetFile.Offset() / int64(pieceLen))
+			t.Piece(firstPiece).SetPriority(torrent.PiecePriorityNow)
+			if firstPiece+1 < info.NumPieces() {
+				t.Piece(firstPiece + 1).SetPriority(torrent.PiecePriorityNow)
+			}
+		}
+	}
+
 	reader := targetFile.NewReader()
 	defer reader.Close()
 
@@ -539,6 +557,22 @@ func (pr *PrioritizingReader) Seek(offset int64, whence int) (int64, error) {
 }
 
 func (pr *PrioritizingReader) Read(p []byte) (int, error) {
-	return pr.reader.Read(p)
+	n, err := pr.reader.Read(p)
+	if n > 0 {
+		info := pr.torrentObj.Info()
+		if info != nil {
+			pieceLen := info.PieceLength
+			if pieceLen > 0 {
+				currentOffset, _ := pr.reader.Seek(0, 1)
+				globalOffset := pr.targetFile.Offset() + currentOffset
+				pieceIdx := int(globalOffset / int64(pieceLen))
+
+				for i := pieceIdx; i < pieceIdx+10 && i < info.NumPieces(); i++ {
+					pr.torrentObj.Piece(i).SetPriority(torrent.PiecePriorityNow)
+				}
+			}
+		}
+	}
+	return n, err
 }
 
