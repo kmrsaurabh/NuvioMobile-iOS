@@ -58,7 +58,7 @@ actual fun PlatformPlayerSurface(
     }
 
     val controller = remember(bridge) {
-        object : PlayerEngineController {
+        object : PlayerEngineController, NowPlayingMetadataController {
             override fun play() {
                 bridge.play()
             }
@@ -89,6 +89,18 @@ actual fun PlatformPlayerSurface(
 
             override fun setMuted(muted: Boolean) {
                 bridge.setMuted(muted)
+            }
+
+            override fun updateNowPlayingMetadata(info: PlayerNowPlayingInfo) {
+                bridge.updateNowPlayingMetadata(
+                    title = info.title,
+                    subtitle = info.subtitle,
+                    artworkUrl = info.artworkUrl,
+                )
+            }
+
+            override fun clearNowPlayingInfo() {
+                bridge.clearNowPlayingInfo()
             }
 
             override fun getAudioTracks(): List<AudioTrack> {

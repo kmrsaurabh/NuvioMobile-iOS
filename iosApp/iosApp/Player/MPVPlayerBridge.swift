@@ -147,6 +147,12 @@ final class MPVPlayerBridgeImpl: NSObject, NuvioPlayerBridge {
     func getBufferedMs() -> Int64 { return playerVC?.bufferedMs ?? 0 }
     func getPlaybackSpeed() -> Float { playerVC?.currentSpeed ?? 1.0 }
     func getErrorMessage() -> String { playerVC?.currentErrorMessage ?? "" }
+    func updateNowPlayingMetadata(title: String, subtitle: String?, artworkUrl: String?) {
+        playerVC?.updateNowPlayingMetadata(title: title, subtitle: subtitle, artworkUrl: artworkUrl)
+    }
+    func clearNowPlayingInfo() {
+        playerVC?.clearNowPlayingInfo()
+    }
 
     func destroy() {
         playerVC?.destroyPlayer()
@@ -206,6 +212,7 @@ final class MPVPlayerViewController: UIViewController {
     private lazy var eventQueue = DispatchQueue(label: "mpv-events", qos: .userInitiated)
     private var recentPlaybackLogs: [String] = []
     private var activeRequestHeaders: [String: String] = [:]
+    private lazy var nowPlayingController = PlayerNowPlayingController(owner: self)
 
     // Cached track lists
     var audioTracks: [TrackInfo] = []
@@ -638,7 +645,22 @@ final class MPVPlayerViewController: UIViewController {
         checkError(mpv_set_property(mpv, "sub-pos", MPV_FORMAT_INT64, &position))
     }
 
+    func updateNowPlayingMetadata(title: String, subtitle: String?, artworkUrl: String?) {
+        nowPlayingController.updateMetadata(title: title, subtitle: subtitle, artworkUrl: artworkUrl)
+        nowPlayingController.syncPlayback(
+            positionMs: positionMs,
+            durationMs: durationMs,
+            isPlaying: isPlayerPlaying,
+            playbackSpeed: currentSpeed
+        )
+    }
+
+    func clearNowPlayingInfo() {
+        nowPlayingController.clear()
+    }
+
     func destroyPlayer() {
+        nowPlayingController.clear()
         NotificationCenter.default.removeObserver(self)
         pendingLoadRetryWorkItem?.cancel()
         pendingLoadRetryWorkItem = nil
@@ -672,6 +694,12 @@ final class MPVPlayerViewController: UIViewController {
         positionMs = Int64(max(position, 0) * 1000)
         bufferedMs = Int64(max(position + cached, 0) * 1000)
         currentSpeed = Float(speed > 0 ? speed : 1.0)
+        nowPlayingController.syncPlayback(
+            positionMs: positionMs,
+            durationMs: durationMs,
+            isPlaying: isPlayerPlaying,
+            playbackSpeed: currentSpeed
+        )
     }
 
     /// Full state + track refresh — called from MPV event loop on property changes.
