@@ -47,6 +47,15 @@
     {
       "versions": [
         {
+          "version": "0.2.14",
+          "buildVersion": "2606081028",
+          "date": "2026-06-08T11:31:14Z",
+          "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.",
+          "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/cpp-v0.2.14-2606081028/NuvioPP-v0.2.14-2606081028.ipa",
+          "size": 41389389,
+          "sha256": "2a2cdc84b8c7dd0c1e08cd52167059463ae8e8463c44a4ca86f7aaf32a996040"
+        },
+        {
           "version": "0.2.13",
           "buildVersion": "2606080608",
           "date": "2026-06-08T06:46:42Z",
