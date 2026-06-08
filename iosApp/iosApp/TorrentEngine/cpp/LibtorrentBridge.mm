@@ -274,8 +274,8 @@ static NSString *gDataDir = nil;
         return [NSString stringWithFormat:@"{\"errorMessage\": \"Add torrent failed: %s\"}", ec.message().c_str()];
     }
 
-    // Instant Warmup & Preloading: Aggressively request first 50 pieces immediately
-    for (int i = 0; i < 50; ++i) {
+    // Instant Warmup & Preloading: Only request first 2 pieces for container probing (headers)
+    for (int i = 0; i < 2; ++i) {
         h.set_piece_deadline(lt::piece_index_t(i), 500, lt::torrent_handle::alert_when_available);
     }
 
