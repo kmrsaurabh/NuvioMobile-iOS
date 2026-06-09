@@ -58,13 +58,13 @@ internal actual fun PlayerScreenRuntime.PlatformNowPlayingMetadataEffect() {
     val latestController = rememberUpdatedState(playerController)
     val snapshot = playbackSnapshot
 
-    val nowPlayingTitle = remember(
+    val nowPlayingText = remember(
         title,
         activeSeasonNumber,
         activeEpisodeNumber,
         activeEpisodeTitle,
     ) {
-        buildNowPlayingTitle(
+        buildNowPlayingText(
             title = title,
             seasonNumber = activeSeasonNumber,
             episodeNumber = activeEpisodeNumber,
@@ -159,10 +159,11 @@ internal actual fun PlayerScreenRuntime.PlatformNowPlayingMetadataEffect() {
         artworkBitmap = loadArtworkBitmap(artworkUrl, artworkShape)
     }
 
-    LaunchedEffect(mediaSession, nowPlayingTitle, artworkBitmap, snapshot.durationMs) {
+    LaunchedEffect(mediaSession, nowPlayingText, artworkBitmap, snapshot.durationMs) {
         mediaSession.setMetadata(
             buildAndroidMediaMetadata(
-                title = nowPlayingTitle,
+                title = nowPlayingText.title,
+                subtitle = nowPlayingText.subtitle,
                 artwork = artworkBitmap,
                 durationMs = snapshot.durationMs,
             ),
@@ -183,29 +184,36 @@ internal actual fun PlayerScreenRuntime.PlatformNowPlayingMetadataEffect() {
     LaunchedEffect(
         context,
         mediaSession,
-        nowPlayingTitle,
+        nowPlayingText,
         artworkBitmap,
         snapshot.isPlaying,
     ) {
         AndroidNowPlayingNotification.show(
             context = context,
             mediaSession = mediaSession,
-            title = nowPlayingTitle,
+            title = nowPlayingText.title,
+            subtitle = nowPlayingText.subtitle,
             artwork = artworkBitmap,
             isPlaying = snapshot.isPlaying,
         )
     }
 }
 
-private fun buildNowPlayingTitle(
+private data class AndroidNowPlayingText(
+    val title: String,
+    val subtitle: String?,
+)
+
+private fun buildNowPlayingText(
     title: String,
     seasonNumber: Int?,
     episodeNumber: Int?,
     episodeTitle: String?,
-): String {
+): AndroidNowPlayingText {
     val contentTitle = title
         .trim()
         .takeIf { it.isNotEmpty() }
+        ?: "Nuvio"
 
     val episodePrefix = when {
         seasonNumber != null && episodeNumber != null ->
@@ -219,15 +227,18 @@ private fun buildNowPlayingTitle(
         ?.trim()
         ?.takeIf { it.isNotEmpty() }
 
-    return listOfNotNull(
-        contentTitle,
+    val subtitle = listOfNotNull(
         episodePrefix,
         episodeName,
     )
         .distinct()
         .joinToString(" • ")
         .takeIf { it.isNotEmpty() }
-        ?: "Nuvio"
+
+    return AndroidNowPlayingText(
+        title = contentTitle,
+        subtitle = subtitle,
+    )
 }
 
 private suspend fun loadArtworkBitmap(
@@ -285,12 +296,18 @@ private fun renderArtworkBitmap(
 
 private fun buildAndroidMediaMetadata(
     title: String,
+    subtitle: String?,
     artwork: Bitmap?,
     durationMs: Long,
 ): MediaMetadata {
     val builder = MediaMetadata.Builder()
         .putString(MediaMetadata.METADATA_KEY_TITLE, title)
         .putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, title)
+
+    subtitle?.let { value ->
+        builder.putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, value)
+        builder.putString(MediaMetadata.METADATA_KEY_ARTIST, value)
+    }
 
     if (durationMs > 0L) {
         builder.putLong(MediaMetadata.METADATA_KEY_DURATION, durationMs)
@@ -337,6 +354,7 @@ private object AndroidNowPlayingNotification {
         context: Context,
         mediaSession: MediaSession,
         title: String,
+        subtitle: String?,
         artwork: Bitmap?,
         isPlaying: Boolean,
     ) {
@@ -380,7 +398,7 @@ private object AndroidNowPlayingNotification {
         val notification = builder
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
-            .setContentText(null)
+            .setContentText(subtitle)
             .setLargeIcon(artwork)
             .setShowWhen(false)
             .setVisibility(Notification.VISIBILITY_PUBLIC)

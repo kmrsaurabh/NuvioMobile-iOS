@@ -164,10 +164,6 @@ final class PlayerNowPlayingController {
         guard image.size.width > 0, image.size.height > 0 else {
             return posterArtworkSize
         }
-
-        // Movies publish portrait posters. Series episodes publish landscape
-        // episode thumbnails. The Kotlin side selects the artwork source, and
-        // the loaded image orientation determines the final Now Playing canvas.
         return image.size.width > image.size.height ? episodeArtworkSize : posterArtworkSize
     }
 
@@ -215,9 +211,10 @@ final class PlayerNowPlayingController {
         let buildInfo = {
             var info: [String: Any] = [:]
             info[MPMediaItemPropertyTitle] = title
+            if let subtitle = self.metadata.subtitle?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfBlank {
+                info[MPMediaItemPropertyArtist] = subtitle
+            }
             info[MPNowPlayingInfoPropertyMediaType] = MPNowPlayingInfoMediaType.video.rawValue
-            // Keep Lock Screen / Control Center metadata title-only.
-            // Do not publish stream provider or filename as artist/subtitle.
             let durationSeconds = Double(self.playbackState.durationMs) / 1000.0
             let elapsedSeconds = Double(self.playbackState.positionMs) / 1000.0
             let defaultRate = Double(self.playbackState.playbackSpeed)

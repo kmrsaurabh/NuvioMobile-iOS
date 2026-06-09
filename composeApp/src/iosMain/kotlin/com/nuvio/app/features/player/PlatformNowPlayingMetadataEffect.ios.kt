@@ -20,6 +20,7 @@ internal actual fun PlayerScreenRuntime.PlatformNowPlayingMetadataEffect() {
         val contentTitle = title
             .trim()
             .takeIf { it.isNotEmpty() }
+            ?: "Nuvio"
 
         val episodePrefix = when {
             activeSeasonNumber != null && activeEpisodeNumber != null ->
@@ -33,15 +34,13 @@ internal actual fun PlayerScreenRuntime.PlatformNowPlayingMetadataEffect() {
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
 
-        val nowPlayingTitle = listOfNotNull(
-            contentTitle,
+        val nowPlayingSubtitle = listOfNotNull(
             episodePrefix,
             episodeName,
         )
             .distinct()
             .joinToString(" • ")
             .takeIf { it.isNotEmpty() }
-            ?: "Nuvio"
 
         val posterArtworkUrl = poster
             ?.trim()
@@ -55,9 +54,6 @@ internal actual fun PlayerScreenRuntime.PlatformNowPlayingMetadataEffect() {
             activeEpisodeNumber != null ||
             episodeName != null
 
-        // Movies use the main content poster. Series episodes prefer the episode
-        // thumbnail so system media surfaces can show a landscape episode still.
-        // Do not use stream/provider/file metadata as artwork sources.
         val artworkUrl = if (isSeriesPlayback && episodeArtworkUrl != null) {
             episodeArtworkUrl
         } else {
@@ -66,8 +62,8 @@ internal actual fun PlayerScreenRuntime.PlatformNowPlayingMetadataEffect() {
 
         controller.updateNowPlayingMetadata(
             PlayerNowPlayingInfo(
-                title = nowPlayingTitle,
-                subtitle = null,
+                title = contentTitle,
+                subtitle = nowPlayingSubtitle,
                 artworkUrl = artworkUrl,
             )
         )
