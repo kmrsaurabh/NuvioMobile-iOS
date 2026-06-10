@@ -412,7 +412,7 @@ private fun ProfileIdentityCard(
                         CollectionCardRemoteImage(
                             imageUrl = customAvatarUrl,
                             contentDescription = name,
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.size(88.dp).clip(CircleShape),
                             contentScale = ContentScale.Crop,
                             animateIfPossible = true,
                         )
