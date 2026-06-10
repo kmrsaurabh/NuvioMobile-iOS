@@ -152,6 +152,12 @@ final class MPVPlayerBridgeImpl: NSObject, NuvioPlayerBridge {
     func getBufferedMs() -> Int64 { return playerVC?.bufferedMs ?? 0 }
     func getPlaybackSpeed() -> Float { playerVC?.currentSpeed ?? 1.0 }
     func getErrorMessage() -> String { playerVC?.currentErrorMessage ?? "" }
+    func updateNowPlayingMetadata(title: String, subtitle: String?, artworkUrl: String?) {
+        playerVC?.updateNowPlayingMetadata(title: title, subtitle: subtitle, artworkUrl: artworkUrl)
+    }
+    func clearNowPlayingInfo() {
+        playerVC?.clearNowPlayingInfo()
+    }
 
     func destroy() {
         playerVC?.destroyPlayer()
@@ -1092,6 +1098,20 @@ final class MPVPlayerViewController: UIViewController, AVPictureInPictureSampleB
 
         var position = Int64(subPos)
         checkError(mpv_set_property(mpv, "sub-pos", MPV_FORMAT_INT64, &position))
+    }
+
+    func updateNowPlayingMetadata(title: String, subtitle: String?, artworkUrl: String?) {
+        nowPlayingController.updateMetadata(title: title, subtitle: subtitle, artworkUrl: artworkUrl)
+        nowPlayingController.syncPlayback(
+            positionMs: positionMs,
+            durationMs: durationMs,
+            isPlaying: isPlayerPlaying,
+            playbackSpeed: currentSpeed
+        )
+    }
+
+    func clearNowPlayingInfo() {
+        nowPlayingController.clear()
     }
 
     func destroyPlayer() {

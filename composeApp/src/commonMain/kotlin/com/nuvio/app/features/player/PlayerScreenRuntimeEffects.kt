@@ -167,6 +167,8 @@ internal fun PlayerScreenRuntime.BindPlayerRuntimeEffects() {
         playerController?.applySubtitleStyle(subtitleStyle)
     }
 
+    PlatformNowPlayingMetadataEffect()
+
     LaunchedEffect(activeSourceUrl, addonSubtitleFetchKey, playerSettingsUiState.addonSubtitleStartupMode) {
         val fetchKey = addonSubtitleFetchKey ?: return@LaunchedEffect
         if (playerSettingsUiState.addonSubtitleStartupMode == AddonSubtitleStartupMode.FAST_STARTUP) {

@@ -40,6 +40,10 @@
         </activity>
 
         <receiver
+            android:name=".features.player.AndroidNowPlayingActionReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".features.downloads.DownloadsNotificationActionReceiver"
             android:exported="false" />
 
