@@ -136,6 +136,7 @@ jobs:
       - name: Package, Release, and Update SideStore
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
           cd iosApp/build/Build/Products/Release-iphoneos
           APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Nuvio.app/Info.plist)
@@ -150,7 +151,8 @@ jobs:
           zip -q -r "$IPA_NAME" Payload
           
           # Create GitHub Release
-          gh release create "v${APP_VERSION}-${{ env.BUMPED_VERSION }}" "$IPA_NAME" --title "v${APP_VERSION} (Build ${{ env.BUMPED_VERSION }})" --notes "Automated iOS build."
+          RELEASE_NOTES="NuvioGo (Based on Go Server). Changelog: $COMMIT_MSG"
+          gh release create "v${APP_VERSION}-${{ env.BUMPED_VERSION }}" "$IPA_NAME" --title "NuvioGo v${APP_VERSION} (Build ${{ env.BUMPED_VERSION }})" --notes "$RELEASE_NOTES"
           
           # Compute hashes for SideStore
           IPA_SIZE=$(stat -f%z "$IPA_NAME")
@@ -166,7 +168,8 @@ jobs:
              --arg url "$DOWNLOAD_URL" \
              --arg size "$IPA_SIZE" \
              --arg sha "$IPA_SHA256" \
-             '.apps[0].versions = [{"version": $version, "buildVersion": $buildVersion, "date": $date, "localizedDescription": "Automated build from CI.", "downloadURL": $url, "size": ($size | tonumber), "sha256": $sha}] + .apps[0].versions' \
+             --arg desc "$RELEASE_NOTES" \
+             '.apps[0].versions = [{"version": $version, "buildVersion": $buildVersion, "date": $date, "localizedDescription": $desc, "downloadURL": $url, "size": ($size | tonumber), "sha256": $sha}] + .apps[0].versions' \
              apps.json > tmp.json && mv tmp.json apps.json
 
       - name: Commit Updated Metadata
