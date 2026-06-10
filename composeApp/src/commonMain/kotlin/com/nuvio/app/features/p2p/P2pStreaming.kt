@@ -11,6 +11,7 @@ data class P2pStreamRequest(
     val infoHash: String,
     val fileIdx: Int?,
     val filename: String? = null,
+    val magnetUri: String? = null,
     val trackers: List<String> = emptyList(),
 )
 
@@ -40,6 +41,8 @@ class P2pStreamingException(message: String) : Exception(message)
 
 expect object P2pStreamingEngine {
     val state: StateFlow<P2pStreamingState>
+    fun warmup()
+    fun cooldownWarmup()
     suspend fun startStream(request: P2pStreamRequest): String
     fun stopStream()
     fun shutdown()
