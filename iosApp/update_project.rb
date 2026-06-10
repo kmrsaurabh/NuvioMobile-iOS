@@ -26,8 +26,14 @@ target.build_phases.each do |phase|
   end
 end
 
-# 2. Add C++ Engine Files (skipped because Xcode 16 Synchronized Groups will pick them up automatically)
-
+# 2. Add PiP Files explicitly
+player_group = project.main_group.find_subpath(File.join('iosApp', 'Player'), true)
+['MPVPictureInPictureController.swift', 'MPVPlayerViewController+PiP.swift'].each do |file_name|
+  unless player_group.files.any? { |f| f.path == file_name }
+    file_reference = player_group.new_file(file_name)
+    target.source_build_phase.add_file_reference(file_reference)
+  end
+end
 # 3. Link LibTorrent static libs (.a) and libc++.tbd
 Dir.glob('Frameworks/LibTorrent/lib/*.a').each do |lib_path|
   # Skip vcpkg's iconv/charset because they shadow Apple's system libiconv.tbd,
