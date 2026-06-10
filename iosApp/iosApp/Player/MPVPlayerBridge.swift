@@ -67,6 +67,8 @@ final class MPVPlayerBridgeImpl: NSObject, NuvioPlayerBridge {
         playerVC?.configureAudioOutput(audioOutput: audioOutput)
     }
     func setPlaybackSpeed(speed: Float) { playerVC?.setSpeed(speed) }
+    func getVolume() -> Float { playerVC?.getVolume() ?? 1.0 }
+    func setVolume(volume: Float) { playerVC?.setVolume(volume) }
     func setMuted(muted: Bool) { playerVC?.setMuted(muted) }
     func setResizeMode(mode: Int32) { playerVC?.setResize(Int(mode)) }
 
@@ -981,6 +983,34 @@ final class MPVPlayerViewController: UIViewController, AVPictureInPictureSampleB
         guard mpv != nil else { return }
         var s = Double(speed)
         mpv_set_property(mpv, "speed", MPV_FORMAT_DOUBLE, &s)
+    }
+
+    func getVolume() -> Float {
+        guard mpv != nil else { return 1.0 }
+        let baseVolume = getDouble("volume") / 100.0
+        let gainDb = getDouble("volume-gain")
+        let gainMultiplier = pow(10.0, gainDb / 20.0)
+        return Float(max(0.0, min(2.0, baseVolume * gainMultiplier)))
+    }
+
+    func setVolume(_ volume: Float) {
+        guard mpv != nil else { return }
+        let clamped = max(0.0, min(2.0, Double(volume)))
+
+        if clamped <= 0.001 {
+            var mutedVolume = 0.0
+            var neutralGain = 0.0
+            checkError(mpv_set_property(mpv, "volume", MPV_FORMAT_DOUBLE, &mutedVolume))
+            checkError(mpv_set_property(mpv, "volume-gain", MPV_FORMAT_DOUBLE, &neutralGain))
+            return
+        }
+
+        // Keep mpv's base volume at 100 and apply real software amplification through volume-gain.
+        // 2.0x equals about +6.02 dB.
+        var baseVolume = 100.0
+        var gainDb = 20.0 * log10(clamped)
+        checkError(mpv_set_property(mpv, "volume", MPV_FORMAT_DOUBLE, &baseVolume))
+        checkError(mpv_set_property(mpv, "volume-gain", MPV_FORMAT_DOUBLE, &gainDb))
     }
 
     func setMuted(_ muted: Bool) {
