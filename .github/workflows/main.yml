@@ -136,6 +136,7 @@ jobs:
       - name: Package, Release, and Update SideStore
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
           cd iosApp/build/Build/Products/Release-iphoneos
           APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Nuvio.app/Info.plist)
@@ -146,16 +147,17 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R Nuvio.app Payload/
-          IPA_NAME="Nuvio-v${APP_VERSION}-${{ env.BUMPED_VERSION }}-Full.ipa"
+          IPA_NAME="NuvioPP-v${APP_VERSION}-${{ env.BUMPED_VERSION }}.ipa"
           zip -q -r "$IPA_NAME" Payload
           
           # Create GitHub Release
-          gh release create "v${APP_VERSION}-${{ env.BUMPED_VERSION }}" "$IPA_NAME" --title "v${APP_VERSION} (Build ${{ env.BUMPED_VERSION }})" --notes "Automated iOS build."
+          RELEASE_NOTES="NuvioPlus (Based on C++ Server). Changelog: $COMMIT_MSG"
+          gh release create "cpp-v${APP_VERSION}-${{ env.BUMPED_VERSION }}" "$IPA_NAME" --title "NuvioPlus v${APP_VERSION} (Build ${{ env.BUMPED_VERSION }})" --notes "$RELEASE_NOTES"
           
           # Compute hashes for SideStore
           IPA_SIZE=$(stat -f%z "$IPA_NAME")
           IPA_SHA256=$(shasum -a 256 "$IPA_NAME" | awk '{print $1}')
-          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/v${APP_VERSION}-${{ env.BUMPED_VERSION }}/$IPA_NAME"
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/cpp-v${APP_VERSION}-${{ env.BUMPED_VERSION }}/$IPA_NAME"
           CURRENT_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           
           # Update apps.json in the repository root
@@ -166,7 +168,8 @@ jobs:
              --arg url "$DOWNLOAD_URL" \
              --arg size "$IPA_SIZE" \
              --arg sha "$IPA_SHA256" \
-             '.apps[0].versions = [{"version": $version, "buildVersion": $buildVersion, "date": $date, "localizedDescription": "Automated build from CI.", "downloadURL": $url, "size": ($size | tonumber), "sha256": $sha}] + .apps[0].versions' \
+             --arg desc "$RELEASE_NOTES" \
+             '.apps[0].versions = [{"version": $version, "buildVersion": $buildVersion, "date": $date, "localizedDescription": $desc, "downloadURL": $url, "size": ($size | tonumber), "sha256": $sha}] + .apps[0].versions' \
              apps.json > tmp.json && mv tmp.json apps.json
 
       - name: Commit Updated Metadata
