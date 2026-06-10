@@ -46,6 +46,9 @@ actual fun PlatformPlayerSurface(
     playWhenReady: Boolean,
     resizeMode: PlayerResizeMode,
     useNativeController: Boolean,
+    muted: Boolean,
+    onReady: () -> Unit,
+    onEnded: () -> Unit,
     onControllerReady: (PlayerEngineController) -> Unit,
     onSnapshot: (PlayerPlaybackSnapshot) -> Unit,
     onError: (String?) -> Unit,
@@ -54,6 +57,8 @@ actual fun PlatformPlayerSurface(
     val latestOnControllerReady = rememberUpdatedState(onControllerReady)
     val latestOnSnapshot = rememberUpdatedState(onSnapshot)
     val latestOnError = rememberUpdatedState(onError)
+    val latestOnReady = rememberUpdatedState(onReady)
+    val latestOnEnded = rememberUpdatedState(onEnded)
     PlayerSettingsRepository.ensureLoaded()
     val playerSettings by PlayerSettingsRepository.uiState.collectAsStateWithLifecycle()
     val latestPlayerSettings = rememberUpdatedState(playerSettings)
@@ -311,9 +316,15 @@ actual fun PlatformPlayerSurface(
         bridge.applyIosVideoOutputSettings(playerSettings)
     }
 
-    // Polling for snapshots
-    LaunchedEffect(bridge) {
+    LaunchedEffect(bridge, muted) {
+        bridge.setMuted(muted)
+    }
+
+    // Polling for snapshots and lightweight playback events.
+    LaunchedEffect(bridge, sourceUrl, sourceAudioUrl) {
         var lastReportedError: String? = null
+        var readyReported = false
+        var endedReported = false
         while (isActive) {
             val snapshot = PlayerPlaybackSnapshot(
                 isLoading = bridge.getIsLoading(),
@@ -325,11 +336,27 @@ actual fun PlatformPlayerSurface(
                 playbackSpeed = bridge.getPlaybackSpeed(),
             )
             latestOnSnapshot.value(snapshot)
+
             val errorMessage = bridge.getErrorMessage().ifBlank { null }
             if (errorMessage != lastReportedError) {
                 lastReportedError = errorMessage
                 latestOnError.value(errorMessage)
             }
+
+            if (!readyReported && errorMessage == null && !snapshot.isLoading && !snapshot.isEnded) {
+                readyReported = true
+                latestOnReady.value()
+            }
+
+            if (snapshot.isEnded) {
+                if (!endedReported) {
+                    endedReported = true
+                    latestOnEnded.value()
+                }
+            } else {
+                endedReported = false
+            }
+
             delay(250L)
         }
     }

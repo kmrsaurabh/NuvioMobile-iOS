@@ -86,6 +86,9 @@ actual fun PlatformPlayerSurface(
     playWhenReady: Boolean,
     resizeMode: PlayerResizeMode,
     useNativeController: Boolean,
+    muted: Boolean,
+    onReady: () -> Unit,
+    onEnded: () -> Unit,
     onControllerReady: (PlayerEngineController) -> Unit,
     onSnapshot: (PlayerPlaybackSnapshot) -> Unit,
     onError: (String?) -> Unit,
@@ -94,6 +97,8 @@ actual fun PlatformPlayerSurface(
     val lifecycleOwner = LocalLifecycleOwner.current
     val latestOnSnapshot = rememberUpdatedState(onSnapshot)
     val latestOnError = rememberUpdatedState(onError)
+    val latestOnReady = rememberUpdatedState(onReady)
+    val latestOnEnded = rememberUpdatedState(onEnded)
     val coroutineScope = rememberCoroutineScope()
 
     val playerSettings = remember {
@@ -297,7 +302,11 @@ actual fun PlatformPlayerSurface(
                 if (playbackState == Player.STATE_READY) {
                     fallbackStartPositionMs = null
                     latestOnError.value(null)
+                    latestOnReady.value()
                     exoPlayer.logCurrentTracks("STATE_READY")
+                }
+                if (playbackState == Player.STATE_ENDED) {
+                    latestOnEnded.value()
                 }
                 syncPlayerViewKeepScreenOn()
                 latestOnSnapshot.value(exoPlayer.snapshot())
@@ -367,6 +376,11 @@ actual fun PlatformPlayerSurface(
             lifecycleOwner.lifecycle.removeObserver(observer)
             exoPlayer.release()
         }
+    }
+
+    LaunchedEffect(exoPlayer, muted) {
+        exoPlayer.volume = if (muted) 0f else 1f
+        latestOnSnapshot.value(exoPlayer.snapshot())
     }
 
     LaunchedEffect(exoPlayer, playWhenReady) {
