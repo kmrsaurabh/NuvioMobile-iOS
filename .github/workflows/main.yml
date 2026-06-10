@@ -151,7 +151,14 @@ jobs:
           zip -q -r "$IPA_NAME" Payload
           
           # Create GitHub Release
-          RELEASE_NOTES="NuvioPlus (Based on C++ Server). Changelog: $COMMIT_MSG"
+          cd ${GITHUB_WORKSPACE}
+          if [ -f "release_notes.txt" ]; then
+            FILE_NOTES=$(cat release_notes.txt)
+            RELEASE_NOTES="NuvioPlus (Based on C++ Server). Changelog: $FILE_NOTES"
+          else
+            RELEASE_NOTES="NuvioPlus (Based on C++ Server). Changelog: $COMMIT_MSG"
+          fi
+          cd iosApp/build/Build/Products/Release-iphoneos
           gh release create "cpp-v${APP_VERSION}-${{ env.BUMPED_VERSION }}" "$IPA_NAME" --title "NuvioPlus v${APP_VERSION} (Build ${{ env.BUMPED_VERSION }})" --notes "$RELEASE_NOTES"
           
           # Compute hashes for SideStore
