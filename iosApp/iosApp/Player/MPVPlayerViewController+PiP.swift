@@ -3,7 +3,6 @@ import UIKit
 import AVFoundation
 
 private var pipCoordinatorKey: UInt8 = 0
-private var pictureInPictureStateListenerKey: UInt8 = 0
 
 extension MPVPlayerViewController {
 
@@ -29,7 +28,6 @@ extension MPVPlayerViewController {
         let coordinator = MPVPictureInPictureController()
         coordinator.delegate = self
         coordinator.playbackController = self
-        coordinator.frameSource = self
         coordinator.attach(toHostView: view)
         pipCoordinator = coordinator
     }
@@ -51,6 +49,22 @@ extension MPVPlayerViewController {
     func stopPictureInPicture() {
         pipCoordinator?.stopPictureInPicture()
     }
+
+    func invalidatePipPlaybackState() {
+        pipCoordinator?.invalidatePlaybackState()
+    }
+
+    func setPipPlaybackRate(_ rate: Double) {
+        pipCoordinator?.setPlaybackRate(rate)
+    }
+
+    func flushPipLayer() {
+        pipCoordinator?.flushPipLayer()
+    }
+
+    func notifyPipFormatChanged() {
+        pipCoordinator?.notifyPipFormatChanged()
+    }
 }
 
 // MARK: - PiP Delegate / Playback Controller Conformance
@@ -58,6 +72,13 @@ extension MPVPlayerViewController {
 extension MPVPlayerViewController: MPVPictureInPictureControllerDelegate {
     func pictureInPictureDidChangeActiveState(active: Bool) {
         // If we need to notify Kotlin in the future, we can add a listener here.
+    }
+
+    func pictureInPictureDidRequestExitPlayback() {
+        NotificationCenter.default.post(
+            name: Notification.Name("NuvioPlayerPiPDidRequestExitPlayback"),
+            object: nil
+        )
     }
 }
 
@@ -77,12 +98,5 @@ extension MPVPlayerViewController: MPVPictureInPicturePlaybackController {
     var isPlaying: Bool {
         refreshPlaybackState()
         return isPlayerPlaying
-    }
-}
-
-extension MPVPlayerViewController: MPVPictureInPictureFrameSource {
-    func capturePictureInPictureFrame() -> CVPixelBuffer? {
-        guard let mpv = self.mpv else { return nil }
-        return MPVScreenshotCapture.capture(mpv: mpv)
     }
 }
