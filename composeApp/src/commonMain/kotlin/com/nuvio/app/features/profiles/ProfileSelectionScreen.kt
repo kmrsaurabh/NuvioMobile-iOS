@@ -56,9 +56,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
 import com.nuvio.app.core.auth.AuthRepository
 import com.nuvio.app.core.auth.AuthState
+import com.nuvio.app.features.home.components.CollectionCardRemoteImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nuvio.composeapp.generated.resources.*
@@ -373,11 +373,12 @@ private fun ProfileAvatarCard(
                 contentAlignment = Alignment.Center,
             ) {
                 if (avatarImageUrl != null) {
-                    AsyncImage(
-                        model = avatarImageUrl,
+                    CollectionCardRemoteImage(
+                        imageUrl = avatarImageUrl,
                         contentDescription = avatarItem?.displayName ?: profile.name,
                         modifier = Modifier.size(100.dp).clip(CircleShape),
                         contentScale = ContentScale.Crop,
+                        animateIfPossible = true,
                     )
                 } else if (profile.name.isNotBlank()) {
                     Text(
