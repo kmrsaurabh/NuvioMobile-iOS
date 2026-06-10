@@ -7,8 +7,6 @@ import UIKit
 
 protocol MPVPictureInPicturePlaybackController: AnyObject {
     var isPlaying: Bool { get }
-    var isBuffering: Bool { get }
-    var positionMs: Int64 { get }
     var durationMs: Int64 { get }
     func play()
     func pause()
@@ -17,10 +15,7 @@ protocol MPVPictureInPicturePlaybackController: AnyObject {
 
 protocol MPVPictureInPictureControllerDelegate: AnyObject {
     func pictureInPictureDidChangeActiveState(active: Bool)
-}
-
-protocol MPVPictureInPictureFrameSource: AnyObject {
-    func capturePictureInPictureFrame() -> CVPixelBuffer?
+    func pictureInPictureDidRequestExitPlayback()
 }
 
 final class MPVPictureInPictureController: NSObject {
@@ -29,9 +24,10 @@ final class MPVPictureInPictureController: NSObject {
 
     weak var delegate: MPVPictureInPictureControllerDelegate?
     weak var playbackController: MPVPictureInPicturePlaybackController?
-    weak var frameSource: MPVPictureInPictureFrameSource?
 
     var isSupported: Bool { AVPictureInPictureController.isPictureInPictureSupported() }
+
+    private(set) var isStarting: Bool = false
     private(set) var isActive: Bool = false {
         didSet {
             guard oldValue != isActive else { return }
@@ -39,23 +35,30 @@ final class MPVPictureInPictureController: NSObject {
         }
     }
 
+    var isStartingOrActive: Bool {
+        isStarting || isActive
+    }
+
     let displayLayer: AVSampleBufferDisplayLayer
 
     // MARK: - Private
 
     private var pictureInPictureController: AVPictureInPictureController?
-    private var displayLink: CADisplayLink?
     private var hostView: UIView?
-    private var placeholderColor: UIColor = .black
     private let renderQueue = DispatchQueue(label: "nuvio.pip.render", qos: .userInteractive)
+    
+    private var isRecoveringDisplayLayer = false
     private var lastEnqueuedPresentationSeconds: Double = 0
-    private var hasInstalledTimebase: Bool = false
-    private let framePumpIntervalSeconds: Double = 1.0 / 24.0
-    private var lastKnownVideoSize: CGSize = CGSize(width: 640, height: 360)
-    private var placeholderSkipCounter: Int = 0
-    private let placeholderSkipInterval: Int = 20 // Only enqueue 1 out of every 20 frames when inactive (= every 2 seconds at 10fps)
-    private var _blackPlaceholderBuffer: CVPixelBuffer?
-    private var _blackPlaceholderSize: CGSize = .zero
+    private var lastPlaybackPositionSeconds: Double = 0
+    private var timebase: CMTimebase?
+    private let stateLock = NSLock()
+    private var pipFormatDescription: CMVideoFormatDescription?
+    
+    // Lifecycle tracking
+    private var isStoppingPiPForForegroundTransition = false
+    private var isRestoringPiPUserInterface = false
+    private var didRestorePiPUserInterface = false
+    private var didRequestForegroundTransitionStop = false
 
     override init() {
         let layer = AVSampleBufferDisplayLayer()
@@ -63,7 +66,7 @@ final class MPVPictureInPictureController: NSObject {
         layer.backgroundColor = UIColor.black.cgColor
         self.displayLayer = layer
         super.init()
-        configureTimebase()
+        createTimebaseIfNeeded()
     }
 
     func attach(toHostView host: UIView) {
@@ -71,28 +74,37 @@ final class MPVPictureInPictureController: NSObject {
         detachFromHost()
         hostView = host
         displayLayer.frame = host.bounds
-        displayLayer.opacity = 0.0
         host.layer.insertSublayer(displayLayer, at: 0)
 
-        let controller = AVPictureInPictureController(
-            contentSource: AVPictureInPictureController.ContentSource(
-                sampleBufferDisplayLayer: displayLayer,
-                playbackDelegate: self
+        if AVPictureInPictureController.isPictureInPictureSupported() {
+            let controller = AVPictureInPictureController(
+                contentSource: AVPictureInPictureController.ContentSource(
+                    sampleBufferDisplayLayer: displayLayer,
+                    playbackDelegate: self
+                )
             )
-        )
-        controller.canStartPictureInPictureAutomaticallyFromInline = true
-        controller.delegate = self
-        pictureInPictureController = controller
-
-        ensureFramePumpRunning()
+            controller.canStartPictureInPictureAutomaticallyFromInline = true
+            controller.delegate = self
+            pictureInPictureController = controller
+        }
     }
 
     func detachFromHost() {
-        stopFramePump()
         pictureInPictureController?.delegate = nil
         pictureInPictureController = nil
         displayLayer.removeFromSuperlayer()
         hostView = nil
+        isStarting = false
+        isActive = false
+    }
+
+    func shutdownSynchronously() {
+        pictureInPictureController?.delegate = nil
+        pictureInPictureController = nil
+        displayLayer.flushAndRemoveImage()
+        displayLayer.removeFromSuperlayer()
+        hostView = nil
+        isStarting = false
         isActive = false
     }
 
@@ -101,233 +113,161 @@ final class MPVPictureInPictureController: NSObject {
         displayLayer.frame = host.bounds
     }
 
-    func updatePlaceholder(color: UIColor) {
-        placeholderColor = color
-    }
-
-    func updateVideoSize(width: Int, height: Int) {
-        guard width > 0, height > 0 else { return }
-        let newSize = CGSize(width: width, height: height)
-        guard newSize != lastKnownVideoSize else { return }
-        lastKnownVideoSize = newSize
-        _blackPlaceholderBuffer = nil // Force regeneration
-    }
-
     func startPictureInPicture() {
         guard let controller = pictureInPictureController else { return }
         guard !controller.isPictureInPictureActive else { return }
-        ensureFramePumpRunning()
         DispatchQueue.main.async {
             controller.startPictureInPicture()
         }
     }
 
     func stopPictureInPicture() {
-        pictureInPictureController?.stopPictureInPicture()
-    }
-
-    // MARK: - Frame pump
-
-    private func ensureFramePumpRunning() {
-        guard displayLink == nil else { return }
-        
-        let link = CADisplayLink(target: self, selector: #selector(displayLinkDidFire(_:)))
-        if #available(iOS 15.0, *) {
-            link.preferredFrameRateRange = CAFrameRateRange(minimum: 24, maximum: 60, preferred: 60)
-        }
-        link.add(to: .main, forMode: .common)
-        displayLink = link
-    }
-
-    @objc private func displayLinkDidFire(_ link: CADisplayLink) {
-        renderQueue.async { [weak self] in
-            self?.enqueueNextFrame(targetTimestamp: link.targetTimestamp)
+        DispatchQueue.main.async { [weak self] in
+            self?.pictureInPictureController?.stopPictureInPicture()
         }
     }
 
-    private func stopFramePump() {
-        displayLink?.invalidate()
-        displayLink = nil
-    }
-
-    private var blackPlaceholderBuffer: CVPixelBuffer? {
-        if _blackPlaceholderSize != lastKnownVideoSize || _blackPlaceholderBuffer == nil {
-            _blackPlaceholderBuffer = makePlaceholderPixelBuffer(size: lastKnownVideoSize, color: .black)
-            _blackPlaceholderSize = lastKnownVideoSize
+    func invalidatePlaybackState() {
+        DispatchQueue.main.async { [weak self] in
+            self?.pictureInPictureController?.invalidatePlaybackState()
         }
-        return _blackPlaceholderBuffer
     }
 
-    private func enqueueNextFrame(targetTimestamp: CFTimeInterval) {
-        syncControlTimebaseToPlayback()
+    func beginForegroundTransition() {
+        isStoppingPiPForForegroundTransition = true
+        stopPictureInPicture()
+    }
 
-        let pixelBuffer: CVPixelBuffer?
-        if isActive {
-            pixelBuffer = frameSource?.capturePictureInPictureFrame()
-                ?? makePlaceholderPixelBuffer(size: lastKnownVideoSize, color: placeholderColor)
-        } else {
-            // When PIP is not active, only generate a placeholder every ~2 seconds
-            // to keep the timebase alive without wasting CPU.
-            placeholderSkipCounter += 1
-            if placeholderSkipCounter >= placeholderSkipInterval {
-                placeholderSkipCounter = 0
-                pixelBuffer = blackPlaceholderBuffer
-            } else {
+    // MARK: - Frame Enqueueing
+
+    func enqueue(frame pixelBuffer: CVPixelBuffer, mediaTime: CMTime) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in
+                self?.enqueue(frame: pixelBuffer, mediaTime: mediaTime)
+            }
+            return
+        }
+
+        recoverDisplayLayerIfNeeded()
+        guard displayLayer.status != .failed else { return }
+
+        stateLock.lock()
+        if pipFormatDescription == nil {
+            var formatDescription: CMVideoFormatDescription?
+            guard CMVideoFormatDescriptionCreateForImageBuffer(
+                allocator: kCFAllocatorDefault,
+                imageBuffer: pixelBuffer,
+                formatDescriptionOut: &formatDescription
+            ) == noErr, let formatDescription else {
+                stateLock.unlock()
                 return
             }
+            pipFormatDescription = formatDescription
         }
-
-        guard let pb = pixelBuffer else { return }
-        enqueuePixelBuffer(pb, targetTimestamp: targetTimestamp)
-    }
-
-    func invalidatePlaybackState(positionMs: Int64, isPlaying: Bool, isBuffering: Bool = false) {
-        if displayLayer.controlTimebase == nil {
-            var newTimebase: CMTimebase?
-            CMTimebaseCreateWithSourceClock(
-                allocator: kCFAllocatorDefault,
-                sourceClock: CMClockGetHostTimeClock(),
-                timebaseOut: &newTimebase
-            )
-            displayLayer.controlTimebase = newTimebase
-        }
-
-        guard let timebase = displayLayer.controlTimebase else { return }
-        let positionTime = CMTime(value: max(positionMs, 0), timescale: 1000)
-        CMTimebaseSetTime(timebase, time: positionTime)
-        
-        // Trick iOS into allowing auto-PiP when buffering by keeping the timebase running.
-        let shouldPretendPlaying = isPlaying || isBuffering
-        CMTimebaseSetRate(timebase, rate: shouldPretendPlaying ? 1.0 : 0.0)
-    }
-
-    private func syncControlTimebaseToPlayback() {
-        guard let playbackController = playbackController else { return }
-        invalidatePlaybackState(
-            positionMs: playbackController.positionMs,
-            isPlaying: playbackController.isPlaying,
-            isBuffering: playbackController.isBuffering
-        )
-    }
-
-    private func configureTimebase() {
-        var timebase: CMTimebase?
-        let status = CMTimebaseCreateWithSourceClock(
-            allocator: kCFAllocatorDefault,
-            sourceClock: CMClockGetHostTimeClock(),
-            timebaseOut: &timebase
-        )
-        guard status == noErr, let timebase else { return }
-        CMTimebaseSetTime(timebase, time: .zero)
-        CMTimebaseSetRate(timebase, rate: 1.0)
-        displayLayer.controlTimebase = timebase
-        hasInstalledTimebase = true
-    }
-
-    private func enqueuePixelBuffer(_ pixelBuffer: CVPixelBuffer, targetTimestamp: CFTimeInterval) {
-        var formatDescription: CMVideoFormatDescription?
-        CMVideoFormatDescriptionCreateForImageBuffer(
-            allocator: kCFAllocatorDefault,
-            imageBuffer: pixelBuffer,
-            formatDescriptionOut: &formatDescription
-        )
+        let formatDescription = pipFormatDescription
+        stateLock.unlock()
         guard let formatDescription else { return }
 
-        // Perfect Jitter-Free Timing: Map CADisplayLink's future targetTimestamp to the AVSampleBufferDisplayLayer's timebase.
-        let presentationSeconds: Double
-        if hasInstalledTimebase, let timebase = displayLayer.controlTimebase {
-            let timebaseTime = CMTimebaseGetTime(timebase)
-            // Use targetTimestamp directly (mapped via host time)
-            presentationSeconds = CMTimeGetSeconds(timebaseTime)
-        } else {
-            presentationSeconds = lastEnqueuedPresentationSeconds + framePumpIntervalSeconds
+        let rawSeconds = max(CMTimeGetSeconds(mediaTime), 0.0)
+        let jumpedBackward = rawSeconds + 0.5 < lastPlaybackPositionSeconds
+        let jumpedForward = rawSeconds - lastPlaybackPositionSeconds > 5.0
+        if jumpedBackward || jumpedForward {
+            displayLayer.flushAndRemoveImage()
+            lastEnqueuedPresentationSeconds = rawSeconds
         }
-        
-        // Ensure monotonically increasing PTS
-        let nextPts = max(presentationSeconds, lastEnqueuedPresentationSeconds + 0.001)
-        let pts = CMTime(seconds: nextPts, preferredTimescale: 600)
-        lastEnqueuedPresentationSeconds = CMTimeGetSeconds(pts)
+        lastPlaybackPositionSeconds = rawSeconds
+
+        let presentationSeconds = max(rawSeconds, lastEnqueuedPresentationSeconds + 0.01)
+        lastEnqueuedPresentationSeconds = presentationSeconds
 
         var timing = CMSampleTimingInfo(
-            duration: CMTime(seconds: framePumpIntervalSeconds, preferredTimescale: 600),
-            presentationTimeStamp: pts,
+            duration: CMTime(value: 1, timescale: 30),
+            presentationTimeStamp: CMTime(seconds: presentationSeconds, preferredTimescale: 600),
             decodeTimeStamp: .invalid
         )
-
         var sampleBuffer: CMSampleBuffer?
-        CMSampleBufferCreateReadyWithImageBuffer(
+        let status = CMSampleBufferCreateReadyWithImageBuffer(
             allocator: kCFAllocatorDefault,
             imageBuffer: pixelBuffer,
             formatDescription: formatDescription,
             sampleTiming: &timing,
             sampleBufferOut: &sampleBuffer
         )
-        guard let sampleBuffer else { return }
+        guard status == noErr, let sampleBuffer else { return }
 
-        if let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: true),
-           CFArrayGetCount(attachmentsArray) > 0 {
-            let dict = unsafeBitCast(
-                CFArrayGetValueAtIndex(attachmentsArray, 0),
-                to: CFMutableDictionary.self
-            )
+        if let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: true),
+           CFArrayGetCount(attachments) > 0,
+           let attachment = CFArrayGetValueAtIndex(attachments, 0) {
+            let dictionary = unsafeBitCast(attachment, to: CFMutableDictionary.self)
             CFDictionarySetValue(
-                dict,
+                dictionary,
                 Unmanaged.passUnretained(kCMSampleAttachmentKey_DisplayImmediately).toOpaque(),
                 Unmanaged.passUnretained(kCFBooleanTrue).toOpaque()
             )
         }
 
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            if self.displayLayer.status == .failed {
-                self.displayLayer.flush()
-            }
-            if self.displayLayer.isReadyForMoreMediaData {
-                self.displayLayer.enqueue(sampleBuffer)
-            }
+        displayLayer.enqueue(sampleBuffer)
+        if displayLayer.status == .failed {
+            recoverDisplayLayerIfNeeded()
         }
     }
 
-    private func makePlaceholderPixelBuffer(size: CGSize, color: UIColor) -> CVPixelBuffer? {
-        let width = Int(size.width)
-        let height = Int(size.height)
-        let attrs: [CFString: Any] = [
-            kCVPixelBufferIOSurfacePropertiesKey: [:],
-            kCVPixelBufferCGImageCompatibilityKey: true,
-            kCVPixelBufferCGBitmapContextCompatibilityKey: true,
-        ]
-        var pixelBuffer: CVPixelBuffer?
-        let status = CVPixelBufferCreate(
-            kCFAllocatorDefault,
-            width,
-            height,
-            kCVPixelFormatType_32BGRA,
-            attrs as CFDictionary,
-            &pixelBuffer
+    private func recoverDisplayLayerIfNeeded() {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in
+                self?.recoverDisplayLayerIfNeeded()
+            }
+            return
+        }
+        guard displayLayer.status == .failed else { return }
+        guard !isRecoveringDisplayLayer else { return }
+
+        isRecoveringDisplayLayer = true
+        displayLayer.flushAndRemoveImage()
+        displayLayer.controlTimebase = nil
+        timebase = nil
+        lastEnqueuedPresentationSeconds = 0
+        lastPlaybackPositionSeconds = 0
+        createTimebaseIfNeeded()
+        DispatchQueue.main.async { [weak self] in
+            self?.isRecoveringDisplayLayer = false
+        }
+    }
+
+    func flushPipLayer() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.lastEnqueuedPresentationSeconds = 0
+            self.lastPlaybackPositionSeconds = 0
+            self.displayLayer.flushAndRemoveImage()
+        }
+    }
+
+    private func createTimebaseIfNeeded() {
+        guard timebase == nil else { return }
+        var tb: CMTimebase?
+        let result = CMTimebaseCreateWithSourceClock(
+            allocator: kCFAllocatorDefault,
+            sourceClock: CMClockGetHostTimeClock(),
+            timebaseOut: &tb
         )
-        guard status == kCVReturnSuccess, let pixelBuffer else { return nil }
+        guard result == noErr, let tb else { return }
+        timebase = tb
+        displayLayer.controlTimebase = tb
+        CMTimebaseSetRate(tb, rate: 0.0)
+        CMTimebaseSetTime(tb, time: .zero)
+    }
 
-        CVPixelBufferLockBaseAddress(pixelBuffer, [])
-        defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, []) }
+    func setPlaybackRate(_ rate: Double) {
+        createTimebaseIfNeeded()
+        guard let timebase else { return }
+        CMTimebaseSetRate(timebase, rate: rate)
+    }
 
-        let baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer)
-        let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedFirst.rawValue
-            | CGBitmapInfo.byteOrder32Little.rawValue)
-        guard let context = CGContext(
-            data: baseAddress,
-            width: width,
-            height: height,
-            bitsPerComponent: 8,
-            bytesPerRow: bytesPerRow,
-            space: colorSpace,
-            bitmapInfo: bitmapInfo.rawValue
-        ) else { return nil }
-
-        context.setFillColor(color.cgColor)
-        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
-        return pixelBuffer
+    func notifyPipFormatChanged() {
+        stateLock.lock()
+        pipFormatDescription = nil
+        stateLock.unlock()
     }
 }
 
@@ -336,42 +276,50 @@ final class MPVPictureInPictureController: NSObject {
 extension MPVPictureInPictureController: AVPictureInPictureControllerDelegate {
 
     func pictureInPictureControllerWillStartPictureInPicture(_ controller: AVPictureInPictureController) {
+        isStarting = true
         isActive = true
-        displayLayer.opacity = 1.0
-        ensureFramePumpRunning()
     }
 
     func pictureInPictureControllerDidStartPictureInPicture(_ controller: AVPictureInPictureController) {
+        isStarting = false
         isActive = true
     }
 
     func pictureInPictureController(_ controller: AVPictureInPictureController, failedToStartPictureInPictureWithError error: Error) {
         print("[NuvioPiP] failed to start: \(error.localizedDescription)")
+        isStarting = false
         isActive = false
     }
 
     func pictureInPictureControllerWillStopPictureInPicture(_ controller: AVPictureInPictureController) {
-        stopFramePump()
+        guard isStoppingPiPForForegroundTransition else { return }
+        // Handle foreground transition UI setup if necessary
     }
 
     func pictureInPictureControllerDidStopPictureInPicture(_ controller: AVPictureInPictureController) {
+        isStarting = false
         isActive = false
-        stopFramePump()
-        displayLayer.opacity = 0.0
-        displayLayer.flushAndRemoveImage()
-        if let host = hostView {
-            host.layer.insertSublayer(displayLayer, at: 0)
+        
+        let shouldRequestExitPlayback = !didRequestForegroundTransitionStop
+        if isStoppingPiPForForegroundTransition {
+            isStoppingPiPForForegroundTransition = false
+            didRestorePiPUserInterface = false
+            didRequestForegroundTransitionStop = false
+        }
+        
+        if shouldRequestExitPlayback {
+            delegate?.pictureInPictureDidRequestExitPlayback()
         }
     }
 
     func pictureInPictureController(
         _ controller: AVPictureInPictureController,
-        restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void
-    ) {
+        restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void) {
+        
+        isRestoringPiPUserInterface = true
+        didRestorePiPUserInterface = true
+        
         DispatchQueue.main.async {
-            self.hostView?.setNeedsLayout()
-            self.hostView?.layoutIfNeeded()
-            self.updateLayout()
             completionHandler(true)
         }
     }
@@ -382,22 +330,23 @@ extension MPVPictureInPictureController: AVPictureInPictureControllerDelegate {
 extension MPVPictureInPictureController: AVPictureInPictureSampleBufferPlaybackDelegate {
 
     func pictureInPictureController(_ controller: AVPictureInPictureController, setPlaying playing: Bool) {
-        if playing {
-            playbackController?.play()
-        } else {
-            playbackController?.pause()
+        DispatchQueue.main.async { [weak self] in
+            if playing {
+                self?.playbackController?.play()
+            } else {
+                self?.playbackController?.pause()
+            }
         }
     }
 
     func pictureInPictureControllerTimeRangeForPlayback(_ controller: AVPictureInPictureController) -> CMTimeRange {
+        let start = CMTime(seconds: 0, preferredTimescale: 600)
         let durationMs = playbackController?.durationMs ?? 0
-        if durationMs <= 0 {
-            return CMTimeRange(start: .negativeInfinity, duration: .positiveInfinity)
+        guard durationMs > 0 else {
+            return CMTimeRange(start: start, duration: .positiveInfinity)
         }
-        return CMTimeRange(
-            start: .zero,
-            duration: CMTime(value: durationMs, timescale: 1000)
-        )
+        let duration = CMTime(seconds: Double(durationMs) / 1000.0, preferredTimescale: 600)
+        return CMTimeRange(start: start, duration: duration)
     }
 
     func pictureInPictureControllerIsPlaybackPaused(_ controller: AVPictureInPictureController) -> Bool {
@@ -414,35 +363,16 @@ extension MPVPictureInPictureController: AVPictureInPictureSampleBufferPlaybackD
         skipByInterval skipInterval: CMTime,
         completion completionHandler: @escaping () -> Void
     ) {
-        let offsetMs = Int64(CMTimeGetSeconds(skipInterval) * 1000.0)
-        let currentPositionMs = playbackController?.positionMs ?? 0
-        let durationMs = playbackController?.durationMs ?? 0
-        let estimatedNewPositionMs = max(0, min(currentPositionMs + offsetMs, durationMs))
-
-        // Perform the actual seek in MPV
-        playbackController?.seek(byMs: offsetMs)
-
-        // Immediately update the display layer timebase to the estimated new position
-        // so AVKit doesn't think playback has stalled
-        invalidatePlaybackState(
-            positionMs: estimatedNewPositionMs,
-            isPlaying: playbackController?.isPlaying ?? true
-        )
-
-        // Flush any stale frames from the display layer
-        if displayLayer.status == .failed {
-            displayLayer.flush()
+        DispatchQueue.main.async { [weak self] in
+            let offsetMs = Int64(CMTimeGetSeconds(skipInterval) * 1000.0)
+            self?.playbackController?.seek(byMs: offsetMs)
+            DispatchQueue.main.async {
+                completionHandler()
+            }
         }
-
-        // Force an immediate frame refresh at the new position
-        renderQueue.async { [weak self] in
-            let target = self?.displayLink?.targetTimestamp ?? 0
-            self?.enqueueNextFrame(targetTimestamp: target)
-        }
-
-        // Delay completion to give MPV time to settle its internal position
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            completionHandler()
-        }
+    }
+    
+    func pictureInPictureControllerShouldProhibitBackgroundAudioPlayback(_ pictureInPictureController: AVPictureInPictureController) -> Bool {
+        return false
     }
 }
