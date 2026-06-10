@@ -11,6 +11,7 @@ import com.nuvio.app.features.addons.AddonsUiState
 import com.nuvio.app.features.details.MetaDetailsUiState
 import com.nuvio.app.features.details.MetaScreenSettingsUiState
 import com.nuvio.app.features.details.MetaVideo
+import com.nuvio.app.features.livetv.LiveTvUiState
 import com.nuvio.app.features.p2p.P2pSettingsUiState
 import com.nuvio.app.features.p2p.P2pStreamingState
 import com.nuvio.app.features.player.skip.NextEpisodeInfo
@@ -57,6 +58,7 @@ internal class PlayerScreenRuntime(
     val initialPositionMs: Long get() = args.initialPositionMs
     val initialProgressFraction: Float? get() = args.initialProgressFraction
     val isSeries: Boolean get() = parentMetaType == "series"
+    val isLiveTvPlayback: Boolean get() = contentType == "live"
 
     lateinit var scope: CoroutineScope
     lateinit var hapticFeedback: HapticFeedback
@@ -67,6 +69,7 @@ internal class PlayerScreenRuntime(
     var metaScreenSettingsUiState: MetaScreenSettingsUiState = MetaScreenSettingsUiState()
     var watchedUiState: WatchedUiState = WatchedUiState()
     var watchProgressUiState: WatchProgressUiState = WatchProgressUiState()
+    var liveTvUiState: LiveTvUiState = LiveTvUiState()
     var sourceStreamsState: StreamsUiState = StreamsUiState()
     var episodeStreamsRepoState: StreamsUiState = StreamsUiState()
     var metaUiState: MetaDetailsUiState = MetaDetailsUiState()
@@ -148,6 +151,7 @@ internal class PlayerScreenRuntime(
 
     var showSourcesPanel by mutableStateOf(false)
     var showEpisodesPanel by mutableStateOf(false)
+    var showLiveChannelsPanel by mutableStateOf(false)
     var showSubmitIntroModal by mutableStateOf(false)
     var submitIntroSegmentType by mutableStateOf("intro")
     var submitIntroStartTimeStr by mutableStateOf("00:00")
