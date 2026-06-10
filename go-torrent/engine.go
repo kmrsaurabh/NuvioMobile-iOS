@@ -135,8 +135,6 @@ func StartEngine(dataDir string, configJson string) (res string) {
 	// Zero Throttling
 	if parsedCfg.MaxUploadRate > 0 {
 		cfg.UploadRateLimiter = rate.NewLimiter(rate.Limit(parsedCfg.MaxUploadRate), int(parsedCfg.MaxUploadRate))
-	} else {
-		cfg.UploadRateLimiter = nil // Unlimited upload
 	}
 
 	c, err := torrent.NewClient(cfg)
