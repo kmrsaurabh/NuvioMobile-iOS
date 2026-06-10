@@ -41,11 +41,7 @@
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/v0.2.2-2606032039/Nuvio-v0.2.2-2606032039-Full.ipa",
           "size": 45594511,
           "sha256": "ad799e6f3348c1269042c21327dcfe78f7cd1c688c5cd36f57cfa126e110cc79"
-        }
-      ]
-    },
-    {
-      "versions": [
+        },
         {
           "version": "0.2.14",
           "buildVersion": "2606081028",
