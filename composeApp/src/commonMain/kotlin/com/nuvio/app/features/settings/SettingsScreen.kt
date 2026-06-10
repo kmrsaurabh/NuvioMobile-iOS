@@ -64,6 +64,7 @@ import com.nuvio.app.features.debrid.DebridSettings
 import com.nuvio.app.features.debrid.DebridSettingsRepository
 import com.nuvio.app.features.home.HomeCatalogSettingsItem
 import com.nuvio.app.features.home.HomeCatalogSettingsRepository
+import com.nuvio.app.features.livetv.LiveTvRepository
 import com.nuvio.app.features.mdblist.MdbListSettings
 import com.nuvio.app.features.mdblist.MdbListSettingsRepository
 import com.nuvio.app.features.notifications.EpisodeReleaseNotificationsRepository
@@ -198,6 +199,10 @@ fun SettingsScreen(
         val profileSettingsState by remember {
             ProfileRepository.state
         }.collectAsStateWithLifecycle()
+        val liveTvUiState by remember {
+            LiveTvRepository.ensureLoaded()
+            LiveTvRepository.uiState
+        }.collectAsStateWithLifecycle()
 
         LaunchedEffect(homescreenCatalogRefreshKey) {
             if (homescreenCatalogRefreshKey.isEmpty()) return@LaunchedEffect
@@ -276,6 +281,7 @@ fun SettingsScreen(
                 tmdbSettings = tmdbSettings,
                 mdbListSettings = mdbListSettings,
                 debridSettings = debridSettings,
+                liveTvUiState = liveTvUiState,
                 traktAuthUiState = traktAuthUiState,
                 traktCommentsEnabled = traktCommentsEnabled,
                 traktSettingsUiState = traktSettingsUiState,
@@ -326,6 +332,7 @@ fun SettingsScreen(
                 tmdbSettings = tmdbSettings,
                 mdbListSettings = mdbListSettings,
                 debridSettings = debridSettings,
+                liveTvUiState = liveTvUiState,
                 traktAuthUiState = traktAuthUiState,
                 traktCommentsEnabled = traktCommentsEnabled,
                 traktSettingsUiState = traktSettingsUiState,
@@ -386,6 +393,7 @@ private fun MobileSettingsScreen(
     tmdbSettings: TmdbSettings,
     mdbListSettings: MdbListSettings,
     debridSettings: DebridSettings,
+    liveTvUiState: com.nuvio.app.features.livetv.LiveTvUiState,
     traktAuthUiState: TraktAuthUiState,
     traktCommentsEnabled: Boolean,
     traktSettingsUiState: TraktSettingsUiState,
@@ -710,6 +718,7 @@ private fun TabletSettingsScreen(
     tmdbSettings: TmdbSettings,
     mdbListSettings: MdbListSettings,
     debridSettings: DebridSettings,
+    liveTvUiState: com.nuvio.app.features.livetv.LiveTvUiState,
     traktAuthUiState: TraktAuthUiState,
     traktCommentsEnabled: Boolean,
     traktSettingsUiState: TraktSettingsUiState,

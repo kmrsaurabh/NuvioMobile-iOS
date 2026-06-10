@@ -2,6 +2,7 @@ package com.nuvio.app.features.settings
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CloudQueue
+import androidx.compose.material.icons.rounded.LiveTv
 import androidx.compose.foundation.lazy.LazyListScope
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.compose_settings_page_debrid
