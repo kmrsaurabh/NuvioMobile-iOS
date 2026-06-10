@@ -765,7 +765,7 @@ final class MPVPlayerViewController: UIViewController {
         setVideoEqualizer("saturation", saturation)
         setVideoEqualizer("gamma", gamma)
         if #available(iOS 17.0, *) {
-            pipDisplayLayer.wantsExtendedDynamicRangeContent = extendedDynamicRange
+            pipCoordinator?.displayLayer.wantsExtendedDynamicRangeContent = extendedDynamicRange
         }
     }
 
@@ -817,15 +817,15 @@ final class MPVPlayerViewController: UIViewController {
         guard mpv != nil else { return }
         switch mode {
         case 1: // Fill
-            pipDisplayLayer.videoGravity = .resizeAspectFill
+            pipCoordinator?.displayLayer.videoGravity = .resizeAspectFill
             setStringProperty("panscan", "1.0")
             setStringProperty("video-unscaled", "no")
         case 2: // Zoom
-            pipDisplayLayer.videoGravity = .resizeAspectFill
+            pipCoordinator?.displayLayer.videoGravity = .resizeAspectFill
             setStringProperty("panscan", "1.0")
             setStringProperty("video-unscaled", "no")
         default: // Fit
-            pipDisplayLayer.videoGravity = .resizeAspect
+            pipCoordinator?.displayLayer.videoGravity = .resizeAspect
             setStringProperty("panscan", "0.0")
             setStringProperty("video-unscaled", "no")
         }
