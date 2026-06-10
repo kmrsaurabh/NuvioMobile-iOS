@@ -1,34 +1,6 @@
 package com.nuvio.app.features.player
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -180,6 +152,7 @@ fun PlayerScreen(
     torrentInfoHash: String? = null,
     torrentFileIdx: Int? = null,
     torrentFilename: String? = null,
+    torrentMagnetUri: String? = null,
     torrentTrackers: List<String> = emptyList(),
     initialPositionMs: Long = 0L,
     initialProgressFraction: Float? = null,
@@ -525,9 +498,37 @@ fun PlayerScreen(
             parentMetaId = parentMetaId,
             videoId = activeVideoId,
             title = title,
-            seasonNumber = activeSeasonNumber,
-            episodeNumber = activeEpisodeNumber,
-            episodeTitle = activeEpisodeTitle,
+            sourceUrl = sourceUrl,
+            sourceAudioUrl = sourceAudioUrl,
+            sourceHeaders = sourceHeaders,
+            sourceResponseHeaders = sourceResponseHeaders,
+            providerName = providerName,
+            streamTitle = streamTitle,
+            streamSubtitle = streamSubtitle,
+            initialBingeGroup = initialBingeGroup,
+            pauseDescription = pauseDescription,
+            onBack = onBack,
+            onOpenInExternalPlayer = onOpenInExternalPlayer,
+            modifier = modifier,
+            logo = logo,
+            poster = poster,
+            background = background,
+            seasonNumber = seasonNumber,
+            episodeNumber = episodeNumber,
+            episodeTitle = episodeTitle,
+            episodeThumbnail = episodeThumbnail,
+            contentType = contentType,
+            videoId = videoId,
+            parentMetaId = parentMetaId,
+            parentMetaType = parentMetaType,
+            providerAddonId = providerAddonId,
+            torrentInfoHash = torrentInfoHash,
+            torrentFileIdx = torrentFileIdx,
+            torrentFilename = torrentFilename,
+            torrentMagnetUri = torrentMagnetUri,
+            torrentTrackers = torrentTrackers,
+            initialPositionMs = initialPositionMs,
+            initialProgressFraction = initialProgressFraction,
         )
 
         fun emitTraktScrobbleStart() {
