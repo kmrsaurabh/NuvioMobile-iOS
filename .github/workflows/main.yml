@@ -119,11 +119,7 @@ jobs:
           echo "BUMPED_VERSION=${BUMPED_VERSION}" >> $GITHUB_ENV
           echo "Build version: ${BUMPED_VERSION}"
 
-      - name: Update Xcode Project (Ruby xcodeproj)
-        run: |
-          gem install xcodeproj
-          cd iosApp
-          ruby update_project.rb
+
 
       - name: Build iOS App via Xcode
         run: |
