@@ -9,8 +9,6 @@
 /* Begin PBXBuildFile section */
 		0A1B2C3D4E5F60718293A4BD /* DownloadsWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 0A1B2C3D4E5F60718293A4B5 /* DownloadsWidgetExtension.appex */; };
 		7397CF462F80FE3A00AC0F84 /* MPVKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* MPVKit */; };
-		8C6BCE8D77724E34B390A3AC /* GoTorrent.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1C2ABA4D87B8490D94D850A9 /* GoTorrent.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		2CEC62B46BD947A6BC852FA2 /* GoTorrent.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1C2ABA4D87B8490D94D850A9 /* GoTorrent.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,7 +39,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				2CEC62B46BD947A6BC852FA2 /* GoTorrent.xcframework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -51,7 +48,6 @@
 /* Begin PBXFileReference section */
 		07921B4E8F8546BEE682C2FE /* Nuvio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nuvio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A1B2C3D4E5F60718293A4B5 /* DownloadsWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DownloadsWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		1C2ABA4D87B8490D94D850A9 /* GoTorrent.xcframework */ = {isa = PBXFileReference; name = "GoTorrent.xcframework"; path = "Frameworks/GoTorrent.xcframework"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = wrapper.xcframework; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -100,7 +96,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8C6BCE8D77724E34B390A3AC /* GoTorrent.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -137,7 +132,6 @@
 		70773C015D744271A9BDA0B1 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				1C2ABA4D87B8490D94D850A9 /* GoTorrent.xcframework */,
 			);
 			name = Frameworks;
 			path = undefined;

@@ -159,12 +159,6 @@ jobs:
           echo "Staged libraries:"
           ls -lh iosApp/Frameworks/LibTorrent/lib/
 
-      - name: Update Xcode Project (Ruby xcodeproj)
-        run: |
-          gem install xcodeproj
-          cd iosApp
-          ruby update_project.rb
-
       - name: Generate Timestamp Build Version
         run: |
           BUMPED_VERSION=$(date -u +%y%m%d%H%M)
