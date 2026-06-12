@@ -206,11 +206,13 @@ private struct PendingLoadRequest {
 
 // MARK: - MPV Player View Controller
 
-final class MPVPlayerViewController: UIViewController {
+final class MPVPlayerViewController: UIViewController, AVPictureInPictureSampleBufferPlaybackDelegate, AVPictureInPictureControllerDelegate {
 
     private static let defaultAudioOutput = "avfoundation,audiounit,"
 
     private let errorStateLock = NSLock()
+    private let pipDisplayLayer = AVSampleBufferDisplayLayer()
+    private var pipController: AVPictureInPictureController?
     private var timebase: CMTimebase?
     private var mpvRenderContext: OpaquePointer?
     private var pendingLoadRequest: PendingLoadRequest?
@@ -231,6 +233,8 @@ final class MPVPlayerViewController: UIViewController {
     private var renderNeedsAnotherPass = false
     private var renderSize: CGSize = .zero
     private var pixelBufferPool: CVPixelBufferPool?
+    private var pipFormatDescription: CMVideoFormatDescription?
+    private let pipTransitionOverlay = UIView()
 
     // Cached track lists
     var audioTracks: [TrackInfo] = []
@@ -285,6 +289,7 @@ final class MPVPlayerViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .black
         view.layer.masksToBounds = true
+        configurePipLayer()
         setupMpv()
         setupPictureInPicture()
         setupNotifications()
@@ -298,6 +303,7 @@ final class MPVPlayerViewController: UIViewController {
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+        layoutPipLayer()
         attemptStartPendingLoad()
     }
 
@@ -311,11 +317,71 @@ final class MPVPlayerViewController: UIViewController {
 
     override func viewSafeAreaInsetsDidChange() {
         super.viewSafeAreaInsetsDidChange()
+        layoutPipLayer()
         refreshImmersiveSystemUI()
         attemptStartPendingLoad()
     }
 
+    private func configurePipLayer() {
+        pipDisplayLayer.backgroundColor = UIColor.black.cgColor
+        pipDisplayLayer.videoGravity = .resizeAspect
+        view.layer.addSublayer(pipDisplayLayer)
+        pipTransitionOverlay.backgroundColor = .black
+        pipTransitionOverlay.alpha = 0.0
+        pipTransitionOverlay.isUserInteractionEnabled = false
+        view.addSubview(pipTransitionOverlay)
+        layoutPipLayer()
 
+        if isPiPEnabled, AVPictureInPictureController.isPictureInPictureSupported() {
+            let source = AVPictureInPictureController.ContentSource(
+                sampleBufferDisplayLayer: pipDisplayLayer,
+                playbackDelegate: self
+            )
+            pipController = AVPictureInPictureController(contentSource: source)
+            pipController?.delegate = self
+            pipController?.canStartPictureInPictureAutomaticallyFromInline = true
+            observePictureInPictureAvailability()
+        }
+
+        createTimebaseIfNeeded()
+    }
+
+    private func observePictureInPictureAvailability() {
+        pipPossibleObservation?.invalidate()
+        pipPossibleObservation = pipController?.observe(\.isPictureInPicturePossible, options: [.initial, .new]) { [weak self] _, _ in
+            DispatchQueue.main.async {
+                self?.startPictureInPictureIfPossible()
+            }
+        }
+    }
+
+    private func layoutPipLayer() {
+        let bounds = view.bounds
+        guard bounds.width > 1, bounds.height > 1 else { return }
+
+        let scale = view.window?.screen.nativeScale ?? UIScreen.main.nativeScale
+        let targetSize = CGSize(
+            width: (bounds.width * scale).rounded(.toNearestOrAwayFromZero),
+            height: (bounds.height * scale).rounded(.toNearestOrAwayFromZero)
+        )
+
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        pipDisplayLayer.contentsScale = scale
+        pipDisplayLayer.frame = CGRect(origin: .zero, size: bounds.size)
+        CATransaction.commit()
+        pipTransitionOverlay.frame = CGRect(origin: .zero, size: bounds.size)
+
+        if renderSize != targetSize {
+            renderSize = targetSize
+            pixelBufferPool = makePixelBufferPool(width: Int(targetSize.width), height: Int(targetSize.height))
+            stateLock.lock()
+            pipFormatDescription = nil
+            stateLock.unlock()
+            flushPipLayer()
+            scheduleRender()
+        }
+    }
 
     // MARK: - MPV Setup
 
@@ -519,10 +585,149 @@ final class MPVPlayerViewController: UIViewController {
     }
 
     private func enqueue(frame pixelBuffer: CVPixelBuffer, mediaTime: CMTime) {
-        pipCoordinator?.enqueue(frame: pixelBuffer, mediaTime: mediaTime)
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in
+                self?.enqueue(frame: pixelBuffer, mediaTime: mediaTime)
+            }
+            return
+        }
+        guard !isDestroying else { return }
+
+        recoverDisplayLayerIfNeeded()
+        guard pipDisplayLayer.status != .failed else { return }
+
+        stateLock.lock()
+        if pipFormatDescription == nil {
+            var formatDescription: CMVideoFormatDescription?
+            guard CMVideoFormatDescriptionCreateForImageBuffer(
+                allocator: kCFAllocatorDefault,
+                imageBuffer: pixelBuffer,
+                formatDescriptionOut: &formatDescription
+            ) == noErr, let formatDescription else {
+                stateLock.unlock()
+                return
+            }
+            pipFormatDescription = formatDescription
+        }
+        let formatDescription = pipFormatDescription
+        stateLock.unlock()
+        guard let formatDescription else { return }
+
+        let rawSeconds = max(CMTimeGetSeconds(mediaTime), 0.0)
+        let jumpedBackward = rawSeconds + 0.5 < lastPlaybackPositionSeconds
+        let jumpedForward = rawSeconds - lastPlaybackPositionSeconds > 5.0
+        if jumpedBackward || jumpedForward {
+            pipDisplayLayer.flushAndRemoveImage()
+            lastEnqueuedPresentationSeconds = rawSeconds
+        }
+        lastPlaybackPositionSeconds = rawSeconds
+
+        let presentationSeconds = max(rawSeconds, lastEnqueuedPresentationSeconds + 0.01)
+        lastEnqueuedPresentationSeconds = presentationSeconds
+
+        var timing = CMSampleTimingInfo(
+            duration: CMTime(value: 1, timescale: 30),
+            presentationTimeStamp: CMTime(seconds: presentationSeconds, preferredTimescale: 600),
+            decodeTimeStamp: .invalid
+        )
+        var sampleBuffer: CMSampleBuffer?
+        let status = CMSampleBufferCreateReadyWithImageBuffer(
+            allocator: kCFAllocatorDefault,
+            imageBuffer: pixelBuffer,
+            formatDescription: formatDescription,
+            sampleTiming: &timing,
+            sampleBufferOut: &sampleBuffer
+        )
+        guard status == noErr, let sampleBuffer else { return }
+
+        if let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: true),
+           CFArrayGetCount(attachments) > 0,
+           let attachment = CFArrayGetValueAtIndex(attachments, 0) {
+            let dictionary = unsafeBitCast(attachment, to: CFMutableDictionary.self)
+            CFDictionarySetValue(
+                dictionary,
+                Unmanaged.passUnretained(kCMSampleAttachmentKey_DisplayImmediately).toOpaque(),
+                Unmanaged.passUnretained(kCFBooleanTrue).toOpaque()
+            )
+        }
+
+        pipDisplayLayer.enqueue(sampleBuffer)
+        if pipDisplayLayer.status == .failed {
+            recoverDisplayLayerIfNeeded()
+        }
     }
 
+    private func recoverDisplayLayerIfNeeded() {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in
+                self?.recoverDisplayLayerIfNeeded()
+            }
+            return
+        }
+        guard pipDisplayLayer.status == .failed else { return }
+        guard !isRecoveringDisplayLayer else { return }
 
+        isRecoveringDisplayLayer = true
+        pipDisplayLayer.flushAndRemoveImage()
+        pipDisplayLayer.controlTimebase = nil
+        timebase = nil
+        lastEnqueuedPresentationSeconds = 0
+        lastPlaybackPositionSeconds = 0
+        createTimebaseIfNeeded()
+        DispatchQueue.main.async { [weak self] in
+            self?.isRecoveringDisplayLayer = false
+        }
+    }
+
+    private func flushPipLayer() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.lastEnqueuedPresentationSeconds = 0
+            self.lastPlaybackPositionSeconds = 0
+            self.pipDisplayLayer.flushAndRemoveImage()
+        }
+    }
+
+    private func createTimebaseIfNeeded() {
+        guard timebase == nil else { return }
+        var tb: CMTimebase?
+        let result = CMTimebaseCreateWithSourceClock(
+            allocator: kCFAllocatorDefault,
+            sourceClock: CMClockGetHostTimeClock(),
+            timebaseOut: &tb
+        )
+        guard result == noErr, let tb else { return }
+        timebase = tb
+        pipDisplayLayer.controlTimebase = tb
+        CMTimebaseSetRate(tb, rate: 0.0)
+        CMTimebaseSetTime(tb, time: .zero)
+    }
+
+    private func setTimebaseTime(seconds: Double) {
+        createTimebaseIfNeeded()
+        guard let timebase else { return }
+        let time = CMTime(seconds: seconds, preferredTimescale: 600)
+        CMTimebaseSetRate(timebase, rate: 0.0)
+        CMTimebaseSetTime(timebase, time: time)
+    }
+
+    private func setPlaybackRate(_ rate: Double) {
+        createTimebaseIfNeeded()
+        guard let timebase else { return }
+        CMTimebaseSetRate(timebase, rate: rate)
+    }
+
+    private func currentPresentationTime() -> CMTime {
+        CMTime(seconds: Double(positionMs) / 1000.0, preferredTimescale: 600)
+    }
+
+    private func invalidatePipPlaybackState() {
+        guard isPiPEnabled else { return }
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.pipController?.invalidatePlaybackState()
+        }
+    }
 
     private func setupNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(willResignActive),
@@ -765,7 +970,7 @@ final class MPVPlayerViewController: UIViewController {
         setVideoEqualizer("saturation", saturation)
         setVideoEqualizer("gamma", gamma)
         if #available(iOS 17.0, *) {
-            pipCoordinator?.displayLayer.wantsExtendedDynamicRangeContent = extendedDynamicRange
+            pipDisplayLayer.wantsExtendedDynamicRangeContent = extendedDynamicRange
         }
     }
 
@@ -817,15 +1022,15 @@ final class MPVPlayerViewController: UIViewController {
         guard mpv != nil else { return }
         switch mode {
         case 1: // Fill
-            pipCoordinator?.displayLayer.videoGravity = .resizeAspectFill
+            pipDisplayLayer.videoGravity = .resizeAspectFill
             setStringProperty("panscan", "1.0")
             setStringProperty("video-unscaled", "no")
         case 2: // Zoom
-            pipCoordinator?.displayLayer.videoGravity = .resizeAspectFill
+            pipDisplayLayer.videoGravity = .resizeAspectFill
             setStringProperty("panscan", "1.0")
             setStringProperty("video-unscaled", "no")
         default: // Fit
-            pipCoordinator?.displayLayer.videoGravity = .resizeAspect
+            pipDisplayLayer.videoGravity = .resizeAspect
             setStringProperty("panscan", "0.0")
             setStringProperty("video-unscaled", "no")
         }
@@ -1358,7 +1563,86 @@ final class MPVPlayerViewController: UIViewController {
     }
 }
 
+extension MPVPlayerViewController {
+    func pictureInPictureControllerWillStopPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
+        guard isStoppingPiPForForegroundTransition else { return }
+    }
 
+    func pictureInPictureController(
+        _ pictureInPictureController: AVPictureInPictureController,
+        restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void
+    ) {
+        isRestoringPiPUserInterface = true
+        didRestorePiPUserInterface = true
+        shouldPresentPiPTransitionOverlay = true
+        showPiPTransitionOverlay()
+        DispatchQueue.main.async {
+            completionHandler(true)
+        }
+    }
+
+    func pictureInPictureControllerDidStopPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
+        let shouldRequestExitPlayback = !didRequestForegroundTransitionStop
+        completePiPForegroundTransition()
+        if shouldRequestExitPlayback {
+            notifyPiPDidRequestExitPlayback()
+        }
+        didRestorePiPUserInterface = false
+        didRequestForegroundTransitionStop = false
+    }
+
+    func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController,
+                                    setPlaying playing: Bool) {
+        DispatchQueue.main.async { [weak self] in
+            if playing {
+                self?.playPlayback()
+            } else {
+                self?.pausePlayback()
+            }
+        }
+    }
+
+    private func notifyPiPDidRequestExitPlayback() {
+        NotificationCenter.default.post(
+            name: Notification.Name("NuvioPlayerPiPDidRequestExitPlayback"),
+            object: nil
+        )
+    }
+
+    func pictureInPictureControllerTimeRangeForPlayback(_ pictureInPictureController: AVPictureInPictureController) -> CMTimeRange {
+        let start = CMTime(seconds: 0, preferredTimescale: 600)
+        guard durationMs > 0 else {
+            return CMTimeRange(start: start, duration: .positiveInfinity)
+        }
+        let duration = CMTime(seconds: Double(durationMs) / 1000.0, preferredTimescale: 600)
+        return CMTimeRange(start: start, duration: duration)
+    }
+
+    func pictureInPictureControllerIsPlaybackPaused(_ pictureInPictureController: AVPictureInPictureController) -> Bool {
+        return !isPlayerPlaying
+    }
+
+    func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController,
+                                    didTransitionToRenderSize newRenderSize: CMVideoDimensions) {
+        // No-op. The layer already tracks the host bounds.
+    }
+
+    func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController,
+                                    skipByInterval skipInterval: CMTime,
+                                    completion: @escaping () -> Void) {
+        DispatchQueue.main.async { [weak self] in
+            let deltaMs = Int64((skipInterval.seconds * 1000.0).rounded())
+            self?.seekByMs(deltaMs)
+            DispatchQueue.main.async {
+                completion()
+            }
+        }
+    }
+
+    func pictureInPictureControllerShouldProhibitBackgroundAudioPlayback(_ pictureInPictureController: AVPictureInPictureController) -> Bool {
+        return false
+    }
+}
 
 // MARK: - Bridge Creator (implements Kotlin protocol)
 
