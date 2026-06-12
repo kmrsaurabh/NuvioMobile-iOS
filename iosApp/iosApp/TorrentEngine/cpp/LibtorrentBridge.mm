@@ -1,6 +1,6 @@
 //
 //  LibtorrentBridge.mm
-//  iosApp (Nuvio++)
+//  iosApp (NuvioPlus)
 //
 //  Objective-C++ implementation file (.mm = Objective-C + C++).
 //  This is where Swift-callable ObjC methods call into the raw C++ libtorrent API.

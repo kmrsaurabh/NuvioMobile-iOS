@@ -46,7 +46,7 @@
           "version": "0.2.14",
           "buildVersion": "2606081028",
           "date": "2026-06-08T11:31:14Z",
-          "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.",
+          "localizedDescription": "NuvioPlus experimental build with native C++ libtorrent engine.",
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/cpp-v0.2.14-2606081028/NuvioPP-v0.2.14-2606081028.ipa",
           "size": 41389389,
           "sha256": "2a2cdc84b8c7dd0c1e08cd52167059463ae8e8463c44a4ca86f7aaf32a996040"
@@ -55,7 +55,7 @@
           "version": "0.2.13",
           "buildVersion": "2606080608",
           "date": "2026-06-08T06:46:42Z",
-          "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.",
+          "localizedDescription": "NuvioPlus experimental build with native C++ libtorrent engine.",
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/cpp-v0.2.13-2606080608/NuvioPP-v0.2.13-2606080608.ipa",
           "size": 41389156,
           "sha256": "f48c99c8322eb975d8dec1de73ad9cfc63474c33115c08e7772fb40cabaf0124"
@@ -64,7 +64,7 @@
           "version": "0.2.12",
           "buildVersion": "2606062014",
           "date": "2026-06-06T20:57:26Z",
-          "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.",
+          "localizedDescription": "NuvioPlus experimental build with native C++ libtorrent engine.",
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/cpp-v0.2.12-2606062014/NuvioPP-v0.2.12-2606062014.ipa",
           "size": 41389480,
           "sha256": "86b2f5660306fb99793d512d5341e0599305eb4350158a0d044695799111723e"
@@ -73,7 +73,7 @@
           "version": "0.2.11",
           "buildVersion": "2606061138",
           "date": "2026-06-06T12:22:17Z",
-          "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.",
+          "localizedDescription": "NuvioPlus experimental build with native C++ libtorrent engine.",
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/cpp-v0.2.11-2606061138/NuvioPP-v0.2.11-2606061138.ipa",
           "size": 41390025,
           "sha256": "c7e5c0a0569716e7a011d1070d0d1badf5235b3fb6fae3bd300cbf7bcb2c5df0"
@@ -82,7 +82,7 @@
           "version": "0.2.10",
           "buildVersion": "2606060802",
           "date": "2026-06-06T08:57:15Z",
-          "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.",
+          "localizedDescription": "NuvioPlus experimental build with native C++ libtorrent engine.",
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/cpp-v0.2.10-2606060802/NuvioPP-v0.2.10-2606060802.ipa",
           "size": 41391849,
           "sha256": "d01ebb4dfafb2d8d2a1deac95747f92fc37ea3e4bec45695da46f16d8ed5d0b1"
@@ -91,7 +91,7 @@
           "version": "0.2.9",
           "buildVersion": "2606060657",
           "date": "2026-06-06T07:45:13Z",
-          "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.",
+          "localizedDescription": "NuvioPlus experimental build with native C++ libtorrent engine.",
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/cpp-v0.2.9-2606060657/NuvioPP-v0.2.9-2606060657.ipa",
           "size": 41389333,
           "sha256": "928d58dfdd0fb461e1b61fd3b5ec54abfbb0b7ca15532f299d87a03ffcd59c0c"
@@ -100,7 +100,7 @@
           "version": "0.2.8",
           "buildVersion": "2606060343",
           "date": "2026-06-06T04:35:26Z",
-          "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.",
+          "localizedDescription": "NuvioPlus experimental build with native C++ libtorrent engine.",
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/cpp-v0.2.8-2606060343/NuvioPP-v0.2.8-2606060343.ipa",
           "size": 41387146,
           "sha256": "919ea6c041bd51bf231e654a981eeefa0c80b7c2e6ca68e8066d354e942a8039"
@@ -109,7 +109,7 @@
           "version": "0.2.7",
           "buildVersion": "2606051942",
           "date": "2026-06-05T20:26:11Z",
-          "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.",
+          "localizedDescription": "NuvioPlus experimental build with native C++ libtorrent engine.",
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/cpp-v0.2.7-2606051942/NuvioPP-v0.2.7-2606051942.ipa",
           "size": 41382335,
           "sha256": "f9f5441b9a7b4479a1fcf40830860f2d71475a2d6aaf199d5aa9ca4b2efffce0"
@@ -118,7 +118,7 @@
           "version": "0.2.6",
           "buildVersion": "2606050731",
           "date": "2026-06-05T08:18:41Z",
-          "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.",
+          "localizedDescription": "NuvioPlus experimental build with native C++ libtorrent engine.",
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/cpp-v0.2.6-2606050731/NuvioPP-v0.2.6-2606050731.ipa",
           "size": 41382404,
           "sha256": "ada20d00d99526be9dba6bd60adb8f5d78c230d5abed1820c1b35765260082fb"
@@ -127,7 +127,7 @@
           "version": "0.2.5",
           "buildVersion": "2606050506",
           "date": "2026-06-05T05:49:39Z",
-          "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.",
+          "localizedDescription": "NuvioPlus experimental build with native C++ libtorrent engine.",
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/cpp-v0.2.5-2606050506/NuvioPP-v0.2.5-2606050506.ipa",
           "size": 41385913,
           "sha256": "c403ea0e685310ec52722bcddeaf76cc7fe0a9c8bdd976bb947a02b07be05ce5"
@@ -136,7 +136,7 @@
           "version": "0.2.4",
           "buildVersion": "2606041834",
           "date": "2026-06-04T19:26:41Z",
-          "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.",
+          "localizedDescription": "NuvioPlus experimental build with native C++ libtorrent engine.",
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/cpp-v0.2.4-2606041834/NuvioPP-v0.2.4-2606041834.ipa",
           "size": 41396286,
           "sha256": "4af88c3bae1be9c630b7889838c1f9bf81646e28598def6c9222bb29742fe5dd"
@@ -149,7 +149,7 @@
           "version": "0.2.15",
           "buildVersion": "2606100400",
           "date": "2026-06-10T04:42:47Z",
-          "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.",
+          "localizedDescription": "NuvioPlus experimental build with native C++ libtorrent engine.",
           "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/cpp-v0.2.15-2606100400/NuvioPP-v0.2.15-2606100400.ipa",
           "size": 41389152,
           "sha256": "e530177d2938a8650d659e7df7c04bf329b92b5bf083358e1f1735bccb44f3ac"

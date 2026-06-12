@@ -1,6 +1,6 @@
 //
 //  LibtorrentBridge.h
-//  iosApp (Nuvio++)
+//  iosApp (NuvioPlus)
 //
 //  Objective-C header exposing libtorrent-rasterbar C++ engine to Swift.
 //  This is the ONLY file Swift sees — all C++ is hidden behind this interface.

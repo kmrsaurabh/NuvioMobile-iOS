@@ -1,4 +1,4 @@
-name: Build Nuvio++ (iOS C++ libtorrent)
+name: Build NuvioPlus (iOS C++ libtorrent)
 
 on:
   workflow_dispatch:
@@ -53,7 +53,7 @@ jobs:
           path: libtorrent-built/
 
   build-ios:
-    name: Build Nuvio++ iOS App
+    name: Build NuvioPlus iOS App
     runs-on: macos-latest
     needs: build-libtorrent
     permissions:
@@ -75,13 +75,13 @@ jobs:
           perl -pi -e "s/MARKETING_VERSION=.*/MARKETING_VERSION=$NEW_VERSION/" iosApp/Configuration/Version.xcconfig
           echo "Bumped version from $CURRENT_VERSION to $NEW_VERSION"
 
-      - name: Set Nuvio++ App Identity (separate Bundle ID & Display Name)
+      - name: Set NuvioPlus App Identity (separate Bundle ID & Display Name)
         run: |
           # Change bundle ID so it installs as a separate app alongside Nuvio (Go)
           plutil -replace CFBundleIdentifier -string "com.nuvio.app.cpp" iosApp/iosApp/Info.plist
-          plutil -replace CFBundleName       -string "Nuvio++"            iosApp/iosApp/Info.plist
-          plutil -replace CFBundleDisplayName -string "Nuvio++"           iosApp/iosApp/Info.plist
-          echo "Bundle ID and display name set to Nuvio++"
+          plutil -replace CFBundleName       -string "NuvioPlus"            iosApp/iosApp/Info.plist
+          plutil -replace CFBundleDisplayName -string "NuvioPlus"           iosApp/iosApp/Info.plist
+          echo "Bundle ID and display name set to NuvioPlus"
 
       - name: Fetch iOS Specific Submodule (MPVKit)
         run: git submodule update --init --recursive MPVKit
@@ -171,7 +171,7 @@ jobs:
           echo "BUMPED_VERSION=${BUMPED_VERSION}" >> $GITHUB_ENV
           echo "Build version: ${BUMPED_VERSION}"
 
-      - name: Build Nuvio++ iOS App via Xcode
+      - name: Build NuvioPlus iOS App via Xcode
         run: |
           cd iosApp
           xcodebuild \
@@ -187,7 +187,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             build
 
-      - name: Package, Release, and Update SideStore (Nuvio++ entry)
+      - name: Package, Release, and Update SideStore (NuvioPlus entry)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -204,15 +204,15 @@ jobs:
 
           # Publish as a separate GitHub Release tagged with "cpp-" prefix
           gh release create "cpp-v${APP_VERSION}-${{ env.BUMPED_VERSION }}" "$IPA_NAME" \
-            --title "Nuvio++ v${APP_VERSION} (Build ${{ env.BUMPED_VERSION }})" \
-            --notes "Nuvio++ experimental build using native C++ libtorrent-rasterbar engine."
+            --title "NuvioPlus v${APP_VERSION} (Build ${{ env.BUMPED_VERSION }})" \
+            --notes "NuvioPlus experimental build using native C++ libtorrent-rasterbar engine."
 
           IPA_SIZE=$(stat -f%z "$IPA_NAME")
           IPA_SHA256=$(shasum -a 256 "$IPA_NAME" | awk '{print $1}')
           DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/cpp-v${APP_VERSION}-${{ env.BUMPED_VERSION }}/$IPA_NAME"
           CURRENT_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Update apps.json — Nuvio++ is apps[1] (separate listing in SideStore)
+          # Update apps.json — NuvioPlus is apps[1] (separate listing in SideStore)
           cd ${GITHUB_WORKSPACE}
           jq --arg version "${APP_VERSION}" \
              --arg buildVersion "${{ env.BUMPED_VERSION }}" \
@@ -220,7 +220,7 @@ jobs:
              --arg url "$DOWNLOAD_URL" \
              --arg size "$IPA_SIZE" \
              --arg sha "$IPA_SHA256" \
-             '.apps[1].versions = [{"version": $version, "buildVersion": $buildVersion, "date": $date, "localizedDescription": "Nuvio++ experimental build with native C++ libtorrent engine.", "downloadURL": $url, "size": ($size | tonumber), "sha256": $sha}] + (.apps[1].versions // [])' \
+             '.apps[1].versions = [{"version": $version, "buildVersion": $buildVersion, "date": $date, "localizedDescription": "NuvioPlus experimental build with native C++ libtorrent engine.", "downloadURL": $url, "size": ($size | tonumber), "sha256": $sha}] + (.apps[1].versions // [])' \
              apps.json > tmp.json && mv tmp.json apps.json
 
       - name: Commit Updated Metadata
@@ -228,7 +228,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add apps.json iosApp/Configuration/Version.xcconfig
-          git commit -m "chore(nuvio++): bump version and update apps.json for build ${{ env.BUMPED_VERSION }} [skip ci]" || echo "No changes to commit"
+          git commit -m "chore(NuvioPlus): bump version and update apps.json for build ${{ env.BUMPED_VERSION }} [skip ci]" || echo "No changes to commit"
           git stash --include-untracked
           git pull --rebase origin "nuvio-cpp"
           git push origin HEAD:"nuvio-cpp"
