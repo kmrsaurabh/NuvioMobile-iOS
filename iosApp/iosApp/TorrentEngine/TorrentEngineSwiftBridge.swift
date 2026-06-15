@@ -5,6 +5,7 @@ import Foundation
     @objc public static let shared = TorrentEngineSwiftBridge()
 
     private var isStarted = false
+    private var lastStartError: String = ""
     private let engineQueue = DispatchQueue(label: "com.nuvio.torrent.cppengine", qos: .userInitiated)
 
     private override init() {
@@ -21,12 +22,14 @@ import Foundation
                 try FileManager.default.createDirectory(atPath: downloadPath, withIntermediateDirectories: true)
             } catch {
                 print("[LibtorrentBridge] Failed to create cache dir: \(error)")
+                self.lastStartError = "Failed to create cache dir: \(error.localizedDescription)"
             }
 
             // Start HTTP Server
             let port = LibtorrentHTTPServer.shared.start(downloadPath: downloadPath)
             if port == 0 {
                 print("[LibtorrentBridge] Failed to start HTTP server.")
+                self.lastStartError = "Failed to start HTTP server."
                 return
             }
             
@@ -48,10 +51,12 @@ import Foundation
             let errStr = LibtorrentBridge.shared().startEngine(withDataDir: downloadPath, config: config)
             if let err = errStr, !err.isEmpty {
                 print("[LibtorrentBridge] Failed to start engine: \(err)")
+                self.lastStartError = err
                 LibtorrentHTTPServer.shared.stop()
                 return
             }
             
+            self.lastStartError = ""
             isStarted = true
             print("[LibtorrentBridge] Engine started successfully at \(downloadPath)")
         }
@@ -63,6 +68,7 @@ import Foundation
             LibtorrentBridge.shared().stopEngine()
             LibtorrentHTTPServer.shared.stop()
             isStarted = false
+            self.lastStartError = ""
             print("[LibtorrentBridge] Engine stopped")
         }
     }
@@ -75,7 +81,10 @@ import Foundation
         var resultJson = "{}"
         engineQueue.sync {
             guard isStarted else {
-                resultJson = "{\"errorMessage\": \"Engine not started\"}"
+                let errorMsg = self.lastStartError.isEmpty ? "Engine not started" : "Engine failed to start: \(self.lastStartError)"
+                // Escape quotes in the error message for JSON
+                let escapedMsg = errorMsg.replacingOccurrences(of: "\"", with: "\\\"").replacingOccurrences(of: "\n", with: " ")
+                resultJson = "{\"errorMessage\": \"\(escapedMsg)\"}"
                 return
             }
             resultJson = LibtorrentBridge.shared().addMagnet(magnetUri, fileIndex: fileIdx)
