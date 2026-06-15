@@ -24,7 +24,7 @@ actual fun HeroTrailerPlayerSurface(
         useYoutubeChunkedPlayback = true,
         modifier = modifier,
         playWhenReady = playWhenReady,
-        resizeMode = PlayerResizeMode.Crop,
+        resizeMode = PlayerResizeMode.Zoom,
         useNativeController = false,
         muted = muted,
         onReady = onReady,
