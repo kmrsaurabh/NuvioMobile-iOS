@@ -72,55 +72,7 @@ import kotlin.math.abs
 import kotlin.math.roundToLong
 import kotlin.math.roundToInt
 
-private const val PlaybackProgressPersistIntervalMs = 60_000L
-private const val PlayerDoubleTapSeekStepMs = 10_000L
-private const val PlayerDoubleTapSeekResetDelayMs = 800L
-private const val PlayerLockedOverlayDurationMs = 2_000L
-private const val PlayerLeftGestureBoundary = 0.4f
-private const val PlayerRightGestureBoundary = 0.6f
-private const val PlayerVerticalGestureSensitivity = 1f
-private const val PlayerSeekProgressSyncDebounceMs = 700L
-private const val P2pInitialPreloadTargetBytes = 5_242_880L
-/** Hard ceiling for next-episode stream search to prevent hanging forever. */
-private const val NEXT_EPISODE_HARD_TIMEOUT_MS = 120_000L
-private val PlayerSliderOverlayGap = 12.dp
-private val PlayerTimeRowHeight = 36.dp
-private val PlayerActionRowHeight = 50.dp
 
-private fun sliderOverlayBottomPadding(metrics: PlayerLayoutMetrics) =
-    metrics.sliderBottomOffset +
-        metrics.sliderTouchHeight +
-        PlayerTimeRowHeight +
-        PlayerActionRowHeight +
-        PlayerSliderOverlayGap
-
-private enum class PlayerSideGesture {
-    Brightness,
-    Volume,
-}
-
-private enum class PlayerSeekDirection {
-    Backward,
-    Forward,
-}
-
-private enum class PlayerGestureMode {
-    HorizontalSeek,
-    Brightness,
-    Volume,
-}
-
-private data class PlayerAccumulatedSeekState(
-    val direction: PlayerSeekDirection,
-    val baselinePositionMs: Long,
-    val amountMs: Long,
-)
-
-private data class PendingPlayerP2pSwitch(
-    val stream: StreamItem,
-    val episode: MetaVideo?,
-    val isAutoPlay: Boolean,
-)
 
 @Composable
 fun PlayerScreen(

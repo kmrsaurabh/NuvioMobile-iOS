@@ -495,6 +495,7 @@ private fun MobileSettingsScreen(
             }
 
             when (page) {
+                SettingsPage.LiveTv -> {}
                 SettingsPage.Root -> {
                     settingsSearchRootContent(
                         query = settingsSearchQuery,
@@ -875,6 +876,7 @@ private fun TabletSettingsScreen(
                     )
                 }
                 when (page) {
+                    SettingsPage.LiveTv -> {}
                     SettingsPage.Root -> {
                         settingsSearchRootContent(
                             query = settingsSearchQuery,
