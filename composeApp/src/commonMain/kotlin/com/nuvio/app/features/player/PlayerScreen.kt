@@ -94,33 +94,13 @@ private fun sliderOverlayBottomPadding(metrics: PlayerLayoutMetrics) =
         PlayerActionRowHeight +
         PlayerSliderOverlayGap
 
-private enum class PlayerSideGesture {
-    Brightness,
-    Volume,
-}
 
-private enum class PlayerSeekDirection {
-    Backward,
-    Forward,
-}
 
-private enum class PlayerGestureMode {
-    HorizontalSeek,
-    Brightness,
-    Volume,
-}
 
-private data class PlayerAccumulatedSeekState(
-    val direction: PlayerSeekDirection,
-    val baselinePositionMs: Long,
-    val amountMs: Long,
-)
 
-private data class PendingPlayerP2pSwitch(
-    val stream: StreamItem,
-    val episode: MetaVideo?,
-    val isAutoPlay: Boolean,
-)
+
+
+
 
 @Composable
 fun PlayerScreen(
