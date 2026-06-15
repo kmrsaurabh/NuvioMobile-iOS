@@ -165,6 +165,77 @@ jobs:
           echo "BUMPED_VERSION=${BUMPED_VERSION}" >> $GITHUB_ENV
           echo "Build version: ${BUMPED_VERSION}"
 
+      - name: Inject C++ files and linker flags into Xcode Project
+        run: |
+          gem install xcodeproj
+          cat << 'EOF' > patch_xcodeproj.rb
+          require 'xcodeproj'
+          project_path = 'iosApp/iosApp.xcodeproj'
+          project = Xcodeproj::Project.open(project_path)
+          target = project.targets.find { |t| t.name == 'iosApp' } || project.targets.first
+
+          # 1. Add Source Files
+          ios_group = project.main_group.children.find { |c| c.display_name == 'iosApp' || c.path == 'iosApp' }
+          
+          # Create TorrentEngine group
+          torrent_group = ios_group.children.find { |c| c.display_name == 'TorrentEngine' || c.path == 'TorrentEngine' }
+          if torrent_group.nil?
+            torrent_group = ios_group.new_group('TorrentEngine', 'TorrentEngine')
+          end
+          
+          # Create cpp group
+          cpp_group = torrent_group.children.find { |c| c.display_name == 'cpp' || c.path == 'cpp' }
+          if cpp_group.nil?
+            cpp_group = torrent_group.new_group('cpp', 'cpp')
+          end
+
+          # Find or add files
+          def add_to_target(group, filename, target)
+            file_ref = group.children.find { |c| c.path == filename }
+            file_ref ||= group.new_file(filename)
+            unless target.source_build_phase.files_references.include?(file_ref)
+              target.source_build_phase.add_file_reference(file_ref)
+            end
+          end
+
+          add_to_target(cpp_group, 'LibtorrentBridge.mm', target)
+          add_to_target(cpp_group, 'LibtorrentHTTPServer.swift', target)
+          add_to_target(torrent_group, 'TorrentEngineSwiftBridge.swift', target)
+          add_to_target(torrent_group, 'TorrentEngineRegistration.swift', target)
+
+          # 2. Update Build Settings
+          target.build_configurations.each do |config|
+            # Header Search Paths
+            hsp = config.build_settings['HEADER_SEARCH_PATHS'] || ['$(inherited)']
+            hsp = [hsp] if hsp.is_a?(String)
+            hsp << '$(SRCROOT)/Frameworks/LibTorrent/include'
+            config.build_settings['HEADER_SEARCH_PATHS'] = hsp.uniq
+
+            # Library Search Paths
+            lsp = config.build_settings['LIBRARY_SEARCH_PATHS'] || ['$(inherited)']
+            lsp = [lsp] if lsp.is_a?(String)
+            lsp << '$(SRCROOT)/Frameworks/LibTorrent/lib'
+            config.build_settings['LIBRARY_SEARCH_PATHS'] = lsp.uniq
+
+            # Linker Flags
+            ldflags = config.build_settings['OTHER_LDFLAGS'] || ['$(inherited)']
+            ldflags = [ldflags] if ldflags.is_a?(String)
+            ldflags.concat(['-lc++', '-ltorrent-rasterbar', '-lssl', '-lcrypto', '-lz', '-liconv'])
+            Dir.glob('iosApp/Frameworks/LibTorrent/lib/libboost_*.a').each do |boost_lib|
+              lib_name = File.basename(boost_lib, '.a').sub(/^lib/, '')
+              ldflags << "-l#{lib_name}"
+            end
+            config.build_settings['OTHER_LDFLAGS'] = ldflags.uniq
+            
+            # Additional Flags
+            config.build_settings['ENABLE_BITCODE'] = 'NO'
+          end
+
+          project.save
+          puts 'Successfully updated Xcode project!'
+          EOF
+          ruby patch_xcodeproj.rb
+
       - name: Build NuvioPlus iOS App via Xcode
         run: |
           cd iosApp
