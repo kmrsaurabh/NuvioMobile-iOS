@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import io.ktor.http.encodeURLParameter
 
 actual object P2pStreamingEngine {
+    actual fun warmup() {}
     private val _state = MutableStateFlow<P2pStreamingState>(P2pStreamingState.Idle)
     actual val state: StateFlow<P2pStreamingState> = _state.asStateFlow()
 

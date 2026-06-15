@@ -6,7 +6,7 @@ import com.nuvio.app.features.details.MetaVideo
 import com.nuvio.app.features.downloads.DownloadsRepository
 import com.nuvio.app.features.livetv.LiveTvChannel
 import com.nuvio.app.features.p2p.P2pConsentDialog
-import com.nuvio.app.features.p2p.P2pSettingsRepository
+import com.nuvio.app.features.torrent.TorrentStreamingRepository
 import com.nuvio.app.features.streams.StreamItem
 import com.nuvio.app.features.streams.StreamsUiState
 import com.nuvio.app.features.watchprogress.WatchProgressEntry
@@ -101,7 +101,7 @@ internal fun PlayerScreenModalHosts(
             onEnableP2p = {
                 val pending = pendingP2pSwitch
                 onPendingP2pSwitchChanged(null)
-                P2pSettingsRepository.setP2pEnabled(true)
+                TorrentStreamingRepository.setP2pEnabled(true)
                 val episode = pending.episode
                 if (episode != null) {
                     onP2pEpisodeStreamSelected(pending.stream, episode, pending.isAutoPlay)

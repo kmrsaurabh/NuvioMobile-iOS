@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import com.nuvio.app.features.details.MetaDetailsRepository
-import com.nuvio.app.features.p2p.P2pSettingsRepository
+import com.nuvio.app.features.torrent.TorrentStreamingRepository
 import com.nuvio.app.features.p2p.P2pStreamRequest
 import com.nuvio.app.features.p2p.P2pStreamingEngine
 import com.nuvio.app.features.p2p.P2pStreamingState
@@ -91,7 +91,7 @@ internal fun PlayerScreenRuntime.BindPlayerRuntimeEffects() {
         activeTorrentFilename,
         activeTorrentMagnetUri,
         activeTorrentTrackers,
-        p2pSettingsUiState.p2pEnabled,
+        TorrentStreamingSettings.p2pEnabled,
     ) {
         val infoHash = activeTorrentInfoHash
         if (infoHash == null) {
@@ -99,7 +99,7 @@ internal fun PlayerScreenRuntime.BindPlayerRuntimeEffects() {
             P2pStreamingEngine.stopStream()
             return@LaunchedEffect
         }
-        if (!P2pSettingsRepository.isVisible || !p2pSettingsUiState.p2pEnabled) {
+        if (!com.nuvio.app.core.build.AppFeaturePolicy.p2pEnabled || !TorrentStreamingSettings.p2pEnabled) {
             return@LaunchedEffect
         }
 

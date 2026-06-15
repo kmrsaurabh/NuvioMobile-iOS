@@ -9,7 +9,7 @@ import com.nuvio.app.features.details.MetaVideo
 import com.nuvio.app.features.downloads.DownloadItem
 import com.nuvio.app.features.downloads.DownloadsRepository
 import com.nuvio.app.features.livetv.LiveTvChannel
-import com.nuvio.app.features.p2p.P2pSettingsRepository
+import com.nuvio.app.features.torrent.TorrentStreamingRepository
 import com.nuvio.app.features.p2p.P2pStreamingEngine
 import com.nuvio.app.features.streams.StreamItem
 import com.nuvio.app.features.streams.StreamLinkCacheRepository
@@ -97,8 +97,8 @@ internal fun PlayerScreenRuntime.saveP2pStreamForReuse(
 
 internal fun PlayerScreenRuntime.switchToP2pSourceStream(stream: StreamItem) {
     val infoHash = stream.p2pInfoHash ?: return
-    if (!P2pSettingsRepository.isVisible) return
-    if (!P2pSettingsRepository.uiState.value.p2pEnabled) {
+    if (!com.nuvio.app.core.build.AppFeaturePolicy.p2pEnabled) return
+    if (!TorrentStreamingRepository.uiState.value.p2pEnabled) {
         pendingP2pSwitch = PendingPlayerP2pSwitch(stream = stream, episode = null, isAutoPlay = false)
         return
     }
@@ -137,8 +137,8 @@ internal fun PlayerScreenRuntime.switchToP2pEpisodeStream(
     isAutoPlay: Boolean = false,
 ) {
     val infoHash = stream.p2pInfoHash ?: return
-    if (!P2pSettingsRepository.isVisible) return
-    if (!P2pSettingsRepository.uiState.value.p2pEnabled) {
+    if (!com.nuvio.app.core.build.AppFeaturePolicy.p2pEnabled) return
+    if (!TorrentStreamingRepository.uiState.value.p2pEnabled) {
         pendingP2pSwitch = PendingPlayerP2pSwitch(stream = stream, episode = episode, isAutoPlay = isAutoPlay)
         return
     }

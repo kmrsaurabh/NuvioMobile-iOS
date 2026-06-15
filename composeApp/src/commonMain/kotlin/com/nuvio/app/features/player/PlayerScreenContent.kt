@@ -16,7 +16,7 @@ import com.nuvio.app.features.addons.AddonRepository
 import com.nuvio.app.features.details.MetaDetailsRepository
 import com.nuvio.app.features.details.MetaScreenSettingsRepository
 import com.nuvio.app.features.livetv.LiveTvRepository
-import com.nuvio.app.features.p2p.P2pSettingsRepository
+import com.nuvio.app.features.torrent.TorrentStreamingRepository
 import com.nuvio.app.features.p2p.P2pStreamingEngine
 import com.nuvio.app.features.watched.WatchedRepository
 import com.nuvio.app.features.watchprogress.WatchProgressRepository
@@ -46,9 +46,9 @@ internal fun PlayerScreenContent(args: PlayerScreenArgs) {
         PlayerSettingsRepository.ensureLoaded()
         PlayerSettingsRepository.uiState
     }.collectAsStateWithLifecycle()
-    val p2pSettingsUiState by remember {
-        P2pSettingsRepository.ensureLoaded()
-        P2pSettingsRepository.uiState
+    val TorrentStreamingSettings by remember {
+        TorrentStreamingRepository.ensureLoaded()
+        TorrentStreamingRepository.uiState
     }.collectAsStateWithLifecycle()
     val p2pStreamingState by P2pStreamingEngine.state.collectAsStateWithLifecycle()
     val metaScreenSettingsUiState by remember {
@@ -90,7 +90,7 @@ internal fun PlayerScreenContent(args: PlayerScreenArgs) {
         runtime.hapticFeedback = LocalHapticFeedback.current
         runtime.gestureController = rememberPlayerGestureController()
         runtime.playerSettingsUiState = playerSettingsUiState
-        runtime.p2pSettingsUiState = p2pSettingsUiState
+        runtime.TorrentStreamingSettings = TorrentStreamingSettings
         runtime.p2pStreamingState = p2pStreamingState
         runtime.metaScreenSettingsUiState = metaScreenSettingsUiState
         runtime.watchedUiState = watchedUiState

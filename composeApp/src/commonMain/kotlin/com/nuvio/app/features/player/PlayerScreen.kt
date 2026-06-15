@@ -143,7 +143,7 @@ fun PlayerScreen(
         PlayerSettingsRepository.ensureLoaded()
         PlayerSettingsRepository.uiState
     }.collectAsStateWithLifecycle()
-    val p2pSettingsUiState by remember {
+    val TorrentStreamingSettings by remember {
         TorrentStreamingRepository.ensureLoaded()
         TorrentStreamingRepository.uiState
     }.collectAsStateWithLifecycle()
@@ -1243,8 +1243,8 @@ fun PlayerScreen(
             )
             activeSourceUrl = p2pSentinelUrl(infoHash, stream.fileIdx)
             activeSourceAudioUrl = null
-            activeSourceHeaders = emptyMap()
-            activeSourceResponseHeaders = emptyMap()
+            activeSourceHeaders = emptyMap<String, String>()
+            activeSourceResponseHeaders = emptyMap<String, String>()
             activeTorrentInfoHash = infoHash
             activeTorrentFileIdx = stream.fileIdx
             activeTorrentFilename = stream.behaviorHints.filename
@@ -1301,8 +1301,8 @@ fun PlayerScreen(
             )
             activeSourceUrl = p2pSentinelUrl(infoHash, stream.fileIdx)
             activeSourceAudioUrl = null
-            activeSourceHeaders = emptyMap()
-            activeSourceResponseHeaders = emptyMap()
+            activeSourceHeaders = emptyMap<String, String>()
+            activeSourceResponseHeaders = emptyMap<String, String>()
             activeTorrentInfoHash = infoHash
             activeTorrentFileIdx = stream.fileIdx
             activeTorrentFilename = stream.behaviorHints.filename
@@ -1511,8 +1511,8 @@ fun PlayerScreen(
 
             activeSourceUrl = localFileUri
             activeSourceAudioUrl = null
-            activeSourceHeaders = emptyMap()
-            activeSourceResponseHeaders = emptyMap()
+            activeSourceHeaders = emptyMap<String, String>()
+            activeSourceResponseHeaders = emptyMap<String, String>()
             activeStreamTitle = downloadItem.streamTitle.ifBlank {
                 episode.title.ifBlank { title }
             }
@@ -1925,7 +1925,7 @@ fun PlayerScreen(
             activeTorrentFileIdx,
             activeTorrentFilename,
             activeTorrentTrackers,
-            p2pSettingsUiState.enabled,
+            TorrentStreamingSettings.enabled,
         ) {
             val infoHash = activeTorrentInfoHash
             if (infoHash == null) {
@@ -1933,7 +1933,7 @@ fun PlayerScreen(
                 P2pStreamingEngine.stopStream()
                 return@LaunchedEffect
             }
-            if (!AppFeaturePolicy.p2pEnabled || !p2pSettingsUiState.enabled) {
+            if (!AppFeaturePolicy.p2pEnabled || !TorrentStreamingSettings.enabled) {
                 return@LaunchedEffect
             }
 
@@ -1958,8 +1958,8 @@ fun PlayerScreen(
                 )
                 if (activeTorrentInfoHash == infoHash && activeTorrentFileIdx == requestedFileIdx) {
                     activeSourceAudioUrl = null
-                    activeSourceHeaders = emptyMap()
-                    activeSourceResponseHeaders = emptyMap()
+                    activeSourceHeaders = emptyMap<String, String>()
+                    activeSourceResponseHeaders = emptyMap<String, String>()
                     p2pResolvedSourceUrl = localUrl
                 }
             } catch (error: CancellationException) {

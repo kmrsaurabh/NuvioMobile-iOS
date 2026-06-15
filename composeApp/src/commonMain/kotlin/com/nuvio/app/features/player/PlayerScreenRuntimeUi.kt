@@ -41,7 +41,7 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
             )
         }
         p2pStats != null -> {
-            if (p2pSettingsUiState.hideTorrentStats) {
+            if (TorrentStreamingSettings.hideTorrentStats) {
                 null
             } else {
                 org.jetbrains.compose.resources.stringResource(
@@ -64,7 +64,7 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
         initialLoadCompleted &&
         playbackSnapshot.isLoading &&
         p2pStats != null &&
-        !p2pSettingsUiState.hideTorrentStats
+        !TorrentStreamingSettings.hideTorrentStats
     val p2pRebufferMessage = when {
         !showP2pRebufferStats -> null
         else -> {

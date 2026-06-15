@@ -93,7 +93,7 @@ import com.nuvio.app.core.ui.nuvioSafeBottomPadding
 import com.nuvio.app.features.debrid.DebridProviders
 import com.nuvio.app.features.torrent.TorrentStreamingRepository
 import com.nuvio.app.features.debrid.DebridSettingsRepository
-import com.nuvio.app.features.p2p.P2pSettingsRepository
+import com.nuvio.app.features.torrent.TorrentStreamingRepository
 import com.nuvio.app.features.p2p.P2pStreamingEngine
 import com.nuvio.app.features.player.PlayerSettingsRepository
 import com.nuvio.app.features.watchprogress.WatchProgressRepository
@@ -188,8 +188,8 @@ fun StreamsScreen(
         }
     }
 
-    DisposableEffect(P2pSettingsRepository.isVisible, p2pSettings.p2pEnabled) {
-        if (P2pSettingsRepository.isVisible && p2pSettings.p2pEnabled) {
+    DisposableEffect(com.nuvio.app.core.build.AppFeaturePolicy.p2pEnabled, p2pSettings.p2pEnabled) {
+        if (com.nuvio.app.core.build.AppFeaturePolicy.p2pEnabled && p2pSettings.p2pEnabled) {
             P2pStreamingEngine.warmup()
         }
         onDispose {
