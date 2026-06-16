@@ -159,6 +159,17 @@ jobs:
           echo "Staged libraries:"
           ls -lh iosApp/Frameworks/LibTorrent/lib/
 
+          echo "Generating DynamicLinker.xcconfig for vcpkg suffixes..."
+          LDFLAGS="-ObjC -lc++ -lz -liconv -ltorrent-rasterbar"
+          for lib in iosApp/Frameworks/LibTorrent/lib/libboost_*.a iosApp/Frameworks/LibTorrent/lib/libcrypto*.a iosApp/Frameworks/LibTorrent/lib/libssl*.a; do
+             if [ -f "$lib" ]; then
+                 filename=$(basename "$lib" .a)
+                 libname=${filename#lib}
+                 LDFLAGS="$LDFLAGS -l$libname"
+             fi
+          done
+          echo "DYNAMIC_LDFLAGS=$LDFLAGS" > iosApp/Configuration/DynamicLinker.xcconfig
+
       - name: Generate Timestamp Build Version
         run: |
           BUMPED_VERSION=$(date -u +%y%m%d%H%M)

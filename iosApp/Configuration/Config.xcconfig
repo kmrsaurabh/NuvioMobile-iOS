@@ -10,5 +10,9 @@ LIBRARY_SEARCH_PATHS = $(inherited) $(SRCROOT)/Frameworks/LibTorrent/lib
 ENABLE_STRICT_OBJC_MSGSEND = YES
 CLANG_CXX_LANGUAGE_STANDARD = c++17
 CLANG_CXX_LIBRARY = libc++
-OTHER_LDFLAGS = $(inherited) -ObjC -ltorrent-rasterbar -lboost_chrono -lboost_container -lboost_context -lboost_date_time -lboost_random -lcrypto -lssl -lc++
+OTHER_LDFLAGS_DEFAULT = -ObjC -ltorrent-rasterbar -lboost_chrono -lboost_container -lboost_context -lboost_date_time -lboost_random -lcrypto -lssl -lc++ -lz -liconv
+DYNAMIC_LDFLAGS = $(OTHER_LDFLAGS_DEFAULT)
+#include? "DynamicLinker.xcconfig"
+
+OTHER_LDFLAGS = $(inherited) $(DYNAMIC_LDFLAGS)
 SWIFT_OBJC_BRIDGING_HEADER = iosApp-Bridging-Header.h
