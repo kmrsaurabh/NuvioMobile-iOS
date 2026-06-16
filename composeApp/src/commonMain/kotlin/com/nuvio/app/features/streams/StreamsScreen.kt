@@ -188,8 +188,8 @@ fun StreamsScreen(
         }
     }
 
-    DisposableEffect(com.nuvio.app.core.build.AppFeaturePolicy.p2pEnabled, p2pSettings.p2pEnabled) {
-        if (com.nuvio.app.core.build.AppFeaturePolicy.p2pEnabled && p2pSettings.p2pEnabled) {
+    DisposableEffect(com.nuvio.app.core.build.AppFeaturePolicy.p2pEnabled, torrentSettings.enabled) {
+        if (com.nuvio.app.core.build.AppFeaturePolicy.p2pEnabled && torrentSettings.enabled) {
             P2pStreamingEngine.warmup()
         }
         onDispose {
