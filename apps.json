@@ -16,6 +16,15 @@
       "tintColor": "#2196F3",
       "versions": [
         {
+          "version": "0.2.19",
+          "buildVersion": "2606160931",
+          "date": "2026-06-16T10:09:33Z",
+          "localizedDescription": "NuvioGo (Based on Go Server). Changelog: fix: propagate Go engine init error to UI",
+          "downloadURL": "https://github.com/kmrsaurabh/NuvioMobile-iOS/releases/download/v0.2.19-2606160931/Nuvio-v0.2.19-2606160931-Full.ipa",
+          "size": 45598226,
+          "sha256": "20971e5bc6fa1acea0a6c94830faa6c6b84e7e413edf390ac1bbc4f748567370"
+        },
+        {
           "version": "0.2.18",
           "buildVersion": "2606081031",
           "date": "2026-06-08T11:25:37Z",
